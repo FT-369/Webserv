@@ -1,5 +1,32 @@
 #include "Utils.hpp"
 
+std::string ft_ltrim(std::string const &str)
+{
+	size_t idx = 0;
+
+	while (isspace(str[idx]))
+		idx++;
+	return str.substr(idx);
+}
+
+std::string ft_rtrim(std::string const &str)
+{
+	size_t idx = str.length() - 1;
+
+	while (isspace(str[idx]))
+		idx--;
+	return str.substr(0, idx + 1);
+}
+
+std::string ft_trim(std::string const &str)
+{
+	std::string ltrim, rtrim;
+
+	ltrim = ft_ltrim(str);
+	rtrim = ft_rtrim(str);
+	return rtrim;
+}
+
 std::vector<std::string> ft_split(std::string const &line, std::string const &delimiter)
 {
 	std::vector<std::string> words;
