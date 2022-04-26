@@ -11,7 +11,7 @@ class ConfigServer
 {
 private:
     std::vector<ConfigLocation> locations;
-    std::map<std::string, std::vector<std::string> > simple_directive;
+    std::map<std::string, std::string> simple_directive;
     /* data */
 public:
     ConfigServer(/* args */);

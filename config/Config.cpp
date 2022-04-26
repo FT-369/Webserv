@@ -20,8 +20,21 @@ void Config::cutComment(std::string &buffer) {
 	}
 }
 
-void Config::parseMainDirective(const std::string &buffer) {
+int Config::parseMainDirective(const std::string &buffer) {
+	// size_t rpos = buffer.rfind(';');
+	// std::string temp = buffer.substr(0, rpos);
+	std::vector<std::string> main_line;
+	std::vector<std::string> temp_line;
 
+	main_line = ft_split(buffer, ";");
+	for (int i = 0; i < main_line.size(); i++)
+	{
+		temp_line = ft_split_space(main_line[i]);
+		if (temp_line.size() != 2)
+			return ERROR;
+		main_directive[temp_line[0]] = temp_line[1];
+	}
+	return SUCCESS;
 }
 
 int Config::checkBrace(std::stack<bool> &check_brace, const std::string &buffer, bool &first_brace) {
@@ -29,7 +42,8 @@ int Config::checkBrace(std::stack<bool> &check_brace, const std::string &buffer,
 	{
 		if (buffer[i] == '{') {
 			if (first_brace == false) {
-				parseMainDirective(buffer);
+				size_t rpos = config_text.rfind(';');
+				parseMainDirective(config_text.substr(0, rpos));
 				first_brace = true;
 			}
 			check_brace.push(1);

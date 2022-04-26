@@ -2,6 +2,7 @@
 #define CONFIG_HPP
 
 #include "ConfigHttp.hpp"
+#include "Utils.hpp"
 #include <fstream>
 #include <stack>
 
@@ -26,7 +27,7 @@ class Config{
 		int readConfigFile();
 		int parsingConfig();
 		int findMain();
-		void parseMainDirective(const std::string &buffer);
+		int parseMainDirective(const std::string &buffer);
 
 };
 
