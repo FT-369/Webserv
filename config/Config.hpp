@@ -6,30 +6,34 @@
 #include <fstream>
 #include <stack>
 
-class Config{
+#define PATH "../setting/"
+#define DEFALUT_CONF "./setting/default.conf"
+#define MAIN_SEPARATOR "\n\n"
+#define BLOCK_SEPARATOR "\n"
+
+class Config {
 	private:
+		std::string filename;
+		std::string	config_text;
 		std::map<std::string, std::string> main_directive;
 		std::map<std::string, std::string> event_directive;
 		ConfigHttp http_directive;
-		const std::string filename;
-		std::string	config_text;
-		// int fd;
 	
 	public:
 		Config();
 		~Config();
-		Config(const std::string &_filename);
+		std::string getFileName();
+		std::map<std::string, std::string> getMainDirective();
+		std::map<std::string, std::string> getEventDirective();
+		int parsingConfig(std::string const &filename);
 		void printConfig();
-		int identifyBlock();
 
 	private: // func
-		int checkBrace(std::stack<bool> &check_brace, const std::string &buffer, bool &first_brace);
 		void cutComment(std::string &buffer);
+		int checkBrace(std::stack<bool> &check_brace, std::string &buffer);
 		int readConfigFile();
-		int parsingConfig();
-		int findMain();
-		int parseMainDirective(const std::string &buffer);
-
+		std::string getBlockName(std::string const &block);
+		int identifyBlock(std::string const &block);
 };
 
 #endif
