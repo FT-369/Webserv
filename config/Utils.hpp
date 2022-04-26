@@ -7,7 +7,11 @@
 #include <string>
 #include <cctype>
 
-std::vector<std::string> ft_split(std::string const line, std::string const delimiter);
-std::vector<std::string> ft_split_space(std::string const line);
+#define ERROR 1
+#define SUCCESS 0
+
+std::vector<std::string> ft_split(std::string const &line, std::string const &delimiter);
+std::vector<std::string> ft_split_space(std::string const &line);
+int parseSimpleDirective(std::map<std::string, std::string> &directive, const std::string &buffer);
 
 #endif
