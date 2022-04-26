@@ -18,12 +18,4 @@ public:
     ~ConfigServer();
 };
 
-ConfigServer::ConfigServer(/* args */)
-{
-}
-
-ConfigServer::~ConfigServer()
-{
-}
-
 #endif

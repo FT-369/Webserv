@@ -17,6 +17,7 @@ class Config{
 	
 	public:
 		Config();
+		~Config();
 		Config(const std::string &_filename);
 		void printConfig();
 		int identifyBlock();

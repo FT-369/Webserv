@@ -18,13 +18,4 @@ public:
     ~ConfigLocation();
 };
 
-ConfigLocation::ConfigLocation(/* args */)
-{
-}
-
-ConfigLocation::~ConfigLocation()
-{
-}
-
-
 #endif

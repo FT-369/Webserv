@@ -4,9 +4,11 @@
 #define SUCCESS 0
 #define PATH "../setting/"
 
-Config::Config() : filename("../setting/default.conf"), config_text("") {
+Config::Config() : filename("./setting/default.conf"), config_text("") {
 	readConfigFile();
 }
+
+Config::~Config() { }
 
 Config::Config(const std::string &_filename) : filename(PATH + _filename), config_text("") {
 	readConfigFile();
@@ -87,28 +89,20 @@ int Config::readConfigFile()
 	return SUCCESS;
 }
 
-int Config::findMain() {
-	size_t pos = config_text.find("{");
-	std::string temp = config_text.substr(0, pos);
-	size_t rpos = temp.rfind(";", pos);
-
-	temp = temp.substr(0, rpos);
-}
-
-int Config::identifyBlock()
-{
-	for (int i = 0; i < config_text.length(); i++){
-		while (std::isspace(config_text[i]))
-		{
-			/* code */
-		}
+// int Config::identifyBlock()
+// {
+// 	for (int i = 0; i < config_text.length(); i++){
+// 		while (std::isspace(config_text[i]))
+// 		{
+// 			/* code */
+// 		}
 		
-		config_text.substr(i, ' ');
-		if (config_text[i] == '{'){
+// 		config_text.substr(i, ' ');
+// 		if (config_text[i] == '{'){
 			
-		}
-	}
-}
+// 		}
+// 	}
+// }
 
 int Config::parsingConfig()
 {
@@ -118,11 +112,4 @@ int Config::parsingConfig()
 void	Config::printConfig()
 {
 	std::cout << this->config_text << std::endl;
-}
-
-int main(void)
-{
-	Config config;
-
-	config.printConfig();
 }
