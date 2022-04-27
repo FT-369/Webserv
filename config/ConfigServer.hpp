@@ -1,21 +1,21 @@
 #ifndef CONFIGSERVER_HPP
 #define CONFIGSERVER_HPP
 
-#include <iostream>
-#include <map>
-#include <string>
-#include <vector>
 #include "ConfigLocation.hpp"
 
 class ConfigServer
 {
 private:
-    std::vector<ConfigLocation> locations;
-    std::map<std::string, std::string> simple_directive;
-    /* data */
+	std::map<std::string, std::string> simple_directive;
+	std::vector<ConfigLocation> locations;
+	/* data */
 public:
-    ConfigServer(/* args */);
-    ~ConfigServer();
+	ConfigServer(/* args */);
+	~ConfigServer();
+	int parsingServer(std::string const &block);
+	int identifyBlock(std::string const &block);
+	std::map<std::string, std::string> getSimpleDirective();
+	std::vector<ConfigLocation> getLocations();
 };
 
 #endif

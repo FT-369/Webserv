@@ -12,6 +12,10 @@ private:
 public:
 	ConfigHttp(/* args */);
 	~ConfigHttp();
+	int parsingHttp(std::string const &block);
+	int identifyBlock(std::string const &block);
+	std::map<std::string, std::string> getSimpleDirective();
+	std::vector<ConfigServer> getServers();
 };
 
 

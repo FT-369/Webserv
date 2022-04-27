@@ -1,16 +1,20 @@
 #include "Config.hpp"
 
-Config::Config() : filename(DEFALUT_CONF), config_text("") {
+Config::Config() : filename(DEFALUT_CONF), config_text("")
+{
 	// init default
 }
 
 Config::~Config() { }
 
 std::string Config::getFileName() { return filename; }
+std::string Config::getConfigText() { return config_text; }
 std::map<std::string, std::string> Config::getMainDirective() { return main_directive; }
 std::map<std::string, std::string> Config::getEventDirective() { return event_directive; }
+ConfigHttp Config::getHttpDirective() { return http_directive; }
 
-void Config::cutComment(std::string &buffer) {
+void Config::cutComment(std::string &buffer)
+{
 	size_t	pos = buffer.find("#");
 
 	if (pos != std::string::npos) {
@@ -18,7 +22,8 @@ void Config::cutComment(std::string &buffer) {
 	}
 }
 
-int Config::checkBrace(std::stack<bool> &check_brace, std::string &buffer) {
+int Config::checkBrace(std::stack<bool> &check_brace, std::string &buffer)
+{
 	std::string modify_buffer;
 
 	for (int i = 0; i < buffer.length(); i++)
@@ -65,7 +70,7 @@ int Config::readConfigFile()
 		config_text += buffer;
 		if (first_brace == false && (pos = config_text.find("{")) != std::string::npos) {
 			first_brace = true;
-			size_t rpos = config_text.rfind(';');
+			size_t rpos = config_text.rfind(';', pos);
 			config_text.insert(rpos + 1, MAIN_SEPARATOR);
 		}
 	}
@@ -76,24 +81,15 @@ int Config::readConfigFile()
 	return SUCCESS;
 }
 
-std::string Config::getBlockName(std::string const &block)
-{
-	size_t pos = block.find("{");
-
-	return ft_trim(block.substr(0, pos));
-}
-
 int Config::identifyBlock(std::string const &block)
 {
 	std::string block_name = getBlockName(block);
+	std::string block_content = getBlockContent(block);
 
 	if (block_name == "events") {
-		size_t open_pos = block.find("{");
-		size_t close_pos = block.rfind("}");
-		std::string event_block = block.substr(open_pos + 1, close_pos - open_pos - 1);
-		parseSimpleDirective(this->event_directive, event_block);
+		parseSimpleDirective(this->event_directive, block_content);
 	} else if (block_name == "http") {
-		// http_directive.parsing(block);
+		http_directive.parsingHttp(block_content);
 	}
 	return SUCCESS;
 }
@@ -109,19 +105,14 @@ int Config::parsingConfig(std::string const &filename)
 	
 	pos = config_text.find(MAIN_SEPARATOR);
 	if (pos == std::string::npos) {
-		blocks = ft_split(config_text, "\n");
+		blocks = ft_split(config_text, BLOCK_SEPARATOR);
 	} else {
 		parseSimpleDirective(main_directive, config_text.substr(0, pos));
-		blocks = ft_split(config_text.substr(pos + strlen(MAIN_SEPARATOR)), "\n");
+		blocks = ft_split(config_text.substr(pos + strlen(MAIN_SEPARATOR)), BLOCK_SEPARATOR);
 	}
 
 	for (size_t i = 0; i < blocks.size(); i++) {
-		identifyBlock(blocks[i]);
+		this->identifyBlock(blocks[i]);
 	}
 	return SUCCESS;
-}
-
-void	Config::printConfig()
-{
-	std::cout << this->config_text << std::endl;
 }
