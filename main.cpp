@@ -40,12 +40,14 @@ int main(void)
 	for (int i = 0; i < servers.size(); i++) {
 		ConfigServer server = servers[i];
 		printMap("server_simple_" + std::to_string(i + 1), server.getSimpleDirective());
+		printMap("server_types_" + std::to_string(i + 1), server.getMimeTypes());
 		
 		std::vector<ConfigLocation> locations = server.getLocations();
 		for (int j = 0; j < locations.size(); j++) {
 			ConfigLocation location = locations[j];
 			std::cout << C_YLLW << "location_url_" + std::to_string(i + 1) + "_" + std::to_string(j + 1) + ": " << C_NRML << location.getUrl() << std::endl;
 			printMap("location_simple_" + std::to_string(i + 1) + "_" + std::to_string(j + 1), location.getSimpleDirective());
+			printMap("location_types_" + std::to_string(i + 1) + "_" + std::to_string(j + 1), location.getMimeTypes());
 		}
 	}
 	
