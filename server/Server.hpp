@@ -6,6 +6,7 @@ class Server
 {
 private:
 	Server();
+	Config *config;
 
 public:
 	Server(Config &config);
