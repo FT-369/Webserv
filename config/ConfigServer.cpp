@@ -8,6 +8,7 @@ ConfigServer::ConfigServer()
 ConfigServer::~ConfigServer() { }
 
 std::map<std::string, std::string> ConfigServer::getSimpleDirective() { return simple_directive; }
+std::map<std::string, std::string> ConfigServer::getMimeTypes() { return mime_types; }
 std::vector<ConfigLocation> ConfigServer::getLocations() { return locations; }
 
 int ConfigServer::identifyBlock(std::string const &block)

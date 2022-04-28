@@ -7,8 +7,9 @@ ConfigHttp::ConfigHttp()
 
 ConfigHttp::~ConfigHttp() { }
 
-std::map<std::string, std::string> ConfigHttp::getSimpleDirective() { return simple_directive;}
-std::vector<ConfigServer> ConfigHttp::getServers() { return servers;}
+std::map<std::string, std::string> ConfigHttp::getSimpleDirective() { return simple_directive; }
+std::vector<ConfigServer> ConfigHttp::getServers() { return servers; }
+std::map<std::string, std::string> ConfigHttp::getMimeTypes() { return mime_types; }
 
 int ConfigHttp::identifyBlock(std::string const &block)
 {

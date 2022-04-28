@@ -16,6 +16,7 @@ public:
 	int parsingLocation(std::string const &block);
 	std::string getUrl();
 	std::map<std::string, std::string> getSimpleDirective();
+	std::map<std::string, std::string> getMimeTypes();
 	
 private:
 	ConfigLocation();

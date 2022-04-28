@@ -11,6 +11,7 @@ ConfigLocation::ConfigLocation(std::string const &url) : url(url) { }
 
 std::string ConfigLocation::getUrl() { return this->url; }
 std::map<std::string, std::string> ConfigLocation::getSimpleDirective() { return this->simple_directive; }
+std::map<std::string, std::string> ConfigLocation::getMimeTypes() { return mime_types; }
 
 int ConfigLocation::identifyBlock(std::string const &block)
 {

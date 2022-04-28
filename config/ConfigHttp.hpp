@@ -15,6 +15,7 @@ public:
 	~ConfigHttp();
 	int parsingHttp(std::string const &block);
 	std::map<std::string, std::string> getSimpleDirective();
+	std::map<std::string, std::string> getMimeTypes();
 	std::vector<ConfigServer> getServers();
 
 private:

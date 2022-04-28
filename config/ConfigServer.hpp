@@ -15,6 +15,7 @@ public:
 	~ConfigServer();
 	int parsingServer(std::string const &block);
 	std::map<std::string, std::string> getSimpleDirective();
+	std::map<std::string, std::string> getMimeTypes();
 	std::vector<ConfigLocation> getLocations();
 
 private:
