@@ -20,8 +20,8 @@ int ConfigHttp::identifyBlock(std::string const &block)
 		server.parsingServer(block_content);
 		servers.push_back(server);
 	} else if (block_name == "types") {
-		//
-	} else {
+		parseSimpleDirective(this->mime_types, block_content);
+	} else if (block_name != "") {
 		// return ERROR;
 	}
 	return SUCCESS;

@@ -25,8 +25,8 @@ int ConfigServer::identifyBlock(std::string const &block)
 		location.parsingLocation(block_content);
 		locations.push_back(location);
 	} else if (block_name == "types") {
-		//
-	} else {
+		parseSimpleDirective(this->mime_types, block_content);
+	} else if (block_name != "") {
 		// return ERROR;
 	}
 	return SUCCESS;

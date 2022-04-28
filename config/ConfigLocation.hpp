@@ -8,6 +8,7 @@ private:
 	std::string url;
 	short url_prefix;
 	std::map<std::string, std::string> simple_directive;
+	std::map<std::string, std::string> mime_types;
 
 public:
 	ConfigLocation(std::string const &url);

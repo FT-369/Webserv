@@ -7,6 +7,7 @@ class ConfigServer
 {
 private:
 	std::map<std::string, std::string> simple_directive;
+	std::map<std::string, std::string> mime_types;
 	std::vector<ConfigLocation> locations;
 
 public:

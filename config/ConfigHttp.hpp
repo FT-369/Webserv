@@ -7,6 +7,7 @@ class ConfigHttp
 {
 private:
 	std::map<std::string, std::string> simple_directive;
+	std::map<std::string, std::string> mime_types;
 	std::vector<ConfigServer> servers;
 
 public:

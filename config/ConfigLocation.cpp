@@ -19,8 +19,8 @@ int ConfigLocation::identifyBlock(std::string const &block)
 	std::vector<std::string> block_name_arg = ft_split_space(block_name);
 
 	if (block_name == "types") {
-		//
-	} else {
+		parseSimpleDirective(this->mime_types, block_content);
+	} else if (block_name != "") {
 		// return ERROR;
 	}
 	return SUCCESS;
