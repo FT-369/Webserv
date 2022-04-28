@@ -1,6 +1,6 @@
 #include "ConfigServer.hpp"
 
-ConfigServer::ConfigServer(/* args */)
+ConfigServer::ConfigServer()
 {
 	// init default
 }
@@ -24,6 +24,8 @@ int ConfigServer::identifyBlock(std::string const &block)
 		ConfigLocation location(url);
 		location.parsingLocation(block_content);
 		locations.push_back(location);
+	} else if (block_name == "types") {
+		//
 	} else {
 		// return ERROR;
 	}

@@ -88,8 +88,12 @@ int Config::identifyBlock(std::string const &block)
 
 	if (block_name == "events") {
 		parseSimpleDirective(this->event_directive, block_content);
+	} else if (block_name == "types") {
+		//
 	} else if (block_name == "http") {
 		http_directive.parsingHttp(block_content);
+	} else if (block_name != "") {
+		// return ERROR;
 	}
 	return SUCCESS;
 }

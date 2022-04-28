@@ -1,6 +1,6 @@
 #include "ConfigHttp.hpp"
 
-ConfigHttp::ConfigHttp(/* args */)
+ConfigHttp::ConfigHttp()
 {
 	// init default
 }
@@ -19,6 +19,8 @@ int ConfigHttp::identifyBlock(std::string const &block)
 		ConfigServer server;
 		server.parsingServer(block_content);
 		servers.push_back(server);
+	} else if (block_name == "types") {
+		//
 	} else {
 		// return ERROR;
 	}
