@@ -1,32 +1,35 @@
 # compile flag
 CXX = clang++
-CXXFLAGS = -std=c++98
-LFLAGS = -L. -l$(LIBNAME)
-IFLAGS = -I$(INCLUDE)
+CXXFLAGS = -std=c++98 $(IFLAGS)
+IFLAGS = -I$(UTILS_INCLUDE) -I$(CONFIG_INCLUDE)
 
-# lib & exec name
-LIBNAME = web
+# exec name
 NAME = webserv
 
 # directory name
-INCLUDE = $(CONFIG_INCLDE)
-CONFIG_INCLDE = config
-SETTING = setting
+CONFIG_INCLUDE = config
+UTILS_INCLUDE = utils
+SETTING_INCLUDE = setting
 
-# file name
+# config
+CONFIG_SOURCE = Config ConfigHttp ConfigLocation ConfigServer configUtils
+CONFIG_OBJECT = $(foreach src, $(CONFIG_SOURCE), $(CONFIG_INCLUDE)/$(src).o)
+CONFIG_HEADER = $(foreach header, $(CONFIG_SOURCE), $(CONFIG_INCLUDE)/$(header).hpp)
+
+# utils
+UTILS_SOURCE = utils
+UTILS_OBJECT = $(foreach src, $(UTILS_SOURCE), $(UTILS_INCLUDE)/$(src).o)
+UTILS_HEADER = $(foreach header, $(UTILS_SOURCE), $(UTILS_INCLUDE)/$(header).hpp)
+
+# source
 MAIN = main.cpp
-CONFIG_SOURCE = Config ConfigHttp ConfigLocation ConfigServer Utils
-CONFIG_HEADER = $(foreach src, $(CONFIG_SOURCE), $(CONFIG_INCLDE)/$(src).hpp)
-OBJECT = $(foreach file, $(CONFIG_SOURCE), $(CONFIG_INCLDE)/$(file).o)
-LIBRARY = lib$(LIBNAME).a
+OBJECT = $(CONFIG_OBJECT) $(UTILS_OBJECT)
+HEADER = $(CONFIG_HEADER) $(UTILS_HEADER)
 
 # dependency
-$(NAME): $(MAIN) $(LIBRARY)
-	$(CXX) $(CXXFLAGS) $(LFLAGS) $(IFLAGS) $(MAIN) -o $(NAME)
-$(LIBRARY): $(OBJECT)
-	ar rcs $(LIBRARY) $(OBJECT)
-$(CONFIG_INCLDE)/%.o: $(CONFIG_INCLDE)/%.cpp $(CONFIG_HEADER)
-	$(CXX) $(CXXFLAGS) $(IFLAGS) -c $< -o $@
+$(NAME): $(MAIN) $(OBJECT) $(HEADER)
+	$(CXX) $(CXXFLAGS) $(OBJECT) $(IFLAGS) $(MAIN) -o $(NAME)
+$(OBJECT): $(HEADER)
 
 # rules
 all: $(NAME)

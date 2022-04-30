@@ -1,7 +1,8 @@
 #ifndef CONFIGLOCATION_HPP
 #define CONFIGLOCATION_HPP
 
-#include "Utils.hpp"
+#include "configUtils.hpp"
+
 class ConfigLocation
 {
 private:
