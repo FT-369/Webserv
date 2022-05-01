@@ -2,11 +2,14 @@
 
 ConfigServer::ConfigServer() { }
 
-ConfigServer::ConfigServer(CommonDirective const &c) : common_directive(c) { }
+ConfigServer::ConfigServer(CommonDirective const &c) : common_directive(c), listen_port(-1) { }
 
 ConfigServer::~ConfigServer() { }
 
 CommonDirective  ConfigServer::getCommonDirective() { return common_directive; }
+int ConfigServer::getListenPort() { return listen_port; }
+std::string ConfigServer::getListenHost() { return listen_host; }
+std::vector<std::string> ConfigServer::getServerName() { return server_name; }
 std::vector<ConfigLocation> ConfigServer::getLocations() { return locations; }
 std::map<std::string, std::string> ConfigServer::getSimpleDirective() { return simple_directive; }
 
@@ -49,10 +52,10 @@ int ConfigServer::parseServerDirecive(std::map<std::string, std::string> &simple
 	}
 
 	if (simple.find(SERVER_NAME) != simple.end()) {
-		std::vector<std::string> name = ft_split_space(simple[SERVER_NAME]);
-		if (name.size() != 1)
-			return ERROR;
-		server_name = name[0];
+		std::vector<std::string> names = ft_split_space(simple[SERVER_NAME]);
+		// if (names.size() < 1)
+		// 	return ERROR;
+		server_name = names;
 	}
 	return SUCCESS;
 }

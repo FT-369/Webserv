@@ -26,6 +26,8 @@ struct CommonDirective {
 	int client_limit_body_size;
 	int request_limit_header_size;
 	std::map<std::string, std::string> cgi_path;
+
+	CommonDirective() : autoindex(false), client_limit_body_size(1000000), request_limit_header_size(4000) {}
 };
 
 bool isCommonDirective(std::string key);

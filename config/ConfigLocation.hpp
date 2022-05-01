@@ -21,6 +21,9 @@ public:
 	~ConfigLocation();
 	std::string getUrl();
 	CommonDirective getCommonDirective();
+	std::vector<std::string> getLimitExcept();
+	int getReturnCode();
+	std::string getReturnDate();
 	std::map<std::string, std::string> getSimpleDirective();
 	int parsingLocation(std::string const &block);
 	

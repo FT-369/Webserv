@@ -12,7 +12,7 @@ private:
 	CommonDirective common_directive;
 	int listen_port;
 	std::string listen_host;
-	std::string server_name;
+	std::vector<std::string> server_name;
 	std::vector<ConfigLocation> locations;
 	std::map<std::string, std::string> simple_directive;
 
@@ -20,6 +20,9 @@ public:
 	ConfigServer(CommonDirective const &c);
 	~ConfigServer();
 	CommonDirective getCommonDirective();
+	int getListenPort();
+	std::string getListenHost();
+	std::vector<std::string> getServerName();
 	std::vector<ConfigLocation> getLocations();
 	std::map<std::string, std::string> getSimpleDirective();
 	int parsingServer(std::string const &block);

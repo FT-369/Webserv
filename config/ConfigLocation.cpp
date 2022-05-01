@@ -5,10 +5,13 @@ ConfigLocation::ConfigLocation() { }
 ConfigLocation::~ConfigLocation() { }
 
 ConfigLocation::ConfigLocation(std::string const &url, CommonDirective const &c)
-	: url(url), common_directive(c) { }
+	: url(url), common_directive(c), return_code(-1) { }
 
 std::string ConfigLocation::getUrl() { return this->url; }
 CommonDirective ConfigLocation::getCommonDirective() { return common_directive; }
+std::vector<std::string> ConfigLocation::getLimitExcept() { return limit_except; }
+int ConfigLocation::getReturnCode() { return return_code; }
+std::string ConfigLocation::getReturnDate() { return return_data; }
 std::map<std::string, std::string> ConfigLocation::getSimpleDirective() { return simple_directive; }
 
 int ConfigLocation::identifyBlock(std::string const &block)
