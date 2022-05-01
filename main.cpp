@@ -43,6 +43,33 @@ void printCommonDirective(std::string name, CommonDirective common) {
 	std::cout << C_GREN << "End of [" << name << "]\n\n" << C_NRML;
 }
 
+void printServerDirective(std::string name, ConfigServer server) {
+	
+
+	std::cout << C_AQUA << "Start of [" << name << "]\n" << C_NRML;
+	std::cout << "listen_port: " << server.getListenPort() << std::endl;
+	std::cout << "listen_host: " << server.getListenHost() << std::endl;
+	std::cout << "sever_name: ";
+	for (size_t i = 0; i < server.getServerName().size(); i++) {
+		std::cout << server.getServerName()[i] << (i + 1 == server.getServerName().size() ? "" : ", ");
+	}
+	std::cout << std::endl;
+	std::cout << C_GREN << "End of [" << name << "]\n\n" << C_NRML;
+}
+
+void printLocationDirective(std::string name, ConfigLocation location) {
+	
+
+	std::cout << C_AQUA << "Start of [" << name << "]\n" << C_NRML;
+	std::cout << "return_code: " << location.getReturnCode() << std::endl;
+	std::cout << "return_data: " << location.getReturnDate() << std::endl;
+	std::cout << "allowed_method: ";
+	for (size_t i = 0; i < location.getLimitExcept().size(); i++) {
+		std::cout << location.getLimitExcept()[i] << (i + 1 == location.getLimitExcept().size() ? "" : ", ") << std::endl;
+	}
+	std::cout << std::endl;
+	std::cout << C_GREN << "End of [" << name << "]\n\n" << C_NRML;
+}
 
 int main(void)
 {
@@ -54,7 +81,7 @@ int main(void)
 	std::map<std::string, std::string> main = config.getGeneralDirective();
 	ConfigHttp http = config.getHttpDirective();
 
-	printMap("main", main);
+	printMap("general", main);
 	printMap("http_simple", http.getSimpleDirective());
 
 	std::vector<ConfigServer> servers = http.getServers();
@@ -62,6 +89,7 @@ int main(void)
 		ConfigServer server = servers[i];
 		printCommonDirective("server_common_" + std::to_string(i + 1), server.getCommonDirective());
 		printMap("server_simple_" + std::to_string(i + 1), server.getSimpleDirective());
+		printServerDirective("server_directive_" + std::to_string(i + 1), server);
 		
 		std::vector<ConfigLocation> locations = server.getLocations();
 		for (int j = 0; j < locations.size(); j++) {
@@ -69,7 +97,8 @@ int main(void)
 			std::cout << C_YLLW << "location_url_" + std::to_string(i + 1) + "_" + std::to_string(j + 1) + ": " << C_NRML << location.getUrl() << std::endl;
 			printCommonDirective("location_common_" + std::to_string(i + 1) + "_" + std::to_string(j + 1), location.getCommonDirective());
 			printMap("location_simple_" + std::to_string(i + 1) + "_" + std::to_string(j + 1), location.getSimpleDirective());
+			printLocationDirective("location_" + std::to_string(i + 1), location);
 		}
 	}
-	
+	return 0;
 }
