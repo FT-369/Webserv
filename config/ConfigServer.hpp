@@ -3,23 +3,31 @@
 
 #include "ConfigLocation.hpp"
 
+#define LISTEN "listen"
+#define SERVER_NAME "server_name"
+
 class ConfigServer
 {
 private:
-	std::map<std::string, std::string> simple_directive;
-	std::map<std::string, std::string> mime_types;
+	CommonDirective common_directive;
+	int listen_port;
+	std::string listen_host;
+	std::string server_name;
 	std::vector<ConfigLocation> locations;
+	std::map<std::string, std::string> simple_directive;
 
 public:
-	ConfigServer();
+	ConfigServer(CommonDirective const &c);
 	~ConfigServer();
-	int parsingServer(std::string const &block);
-	std::map<std::string, std::string> getSimpleDirective();
-	std::map<std::string, std::string> getMimeTypes();
+	CommonDirective getCommonDirective();
 	std::vector<ConfigLocation> getLocations();
+	std::map<std::string, std::string> getSimpleDirective();
+	int parsingServer(std::string const &block);
 
 private:
-	int identifyBlock(std::string const &block);
+	ConfigServer();
+	int parseServerDirecive(std::map<std::string, std::string> &simple);
+	int identifyLocationBlock(std::string const &block);
 };
 
 #endif

@@ -11,8 +11,7 @@ class Config {
 private:
 	std::string filename;
 	std::string	config_text;
-	std::map<std::string, std::string> main_directive;
-	std::map<std::string, std::string> event_directive;
+	std::map<std::string, std::string> general_directive;
 	ConfigHttp http_directive;
 
 public:
@@ -20,16 +19,16 @@ public:
 	~Config();
 	std::string getFileName();
 	std::string getConfigText();
-	std::map<std::string, std::string> getMainDirective();
-	std::map<std::string, std::string> getEventDirective();
+	std::map<std::string, std::string> getGeneralDirective();
 	ConfigHttp getHttpDirective();
 	int parsingConfig(std::string const &filename);
 
 private: // func
-	void cutComment(std::string &buffer);
+	int identifyHttpBlock(std::string const &block);
+	int parseGeneralDirective(std::map<std::string, std::string> &directive, std::string const &buffer);
 	int checkBrace(std::stack<bool> &check_brace, std::string &buffer);
-	int readConfigFile();
-	int identifyBlock(std::string const &block);
+	void cutComment(std::string &buffer);
+	int readConfigFile(std::string const &filename);
 };
 
 #endif

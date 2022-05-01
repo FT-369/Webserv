@@ -3,26 +3,31 @@
 
 #include "configUtils.hpp"
 
+#define ALLOWED_METHOD "limit_except"
+#define REDIRECT "return"
+
 class ConfigLocation
 {
 private:
 	std::string url;
-	short url_prefix;
+	CommonDirective common_directive;
+	std::vector<std::string> limit_except;
+	int return_code;
+	std::string return_data;
 	std::map<std::string, std::string> simple_directive;
-	std::map<std::string, std::string> mime_types;
 
 public:
-	ConfigLocation(std::string const &url);
+	ConfigLocation(std::string const &url, CommonDirective const &c);
 	~ConfigLocation();
-	int parsingLocation(std::string const &block);
 	std::string getUrl();
+	CommonDirective getCommonDirective();
 	std::map<std::string, std::string> getSimpleDirective();
-	std::map<std::string, std::string> getMimeTypes();
+	int parsingLocation(std::string const &block);
 	
 private:
 	ConfigLocation();
+	int parseLocationDirecive(std::map<std::string, std::string> &simple);
 	int identifyBlock(std::string const &block);
-	// url parsing
 };
 
 #endif
