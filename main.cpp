@@ -75,12 +75,12 @@ int main(void)
 {
 	Config config;
 
-	config.parsingConfig(DEFALUT_CONF);
 	// std::cout << config.getConfigText() << std::endl;
-
+	std::map<std::string, std::string> mime_types = config.getMimeTypes();
 	std::map<std::string, std::string> main = config.getGeneralDirective();
 	ConfigHttp http = config.getHttpDirective();
 
+	printMap("mime_types", mime_types);
 	printMap("general", main);
 	printMap("http_simple", http.getSimpleDirective());
 

@@ -2,13 +2,21 @@
 
 Config::Config() : filename(DEFALUT_CONF), config_text("")
 {
-	// init default
+	parsingConfig();
+	parsingMimeTypes(MIME_TYPES);
+}
+
+Config::Config(std::string const &filename) : filename(filename), config_text("")
+{
+	parsingConfig();
+	parsingMimeTypes(MIME_TYPES);
 }
 
 Config::~Config() { }
 
 std::string Config::getFileName() { return filename; }
 std::string Config::getConfigText() { return config_text; }
+std::map<std::string, std::string> Config::getMimeTypes() { return mime_types; }
 std::map<std::string, std::string> Config::getGeneralDirective() { return general_directive; }
 ConfigHttp Config::getHttpDirective() { return http_directive; }
 
@@ -46,7 +54,7 @@ int Config::checkBrace(std::stack<bool> &check_brace, std::string &buffer)
 	return SUCCESS;
 }
 
-int Config::readConfigFile(std::string const &filename)
+int Config::readConfigFile()
 {
 	std::ifstream is(filename);
 	std::string buffer;
@@ -112,13 +120,12 @@ int Config::parseGeneralDirective(std::map<std::string, std::string> &directive,
 	return SUCCESS;
 }
 
-int Config::parsingConfig(std::string const &filename)
+int Config::parsingConfig()
 {
 	size_t pos;
 	std::vector<std::string> blocks;
 
-	this->filename = filename;
-	if (readConfigFile(filename) == ERROR)
+	if (readConfigFile() == ERROR)
 		return ERROR;
 	
 	pos = config_text.find(MAIN_SEPARATOR);
@@ -131,6 +138,33 @@ int Config::parsingConfig(std::string const &filename)
 
 	for (size_t i = 0; i < blocks.size(); i++) {
 		identifyHttpBlock(blocks[i]);
+	}
+	return SUCCESS;
+}
+
+int Config::parsingMimeTypes(std::string const &filename) {
+	std::ifstream is(filename);
+	std::string buffer;
+	std::string line = "";
+	std::vector<std::string> split_line;
+
+	if (is.fail()) {
+		std::cerr << "Unable to find the file: " << filename << std::endl;
+		return ERROR;
+	}
+	while (std::getline(is, buffer)) {
+		line += buffer;
+	}
+	split_line = ft_split(line, ";");
+
+	for (size_t i = 0; i < split_line.size(); i++) {
+		std::vector<std::string> key_value = ft_split_space(split_line[i]);
+		if (key_value.size() < 2) {
+			return ERROR;
+		}
+		for (size_t i = 1; i < key_value.size(); i++) {
+			mime_types[key_value[i]] = key_value[0];
+		}
 	}
 	return SUCCESS;
 }
