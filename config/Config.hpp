@@ -12,6 +12,7 @@ class Config {
 private:
 	std::string filename;
 	std::string	config_text;
+	std::string default_type;
 	std::map<std::string, std::string> mime_types;
 	std::map<std::string, std::string> general_directive;
 	ConfigHttp http_directive;

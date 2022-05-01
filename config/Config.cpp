@@ -1,12 +1,12 @@
 #include "Config.hpp"
 
-Config::Config() : filename(DEFALUT_CONF), config_text("")
+Config::Config() : filename(DEFALUT_CONF), config_text(""), default_type("text/plain")
 {
 	parsingConfig();
 	parsingMimeTypes(MIME_TYPES);
 }
 
-Config::Config(std::string const &filename) : filename(filename), config_text("")
+Config::Config(std::string const &filename) : filename(filename), config_text(""), default_type("text/plain")
 {
 	parsingConfig();
 	parsingMimeTypes(MIME_TYPES);
