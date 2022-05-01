@@ -1,0 +1,42 @@
+# compile flag
+CXX = clang++
+CXXFLAGS = -std=c++98 $(IFLAGS)
+IFLAGS = -I$(UTILS_INCLUDE) -I$(CONFIG_INCLUDE)
+
+# exec name
+NAME = webserv
+
+# directory name
+CONFIG_INCLUDE = config
+UTILS_INCLUDE = utils
+SETTING_INCLUDE = setting
+
+# config
+CONFIG_SOURCE = Config ConfigHttp ConfigLocation ConfigServer configUtils
+CONFIG_OBJECT = $(foreach src, $(CONFIG_SOURCE), $(CONFIG_INCLUDE)/$(src).o)
+CONFIG_HEADER = $(foreach header, $(CONFIG_SOURCE), $(CONFIG_INCLUDE)/$(header).hpp)
+
+# utils
+UTILS_SOURCE = utils
+UTILS_OBJECT = $(foreach src, $(UTILS_SOURCE), $(UTILS_INCLUDE)/$(src).o)
+UTILS_HEADER = $(foreach header, $(UTILS_SOURCE), $(UTILS_INCLUDE)/$(header).hpp)
+
+# source
+MAIN = main.cpp
+OBJECT = $(CONFIG_OBJECT) $(UTILS_OBJECT)
+HEADER = $(CONFIG_HEADER) $(UTILS_HEADER)
+
+# dependency
+$(NAME): $(MAIN) $(OBJECT) $(HEADER)
+	$(CXX) $(CXXFLAGS) $(OBJECT) $(IFLAGS) $(MAIN) -o $(NAME)
+$(OBJECT): $(HEADER)
+
+# rules
+all: $(NAME)
+clean:
+	rm -rf $(OBJECT) $(LIBRARY)
+fclean:
+	rm -rf $(OBJECT) $(LIBRARY) $(NAME)
+re: fclean all
+
+.PHONY: all run clean fclean re

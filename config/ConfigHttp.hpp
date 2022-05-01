@@ -6,15 +6,21 @@
 class ConfigHttp
 {
 private:
-	std::map<std::string, std::string> simple_directive;
+	CommonDirective common_directive;
 	std::vector<ConfigServer> servers;
+	std::map<std::string, std::string> simple_directive;
 
 public:
-	ConfigHttp(/* args */);
+	ConfigHttp();
 	~ConfigHttp();
+	CommonDirective getCommonDirective();
+	std::vector<ConfigServer> getServers();
+	std::map<std::string, std::string> getSimpleDirective();
+	int parsingHttp(std::string const &block);
+
+private:
+	int identifyServerBlock(std::string const &block);
 };
-
-
 
 
 #endif

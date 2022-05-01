@@ -1,29 +1,36 @@
 #ifndef CONFIGSERVER_HPP
 #define CONFIGSERVER_HPP
 
-#include <iostream>
-#include <map>
-#include <string>
-#include <vector>
 #include "ConfigLocation.hpp"
+
+#define LISTEN "listen"
+#define SERVER_NAME "server_name"
 
 class ConfigServer
 {
 private:
-    std::vector<ConfigLocation> locations;
-    std::map<std::string, std::vector<std::string> > simple_directive;
-    /* data */
+	CommonDirective common_directive;
+	int listen_port;
+	std::string listen_host;
+	std::vector<std::string> server_name;
+	std::vector<ConfigLocation> locations;
+	std::map<std::string, std::string> simple_directive;
+
 public:
-    ConfigServer(/* args */);
-    ~ConfigServer();
+	ConfigServer(CommonDirective const &c);
+	~ConfigServer();
+	CommonDirective getCommonDirective();
+	int getListenPort();
+	std::string getListenHost();
+	std::vector<std::string> getServerName();
+	std::vector<ConfigLocation> getLocations();
+	std::map<std::string, std::string> getSimpleDirective();
+	int parsingServer(std::string const &block);
+
+private:
+	ConfigServer();
+	int parseServerDirecive(std::map<std::string, std::string> &simple);
+	int identifyLocationBlock(std::string const &block);
 };
-
-ConfigServer::ConfigServer(/* args */)
-{
-}
-
-ConfigServer::~ConfigServer()
-{
-}
 
 #endif
