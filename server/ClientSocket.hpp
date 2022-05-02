@@ -1,5 +1,5 @@
-#ifndef CLIENTSOCKET_CPP
-#define CLIENTSOCKET_CPP
+#ifndef CLIENTSOCKET_HPP
+#define CLIENTSOCKET_HPP
 #include "Socket.hpp"
 
 class ClientSocket : public Socket

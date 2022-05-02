@@ -1,5 +1,5 @@
-#ifndef SERVERSOCKET_CPP
-#define SERVERSOCKET_CPP
+#ifndef SERVERSOCKET_HPP
+#define SERVERSOCKET_HPP
 #include "Socket.hpp"
 #include <cstring>
 

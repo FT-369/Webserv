@@ -1,5 +1,5 @@
-#ifndef SOCKET_CPP
-#define SOCKET_CPP
+#ifndef SOCKET_HPP
+#define SOCKET_HPP
 #include "ConfigServer.hpp"
 #include <arpa/inet.h>
 #include <sys/socket.h>
