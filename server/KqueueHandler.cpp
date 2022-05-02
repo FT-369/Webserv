@@ -1,11 +1,11 @@
 #include "KqueueHandler.hpp"
 
-KqueueHandler::KqueueHandler() : kq_fd(0), n_events(1024)
+KqueueHandler::KqueueHandler() : kq_fd(0), n_event(1024)
 {
 
 }
 
-int KqueueHandler::init_kevent()
+int KqueueHandler::initKevent()
 {
     int new_event;
 

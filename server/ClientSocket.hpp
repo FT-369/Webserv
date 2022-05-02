@@ -15,6 +15,6 @@ public:
 	~ClientSocket();
 	int binding();
 	int acceptClient();
-}
+};
 
 #endif

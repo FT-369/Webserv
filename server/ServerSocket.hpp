@@ -10,6 +10,7 @@ private:
 
 public:
 	ServerSocket();
+	ServerSocket(ConfigServer server);
 	~ServerSocket();
 	int binding();
 	int clientAccept(int &connectFD);

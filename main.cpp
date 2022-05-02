@@ -102,6 +102,14 @@ int main(void)
 			printLocationDirective("location_" + std::to_string(i + 1), location);
 		}
 	}
-	server.keventProcess();
+	try
+	{
+		server.keventProcess();
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+	}
+	
 	return 0;
 }

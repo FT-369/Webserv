@@ -1,7 +1,8 @@
 #include "ServerSocket.hpp"
 
-ServerSocket::ServerSocket(ConfigServer server) : type(SERVER_SOCKET)
+ServerSocket::ServerSocket(ConfigServer server)
 {
+	socket_type = SERVER_SOCKET;
 	if (socket_fd = socket(AF_INET, SOCK_STREAM, 0) == -1);
 		// throw error
 	memset(&addr, 0, sizeof(addr));
@@ -16,7 +17,7 @@ int ServerSocket::binding()
 	// 	throw (setsockopt_error());
 	// if (setsockopt(serv_sock, SOL_SOCKET, SO_REUSEPORT, &reuse, sizeof(reuse)) == -1) //바로 포트 재사용가능하도록 설정
 	// 	throw (setsockopt_error());
-	if (bind(socket_fd, reinterpret_cast<struct sockaddr *>(&server_addr), sizeof(server_addr)) == -1)
+	if (bind(socket_fd, reinterpret_cast<struct sockaddr *>(&addr), sizeof(addr)) == -1)
 	{
 		std::cout << "bind() error" << std::endl;
 		return ERROR;

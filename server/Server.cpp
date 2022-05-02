@@ -16,7 +16,7 @@ void Server::serverConnect()
     for (int i = 0; i < server_size; i++)
     {
         int error_flag;
-        SocketController new_socket = SocketController(servers[i], SERVER_SOCKET);
+        ServerSocket new_socket = ServerSocket(servers[i]);
         if (new_socket.binding() == ERROR)
             continue;
         socket[new_socket.getSocketFd()] = new_socket;
@@ -41,25 +41,21 @@ void Server::acceptGetClientFd()
 
 int Server::isServerFd(uintptr_t fd)
 {
-    // Socket tem = socket.find(fd);
-    // if (tem != socket.end())
-    // {
-    //     socket.secon;
-    // }
-    // if ((*(find(socket.begin(), socket.end(), (int)fd)).getSocketType() )== 1);
+    auto tem = socket.find(fd);
+    if (tem != socket.end() && tem->second.getSocketType() == 1)
+        return true;
+    return false;
 }
 
 void Server::keventProcess()
 {
-    int event_num = 0;
-
     serverConnect();
     if ((kq.kq_fd == kqueue()) == -1)
         std::cout << " errorororororo" << std::endl;
 
     while (1)
     {
-        kq.init_kevent();
+        int event_num = kq.initKevent();
         if (event_num == -1)
         {
             std::cout << "errrororroroor" << std::endl;
@@ -104,13 +100,13 @@ void Server::keventProcess()
                 }
 
             case EVFILT_WRITE:
-                if (current_fd_status == RESPONSE_SECCEED)
-                {
-                    // send_data(req->_client_write, (char *)(req->_content_type).c_str(), (char *)(req->_file_name).c_str());
-                    // write(ke.eventList[i].ident, buffer, strlen(buffer));
-                    // ke.saved_fd.erase(ke.eventList[i].ident);
-                    // close(ke.eventList[i].ident);
-                }
+                //     if (current_fd_status == RESPONSE_SECCEED)
+                //     {
+                // send_data(req->_client_write, (char *)(req->_content_type).c_str(), (char *)(req->_file_name).c_str());
+                // write(ke.eventList[i].ident, buffer, strlen(buffer));
+                // ke.saved_fd.erase(ke.eventList[i].ident);
+                // close(ke.eventList[i].ident);
+                // }
             }
         }
     }

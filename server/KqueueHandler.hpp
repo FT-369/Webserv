@@ -20,7 +20,7 @@ public :
 	KqueueHandler();
 	void changeEvent(std::vector<struct kevent> &k, uintptr_t ident,
                     int16_t filter, intptr_t data, void *udata);
-	int	init_kevent();
+	int	initKevent();
 	int disableEvent();
 	int isServerFd();
 };
