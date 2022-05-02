@@ -1,16 +1,27 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
-#include "Config.hpp"
+
+#include "KqueueHandler.hpp"
+#include "SocketController.hpp"
+
 
 class Server
 {
-private:
+private :
+	KqueueHandler kq;
+	std::map<uintptr_t, Socket> socket;
+	Config config;
+
+private :
 	Server();
-	Config *config;
 
 public:
 	Server(Config &config);
 	~Server();
+	void serverConnect();
+	void acceptGetClientFd();
+	void keventProcess();
+	int isServerFd(uintptr_t fd);
 };
 
 #endif
