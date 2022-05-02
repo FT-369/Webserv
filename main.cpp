@@ -1,4 +1,5 @@
 #include "Config.hpp"
+#include "Server.hpp"
 
 # define C_NRML "\033[0m"
 # define C_BLCK "\033[30m"
@@ -79,6 +80,7 @@ int main(void)
 	std::map<std::string, std::string> mime_types = config.getMimeTypes();
 	std::map<std::string, std::string> main = config.getGeneralDirective();
 	ConfigHttp http = config.getHttpDirective();
+	Server server = Server(config);
 
 	printMap("mime_types", mime_types);
 	printMap("general", main);
@@ -100,5 +102,14 @@ int main(void)
 			printLocationDirective("location_" + std::to_string(i + 1), location);
 		}
 	}
+	try
+	{
+		server.keventProcess();
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+	}
+	
 	return 0;
 }

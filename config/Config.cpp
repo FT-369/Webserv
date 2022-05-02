@@ -168,3 +168,72 @@ int Config::parsingMimeTypes(std::string const &filename) {
 	}
 	return SUCCESS;
 }
+
+int Config::parsingMimeTypes(std::string const &filename) {
+	std::ifstream is(filename);
+	std::string buffer;
+	std::string line = "";
+	std::vector<std::string> split_line;
+
+	if (is.fail()) {
+		std::cerr << "Unable to find the file: " << filename << std::endl;
+		return ERROR;
+	}
+	while (std::getline(is, buffer)) {
+		line += buffer;
+	}
+	split_line = ft_split(line, ";");
+
+	for (size_t i = 0; i < split_line.size(); i++) {
+		std::vector<std::string> key_value = ft_split_space(split_line[i]);
+		if (key_value.size() < 2) {
+			return ERROR;
+		}
+		for (size_t i = 1; i < key_value.size(); i++) {
+			mime_types[key_value[i]] = key_value[0];
+		}
+	}
+	return SUCCESS;
+}
+
+int	Config::setStatusCode()
+{
+	status_code[100] = "Continue";
+	status_code[101] = "Switching Protocols";
+	status_code[200] = "OK";
+	status_code[201] = "Created";
+	status_code[202] = "Accepted";
+	status_code[203] = "Non-Authoritative";
+	status_code[204] = "No Content";
+	status_code[205] = "Reset Content";
+	status_code[206] = "Partial Content";
+	status_code[300] = "Multiple Choices";
+	status_code[301] = "Moved Permanently";
+	status_code[302] = "Found";
+	status_code[303] = "See Other";
+	status_code[304] = "Not Modified";
+	status_code[305] = "Use Proxy";
+	status_code[307] = "Temporary Redirect";
+	status_code[400] = "Bad Request";
+	status_code[401] = "Unauthorized";
+	status_code[403] = "Forbidden";
+	status_code[404] = "Not Found";
+	status_code[405] = "Method Not Allowed";
+	status_code[406] = "Not Acceptable";
+	status_code[407] = "Proxy Authentication";
+	status_code[408] = "Request Timeout";
+	status_code[409] = "Conflict";
+	status_code[410] = "Gone";
+	status_code[411] = "Length Required";
+	status_code[412] = "Precondition Failed";
+	status_code[413] = "Request Entity Too Large";
+	status_code[414] = "Request URI Too Long";
+	status_code[415] = "Unsupported Media Type";
+	status_code[416] = "Requested Range Not Satisfiable";
+	status_code[500] = "Expectation Failed";
+	status_code[501] = "Internal Server Error";
+	status_code[502] = "Not Implemented";
+	status_code[503] = "Bad Gateway";
+	status_code[504] = "Gateway Timeout";
+	status_code[505] = "HTTP Version Not Supported";
+}

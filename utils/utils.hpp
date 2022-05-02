@@ -9,7 +9,7 @@
 #define ERROR 1
 #define SUCCESS 0
 
-
+int	error_handling(std::string error, int ret);
 std::string ft_ltrim(std::string const &str);
 std::string ft_rtrim(std::string const &str);
 std::string ft_trim(std::string const &str);
