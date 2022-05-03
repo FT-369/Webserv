@@ -13,15 +13,15 @@ public :
 	int n_event;
 	std::vector<struct kevent> change_list;
 	struct kevent event_list[10];
-	std::vector<int> servers_fd;
 	std::map<int, std::string> saved_fd;
 	int kq_fd;
 public :
 	KqueueHandler();
-	void changeEvent(std::vector<struct kevent> &k, uintptr_t ident,
-                    int16_t filter, intptr_t data, void *udata);
 	int	initKevent();
-	int disableEvent();
+	void addEvent(int16_t filter, uintptr_t ident, void *udata);
+	void enableEvent(int16_t filter, uintptr_t ident, void *udata);
+	void disableEvent(int16_t filter, uintptr_t ident, void *udata);
+	void removeEvent(int16_t filter, uintptr_t ident, void *udata);
 	int isServerFd();
 };
 
