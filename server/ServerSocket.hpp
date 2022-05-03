@@ -5,7 +5,7 @@
 
 class ServerSocket : public Socket
 {
-private:
+public:
 	struct sockaddr_in addr;
 
 public:

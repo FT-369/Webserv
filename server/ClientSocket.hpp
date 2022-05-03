@@ -1,6 +1,8 @@
 #ifndef CLIENTSOCKET_HPP
 #define CLIENTSOCKET_HPP
 #include "Socket.hpp"
+// #include "Response.hpp"
+#include "Request.hpp"
 
 class ClientSocket : public Socket
 {

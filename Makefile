@@ -1,7 +1,7 @@
 # compile flag
 CXX = clang++
 CXXFLAGS = -std=c++98 $(IFLAGS)
-IFLAGS = -I$(UTILS_INCLUDE) -I$(CONFIG_INCLUDE)
+IFLAGS = -I$(UTILS_INCLUDE) -I$(CONFIG_INCLUDE) -I$(REQUEST_INCLUDE) -I$(SERVER_INCLUDE)
 
 # exec name
 NAME = webserv
@@ -10,6 +10,8 @@ NAME = webserv
 CONFIG_INCLUDE = config
 UTILS_INCLUDE = utils
 SETTING_INCLUDE = setting
+REQUEST_INCLUDE = request
+SERVER_INCLUDE = server
 
 # config
 CONFIG_SOURCE = Config ConfigHttp ConfigLocation ConfigServer configUtils
@@ -21,10 +23,20 @@ UTILS_SOURCE = utils
 UTILS_OBJECT = $(foreach src, $(UTILS_SOURCE), $(UTILS_INCLUDE)/$(src).o)
 UTILS_HEADER = $(foreach header, $(UTILS_SOURCE), $(UTILS_INCLUDE)/$(header).hpp)
 
+# request
+REQUEST_SOURCE = Request
+REQUEST_OBJECT = $(foreach src, $(REQUEST_SOURCE), $(REQUEST_INCLUDE)/$(src).o)
+REQUEST_HEADER = $(foreach header, $(REQUEST_SOURCE), $(REQUEST_INCLUDE)/$(header).hpp)
+
+# server
+SERVER_SOURCE = ClientSocket KqueueHandler Server ServerSocket Socket
+SERVER_OBJECT = $(foreach src, $(SERVER_SOURCE), $(SERVER_INCLUDE)/$(src).o)
+SERVER_HEADER = $(foreach header, $(SERVER_SOURCE), $(SERVER_INCLUDE)/$(header).hpp)
+
 # source
 MAIN = main.cpp
-OBJECT = $(CONFIG_OBJECT) $(UTILS_OBJECT)
-HEADER = $(CONFIG_HEADER) $(UTILS_HEADER)
+OBJECT = $(CONFIG_OBJECT) $(UTILS_OBJECT) $(REQUEST_OBJECT) $(SERVER_OBJECT)
+HEADER = $(CONFIG_HEADER) $(UTILS_HEADER) $(REQUEST_HEADER) $(SERVER_HEADER)
 
 # dependency
 $(NAME): $(MAIN) $(OBJECT) $(HEADER)

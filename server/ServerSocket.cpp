@@ -1,8 +1,10 @@
 #include "ServerSocket.hpp"
 
+ServerSocket::ServerSocket() { }
+
 ServerSocket::ServerSocket(ConfigServer server) : Socket(SERVER_SOCKET)
 {
-	if (socket_fd = socket(AF_INET, SOCK_STREAM, 0) == -1);
+	if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1){}
 		// throw error
 	port = server.getListenPort();
 	host = server.getListenHost().c_str();
@@ -41,13 +43,13 @@ int ServerSocket::clientAccept(int &connectFD)
 	struct sockaddr_in client_addr;
 	socklen_t client_addr_size = sizeof(client_addr);
 
-	int connectFD = accept(socket_fd, (struct sockaddr *)&client_addr, &client_addr_size);
+	connectFD = accept(socket_fd, (struct sockaddr *)&client_addr, &client_addr_size);
 	if (connectFD == -1) {
 		std::cout << "server_socket: accept() error" << std::endl;
 		return ERROR;
 	}
 	fcntl(connectFD, F_SETFL, O_NONBLOCK);
-	return connectFD;
+	return ERROR;
 }
 
 ServerSocket::~ServerSocket()

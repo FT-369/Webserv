@@ -8,7 +8,7 @@ ConfigHttp::ConfigHttp()
 ConfigHttp::~ConfigHttp() { }
 
 CommonDirective  ConfigHttp::getCommonDirective() { return common_directive; }
-std::vector<ConfigServer> ConfigHttp::getServers() { return servers; }
+std::vector<ConfigServer> &ConfigHttp::getServers() { return servers; }
 std::map<std::string, std::string> ConfigHttp::getSimpleDirective() { return simple_directive; }
 
 int ConfigHttp::identifyServerBlock(std::string const &block)

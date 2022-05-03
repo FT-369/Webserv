@@ -18,9 +18,9 @@ protected:
 	int	socket_type;
 	int	port;
 	std::string host;
-	Socket();
 
 public:
+	Socket();
 	Socket(int socket_type);
 	virtual ~Socket();
 	int getSocketFd();

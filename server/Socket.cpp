@@ -1,5 +1,7 @@
 #include "Socket.hpp"
 
+Socket::Socket() { }
+
 Socket::Socket(int socket_type) : socket_type(socket_type) { }
 
 Socket::~Socket()

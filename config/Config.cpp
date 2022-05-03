@@ -169,34 +169,7 @@ int Config::parsingMimeTypes(std::string const &filename) {
 	return SUCCESS;
 }
 
-int Config::parsingMimeTypes(std::string const &filename) {
-	std::ifstream is(filename);
-	std::string buffer;
-	std::string line = "";
-	std::vector<std::string> split_line;
-
-	if (is.fail()) {
-		std::cerr << "Unable to find the file: " << filename << std::endl;
-		return ERROR;
-	}
-	while (std::getline(is, buffer)) {
-		line += buffer;
-	}
-	split_line = ft_split(line, ";");
-
-	for (size_t i = 0; i < split_line.size(); i++) {
-		std::vector<std::string> key_value = ft_split_space(split_line[i]);
-		if (key_value.size() < 2) {
-			return ERROR;
-		}
-		for (size_t i = 1; i < key_value.size(); i++) {
-			mime_types[key_value[i]] = key_value[0];
-		}
-	}
-	return SUCCESS;
-}
-
-int	Config::setStatusCode()
+void	Config::setStatusCode()
 {
 	status_code[100] = "Continue";
 	status_code[101] = "Switching Protocols";
