@@ -13,8 +13,6 @@ private:
 public:
 	ClientSocket();
 	~ClientSocket();
-	int binding();
-	int acceptClient();
 };
 
 #endif
