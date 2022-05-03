@@ -19,9 +19,9 @@ public:
 	Server(Config &config);
 	~Server();
 	void serverConnect();
-	void acceptGetClientFd();
+	void acceptGetClientFd(ServerSocket *server_socket);
 	void keventProcess();
-	ServerSocket isServerFd(uintptr_t fd);
+	ServerSocket *Server::isServerFd(uintptr_t fd);
 };
 
 #endif

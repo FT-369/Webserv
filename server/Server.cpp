@@ -28,22 +28,22 @@ void Server::serverConnect()
     }
 }
 
-void Server::acceptGetClientFd()
+void Server::acceptGetClientFd(ServerSocket *server_socket)
 {
     int connect_fd;
 
-    ServerSocket serversocket = clientAccept(connect_fd);
+    server_socket->clientAccept(connect_fd);
     fcntl(connect_fd, F_SETFL, O_NONBLOCK);
     kq.addEvent(connect_fd, EVFILT_READ, NULL);
     kq.addEvent(connect_fd, EVFILT_WRITE, NULL);
     kq.saved_fd[connect_fd] = "";
 }
 
-ServerSocket Server::isServerFd(uintptr_t fd)
+ServerSocket *Server::isServerFd(uintptr_t fd)
 {
-    ServerSocket tem = socket.find(fd);
-    if (tem != socket.end() && tem->second.getSocketType() == 1)
-        return tem;
+    std::map<uintptr_t, Socket>::iterator it = socket.find(fd);
+    if ((it != socket.end()) && ((it->second).getSocketType() == SERVER_SOCKET))
+        return dynamic_cast<ServerSocket *>(&(it->second));
     return NULL;
 }
 
@@ -66,17 +66,16 @@ void Server::keventProcess()
             if (kq.event_list[i].flags == EV_ERROR)
             {
                 std::cout << "errorororor" << std::endl;
-                kq.disableEvent(); //에러가 발생한 fd 삭제
+                kq.disableEvent(kq.event_list[i].filter, EVFILT_WRITE, NULL); //에러가 발생한 fd 삭제
                 continue;
             }
             switch (kq.event_list[i].filter)
             {
-
             case EVFILT_READ:
-                ServerSocket serverSocket = isServerFd(kq.event_list[i].ident);
-                if () // fd가 서버 소켓이면 클라이언트 accept
+                ServerSocket *server_socket = isServerFd(kq.event_list[i].ident);
+                if (server_socket) // fd가 서버 소켓이면 클라이언트 accept
                 {
-                    acceptGetClientFd(socket.find(kq.event_list[i].ident,));
+                    acceptGetClientFd(server_socket);
                 }
                 else
                 {
