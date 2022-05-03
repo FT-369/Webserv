@@ -9,7 +9,7 @@
 #include <fcntl.h>
 
 #define SERVER_SOCKET 1
-#define CLLIENT_SOCKET 2
+#define CLIENT_SOCKET 2
 
 class Socket
 {
@@ -18,9 +18,10 @@ protected:
 	int	socket_type;
 	int	port;
 	std::string host;
+	Socket();
 
 public:
-	Socket();
+	Socket(int socket_type);
 	virtual ~Socket();
 	int getSocketFd();
 	int getSocketPort();
