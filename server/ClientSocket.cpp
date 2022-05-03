@@ -1,5 +1,6 @@
 #include "ClientSocket.hpp"
-ClientSocket::ClientSocket()
+
+ClientSocket::ClientSocket() : Socket(CLIENT_SOCKET)
 {
 	
 };

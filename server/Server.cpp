@@ -20,8 +20,7 @@ void Server::serverConnect()
         if (new_socket.binding() == ERROR)
             continue;
         socket[new_socket.getSocketFd()] = new_socket;
-        kq.servers_fd.push_back(new_socket.getSocketFd()); // 서버 저장 변수를 따로 만든다. kqueue에서 이 변수만 사용해 서버 fd인지 아닌지 판별한다.
-        kq.changeEvent(kq.change_list, EVFILT_READ, EV_ADD | EV_ENABLE, 0, NULL);
+        kq.addEvent(EVFILT_READ, new_socket.getSocketFd(), NULL);
     }
     if (kq.kq_fd == -1)
     {
@@ -33,18 +32,19 @@ void Server::acceptGetClientFd()
 {
     int connect_fd;
 
+    ServerSocket serversocket = clientAccept(connect_fd);
     fcntl(connect_fd, F_SETFL, O_NONBLOCK);
-    kq.changeEvent(kq.change_list, connect_fd, EVFILT_READ, EV_ADD | EV_ENABLE, NULL);
-    kq.changeEvent(kq.change_list, connect_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, NULL);
+    kq.addEvent(connect_fd, EVFILT_READ, NULL);
+    kq.addEvent(connect_fd, EVFILT_WRITE, NULL);
     kq.saved_fd[connect_fd] = "";
 }
 
-int Server::isServerFd(uintptr_t fd)
+ServerSocket Server::isServerFd(uintptr_t fd)
 {
-    auto tem = socket.find(fd);
+    ServerSocket tem = socket.find(fd);
     if (tem != socket.end() && tem->second.getSocketType() == 1)
-        return true;
-    return false;
+        return tem;
+    return NULL;
 }
 
 void Server::keventProcess()
@@ -73,9 +73,10 @@ void Server::keventProcess()
             {
 
             case EVFILT_READ:
-                if (isServerFd(kq.event_list[i].ident)) // fd가 서버 소켓이면 클라이언트 accept
+                ServerSocket serverSocket = isServerFd(kq.event_list[i].ident);
+                if () // fd가 서버 소켓이면 클라이언트 accept
                 {
-                    acceptGetClientFd();
+                    acceptGetClientFd(socket.find(kq.event_list[i].ident,));
                 }
                 else
                 {

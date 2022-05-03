@@ -14,10 +14,26 @@ int KqueueHandler::initKevent()
     return new_event;
 }
 
-void    KqueueHandler::changeEvent(std::vector<struct kevent> &k, uintptr_t ident, 
-                                    int16_t filter, intptr_t data, void *udata)
-{
+void KqueueHandler::addEvent(int16_t filter, uintptr_t ident, void *udata){
     struct kevent temp_event;
-    EV_SET(&temp_event, ident, filter, 0, 0, data, udata);
-    k.push_back(temp_event);
-};
+    EV_SET(&temp_event, ident, filter, EV_ADD | EV_EOF, 0, 0, udata);
+    change_list.push_back(temp_event);
+}
+
+void KqueueHandler::disableEvent(int16_t filter, uintptr_t ident, void *udata){
+    struct kevent temp_event;
+    EV_SET(&temp_event, ident, filter, EV_DISABLE, 0, 0, udata);
+    change_list.push_back(temp_event);
+}
+
+void KqueueHandler::enableEvent(int16_t filter, uintptr_t ident, void *udata){
+    struct kevent temp_event;
+    EV_SET(&temp_event, ident, filter, EV_ENABLE, 0, 0, udata);
+    change_list.push_back(temp_event);
+}
+
+void KqueueHandler::removeEvent(int16_t filter, uintptr_t ident, void *udata){
+    struct kevent temp_event;
+    EV_SET(&temp_event, ident, filter, EV_DELETE, 0, 0, udata);
+    change_list.push_back(temp_event);
+}

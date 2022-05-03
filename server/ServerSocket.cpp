@@ -1,14 +1,15 @@
 #include "ServerSocket.hpp"
 
-ServerSocket::ServerSocket(ConfigServer server)
+ServerSocket::ServerSocket(ConfigServer server) : Socket(SERVER_SOCKET)
 {
-	socket_type = SERVER_SOCKET;
 	if (socket_fd = socket(AF_INET, SOCK_STREAM, 0) == -1);
 		// throw error
+	port = server.getListenPort();
+	host = server.getListenHost().c_str();
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = inet_addr(server.getListenHost().c_str());
-	addr.sin_port = htons(server.getListenPort());
+	addr.sin_addr.s_addr = inet_addr(host.c_str());
+	addr.sin_port = htons(port);
 }
 
 int ServerSocket::binding()
