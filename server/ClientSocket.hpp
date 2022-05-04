@@ -14,7 +14,9 @@ private:
 
 public:
 	ClientSocket();
+	ClientSocket(int fd);
 	~ClientSocket();
+	
 };
 
 #endif

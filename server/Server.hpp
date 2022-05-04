@@ -4,6 +4,7 @@
 #include "KqueueHandler.hpp"
 #include "Socket.hpp"
 #include "ServerSocket.hpp"
+#include "ClientSocket.hpp"
 
 class Server
 {

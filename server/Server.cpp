@@ -40,22 +40,25 @@ void Server::acceptGetClientFd(ServerSocket *server_socket)
 
     server_socket->clientAccept(connect_fd);
     fcntl(connect_fd, F_SETFL, O_NONBLOCK);
-    kq.addEvent(connect_fd, EVFILT_READ, NULL);
-    kq.addEvent(connect_fd, EVFILT_WRITE, NULL);
+    ClientSocket *new_socket = new ClientSocket(connect_fd);
+    socket[new_socket->getSocketFd()] = new_socket;
+    std::cout << "new_socket = " << new_socket->getSocketFd() << std::endl;
+    kq.addEvent(EVFILT_READ, connect_fd, NULL);
+    kq.addEvent(EVFILT_WRITE, connect_fd,  NULL);
     kq.saved_fd[connect_fd] = "";
 }
 
 ServerSocket *Server::isServerFd(uintptr_t fd)
 {
     std::map<uintptr_t, Socket *>::iterator it = socket.find(fd);
-    std::cout << "(it->second).getSocketType()" << (it->second)->getSocketType() << std::endl;
-    if (it != socket.end()) {
-        std::cout << "it != socket.end()" << std::endl;
-        if (((it->second)->getSocketType() == SERVER_SOCKET))
-        {
-            std::cout << "(it->second).getSocketType()" << std::endl;
-        }
-    }
+    std::cout << "(it->second).getSocket()" << (it->second)->getSocketFd() << std::endl;
+    // if (it != socket.end()) {
+    //     // std::cout << "it != socket.end()" << std::endl;
+    //     if (((it->second)->getSocketType() == SERVER_SOCKET))
+    //     {
+    //         // std::cout << "(it->second).getSocketType()" << std::endl;
+    //     }
+    // }
     if ((it != socket.end()) && ((it->second)->getSocketType() == SERVER_SOCKET))
     {
         std::cout << "success" << std::endl;
@@ -117,6 +120,7 @@ void send_data(Request *request)
 
 void Server::keventProcess()
 {
+    std::map<int, Request *> request_map;
     serverConnect();
     if ((kq.kq_fd = kqueue()) == -1)
         std::cout << " errorororororo" << std::endl;
@@ -129,8 +133,7 @@ void Server::keventProcess()
             std::cout << "errrororroroor" << std::endl;
             exit(1);
         }
-        std::map<int, Request *> request_map;
-        std::cout << "event_num" << event_num << std::endl;
+        // std::cout << "event_num" << event_num << std::endl;
         for (int i = 0; i < event_num; i++)
         {
             if (kq.event_list[i].flags == EV_ERROR)
@@ -148,11 +151,11 @@ void Server::keventProcess()
 					std::cout << server_socket << std::endl;
                     if (server_socket) // fd가 서버 소켓이면 클라이언트 accept
                     {
-                        std::cout << "EVFILT_READ" << std::endl;
                         acceptGetClientFd(server_socket);
                     }
-                    if (request_map.find(kq.event_list[i].ident) != request_map.end())
+                    else
                     {
+                        std::cout << "EVFILT_READ" << std::endl;
                         Request *req = new Request(kq.event_list[i].ident);
                         if (req == 0)
                         {
@@ -168,12 +171,12 @@ void Server::keventProcess()
                         // if (MakeResponseMsg() == ERROR); // 만들어진 response를 어떤식으로 해당 fd에 저장할지 고민이 필요
                         //     throw error;
                     }
-            }
+                }
                 case EVFILT_WRITE:
                 {
-                    std::cout << "EVFILT_WRITE" << std::endl;
                     if (request_map.find(kq.event_list[i].ident) != request_map.end())
                     {
+                        std::cout << "EVFILT_WRITE" << std::endl;
                         Request *req = request_map[kq.event_list[i].ident];
                         if (req != 0)
                         {
