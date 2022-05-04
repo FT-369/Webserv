@@ -22,14 +22,14 @@ void Server::serverConnect()
     for (int i = 0; i < server_size; i++)
     {
         int error_flag;
-        ServerSocket new_socket = ServerSocket(servers[i]);
-        std::cout << "server host:" << new_socket.getSocketHost() << std::endl;
-        std::cout << "server port:" << new_socket.getSocketPort() << std::endl;
+        ServerSocket *new_socket = new ServerSocket(servers[i]);
+        std::cout << "server host:" << new_socket->getSocketHost() << std::endl;
+        std::cout << "server port:" << new_socket->getSocketPort() << std::endl;
 
-        if (new_socket.binding() == ERROR)
+        if (new_socket->binding() == ERROR)
             continue;
-        socket[new_socket.getSocketFd()] = new_socket;
-        kq.addEvent(EVFILT_READ, new_socket.getSocketFd(), NULL);
+        socket[new_socket->getSocketFd()] = new_socket;
+        kq.addEvent(EVFILT_READ, new_socket->getSocketFd(), NULL);
     }
     std::cout << "map_socket_size: " << socket.size() << std::endl;
 }
@@ -47,20 +47,19 @@ void Server::acceptGetClientFd(ServerSocket *server_socket)
 
 ServerSocket *Server::isServerFd(uintptr_t fd)
 {
-    std::map<uintptr_t, Socket>::iterator it = socket.find(fd);
-    std::cout << "(it->second).getSocketType()" << (it->second).getSocketType() << std::endl;
+    std::map<uintptr_t, Socket *>::iterator it = socket.find(fd);
+    std::cout << "(it->second).getSocketType()" << (it->second)->getSocketType() << std::endl;
     if (it != socket.end()) {
         std::cout << "it != socket.end()" << std::endl;
-        if (((it->second).getSocketType() == SERVER_SOCKET))
+        if (((it->second)->getSocketType() == SERVER_SOCKET))
         {
             std::cout << "(it->second).getSocketType()" << std::endl;
-            return reinterpret_cast<ServerSocket *>(&(it->second));
         }
     }
-    if ((it != socket.end()) && ((it->second).getSocketType() == SERVER_SOCKET))
+    if ((it != socket.end()) && ((it->second)->getSocketType() == SERVER_SOCKET))
     {
         std::cout << "success" << std::endl;
-        return reinterpret_cast<ServerSocket *>(&(it->second));
+        return dynamic_cast<ServerSocket *>(it->second);
     }
     return NULL;
 }
@@ -146,6 +145,7 @@ void Server::keventProcess()
                 case EVFILT_READ:
                 {
                     ServerSocket *server_socket = isServerFd(kq.event_list[i].ident);
+					std::cout << server_socket << std::endl;
                     if (server_socket) // fd가 서버 소켓이면 클라이언트 accept
                     {
                         std::cout << "EVFILT_READ" << std::endl;

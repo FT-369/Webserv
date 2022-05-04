@@ -9,7 +9,7 @@ class Server
 {
 private :
 	KqueueHandler kq;
-	std::map<uintptr_t, Socket> socket;
+	std::map<uintptr_t, Socket *> socket;
 	Config config;
 
 private :
