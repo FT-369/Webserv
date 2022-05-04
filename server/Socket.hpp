@@ -22,6 +22,7 @@ protected:
 public:
 	Socket();
 	Socket(int socket_type);
+	Socket(int socket_type, int fd);
 	virtual ~Socket();
 	int getSocketFd();
 	int getSocketPort();
