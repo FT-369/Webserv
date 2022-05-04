@@ -50,19 +50,11 @@ void Server::acceptGetClientFd(ServerSocket *server_socket)
 
 ServerSocket *Server::isServerFd(uintptr_t fd)
 {
-    std::map<uintptr_t, Socket *>::iterator it = socket.find(fd);
-    std::cout << "(it->second).getSocket()" << (it->second)->getSocketFd() << std::endl;
-    // if (it != socket.end()) {
-    //     // std::cout << "it != socket.end()" << std::endl;
-    //     if (((it->second)->getSocketType() == SERVER_SOCKET))
-    //     {
-    //         // std::cout << "(it->second).getSocketType()" << std::endl;
-    //     }
-    // }
-    if ((it != socket.end()) && ((it->second)->getSocketType() == SERVER_SOCKET))
+    std::cout << "[isServerFd] fd: " << fd << std::endl;
+    if (socket[fd]->getSocketType() == SERVER_SOCKET)
     {
-        std::cout << "success" << std::endl;
-        return dynamic_cast<ServerSocket *>(it->second);
+        std::cout << "this is Server Socket" << std::endl;
+        return dynamic_cast<ServerSocket *>(socket[fd]);
     }
     return NULL;
 }
@@ -82,25 +74,14 @@ std::string get_content_type(std::string file)
 
 void send_data(Request *request)
 {
+    std::cout << "send data!" << std::endl;
+
     FILE *fp = fdopen(dup(request->socket_fd), "w");
-    std::string file_name = "../static_file" + request->path.substr(1);
-    std::string content_type = "Content-type:" + get_content_type(file_name) + "\r\n\r\n";
 
     char protocol[] = "HTTP/1.0 200 OK\r\n";
     char server[] = "Server: Mac Web Server \r\n";
     char cnt_len[] = "Content-length:2048\r\n";
-    char *cnt_type = const_cast<char *>(content_type.c_str());
-    char buf[1024];
-    FILE *send_file;
-
-    std::cout << "send data!" << std::endl;
-    send_file = fopen(file_name.c_str(), "r");
-
-    if (send_file == NULL)
-    {
-        // send_error(fp);
-        return;
-    }
+    char cnt_type[] = "Content-type:text/html\r\n\r\n";
 
     // 헤더 정보 전송
     fputs(protocol, fp);
@@ -108,12 +89,19 @@ void send_data(Request *request)
     fputs(cnt_len, fp);
     fputs(cnt_type, fp);
 
-    // 요청 데이터 전송
-    while (fgets(buf, 1024, send_file) != NULL)
-    {
-        fputs(buf, fp);
-        fflush(fp);
-    }
+	char html[] =
+		"<html>\n \
+			<head> \
+				<title>HELLO</title> \
+			</head>\n \
+			<body>\n \
+				<center><h1>HELLO</h1></center>\n \
+				<hr><center>Webserv</center>\n \
+			</body>\n \
+		</html>";
+
+    // 데이터 전송
+	fputs(html, fp);
     fflush(fp);
     fclose(fp);
 }
@@ -147,8 +135,11 @@ void Server::keventProcess()
             {
                 case EVFILT_READ:
                 {
+                    std::map<uintptr_t, Socket *>::iterator it = socket.find(kq.event_list[i].ident);
+                    if (it == socket.end())	// Server의 socket 리스트에 저장되지 않은 fd면 넘기기
+                        continue;
                     ServerSocket *server_socket = isServerFd(kq.event_list[i].ident);
-					std::cout << server_socket << std::endl;
+                    std::cout << server_socket << std::endl;
                     if (server_socket) // fd가 서버 소켓이면 클라이언트 accept
                     {
                         acceptGetClientFd(server_socket);
