@@ -39,9 +39,7 @@ int ConfigServer::parseServerDirecive(std::map<std::string, std::string> &simple
 		std::vector<std::string> listen = ft_split_space(simple[LISTEN]);
 		if (listen.size() != 1)
 			return ERROR;
-		std::cout << "listen[1]: " << listen[0] << std::endl;
 		if (listen[0].find(":") != std::string::npos) {
-			std::cout << "this is :" << std::endl;
 			std::vector<std::string> host_port = ft_split(listen[0], ":");
 			if (host_port.size() != 2)
 				return ERROR;
@@ -72,8 +70,6 @@ int ConfigServer::parseServerDirecive(std::map<std::string, std::string> &simple
 				listen_host = listen[0];
 			}
 		}
-		std::cout << "!!!! listen_host: " << listen_host << std::endl;
-		std::cout << "!!!! listen_port: " << listen_port << std::endl;
 	}
 
 	if (simple.find(SERVER_NAME) != simple.end()) {

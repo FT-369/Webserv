@@ -5,11 +5,7 @@
 
 Server::Server() {}
 
-Server::Server(Config &con) : config(con) {
-    std::cout << "create Server\n";
-    std::cout << (config.getHttpDirective()).getServers().size() << std::endl;
-    std::cout << (con.getHttpDirective()).getServers().size() << std::endl;
-}
+Server::Server(Config &con) : config(con) { }
 
 Server::~Server() {}
 
@@ -124,6 +120,7 @@ void Server::keventProcess()
     while (1)
     {
         int event_num = kq.initKevent();
+		std::cout << "event_num :" << event_num << std::endl;
         if (event_num == -1)
         {
             std::cout << "errrororroroor" << std::endl;
