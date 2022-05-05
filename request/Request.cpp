@@ -40,6 +40,17 @@ std::string Request::ft_fgets_line(FILE* fp)
 	return getline;
 }
 
+void printReq(std::map<std::string, std::string> map) {
+	std::map<std::string, std::string>::iterator it;
+
+	std::cout << "\n!!! Start of REQUEST !!!\n";
+	for (it = map.begin(); it != map.end(); it++)
+	{
+		std::cout << "{" << it->first << ": " << it->second << "}" << std::endl;
+	}
+	std::cout << "!!! End of REQUEST !!!\n\n";
+}
+
 int Request::parseRequest()
 {
 	if (parseRequestLine() == ERROR)
@@ -48,6 +59,8 @@ int Request::parseRequest()
 		return ERROR;
 	if (this->method == "POST")
 		parseRequestBody();
+	std::cout << "!!! path of requtest !!! : " << this->getPath() << std::endl;
+	printReq(this->getRequestHeader());
 	return SUCCESS;
 }
 

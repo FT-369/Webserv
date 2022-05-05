@@ -11,10 +11,14 @@ private:
 	// Request request;
 	// Status status;
 	// unsigned long start_time;
+	ConfigServer server_info;
+
+private:
+	ClientSocket();
 
 public:
-	ClientSocket();
-	ClientSocket(int fd);
+	ClientSocket(int fd, ConfigServer server_info);
+	ConfigServer getConnectServerInfo();
 	~ClientSocket();
 	
 };

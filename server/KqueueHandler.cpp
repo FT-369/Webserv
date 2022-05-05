@@ -16,7 +16,7 @@ int KqueueHandler::initKevent()
 
 void KqueueHandler::addEvent(int16_t filter, uintptr_t ident, void *udata){
     struct kevent temp_event;
-    EV_SET(&temp_event, ident, filter, EV_ADD | EV_ENABLE, 0, 0, udata);
+    EV_SET(&temp_event, ident, filter, EV_ADD | EV_EOF, 0, 0, udata);
     change_list.push_back(temp_event);
 }
 

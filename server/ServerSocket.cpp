@@ -1,8 +1,6 @@
 #include "ServerSocket.hpp"
 
-ServerSocket::ServerSocket() { }
-
-ServerSocket::ServerSocket(ConfigServer server) : Socket(SERVER_SOCKET)
+ServerSocket::ServerSocket(ConfigServer server) : Socket(SERVER_SOCKET), server_info(server)
 {
 	if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1){}
 		// throw error
@@ -10,7 +8,8 @@ ServerSocket::ServerSocket(ConfigServer server) : Socket(SERVER_SOCKET)
 	host = server.getListenHost().c_str();
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = inet_addr(host.c_str());
+	// addr.sin_addr.s_addr = inet_addr(host.c_str());
+	addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	addr.sin_port = htons(port);
 }
 
@@ -56,3 +55,5 @@ ServerSocket::~ServerSocket()
 {
 	close(socket_fd);
 }
+
+ConfigServer ServerSocket::getServerInfo() { return server_info; }

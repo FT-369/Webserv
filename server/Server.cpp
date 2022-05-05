@@ -5,7 +5,7 @@
 
 Server::Server() {}
 
-Server::Server(Config &con) : config(con) { }
+Server::Server(Config &con) : config(con) {}
 
 Server::~Server() {}
 
@@ -36,20 +36,18 @@ void Server::acceptGetClientFd(ServerSocket *server_socket)
 
     server_socket->clientAccept(connect_fd);
     fcntl(connect_fd, F_SETFL, O_NONBLOCK);
-    ClientSocket *new_socket = new ClientSocket(connect_fd);
+    ClientSocket *new_socket = new ClientSocket(connect_fd, server_socket->getServerInfo());
     socket[new_socket->getSocketFd()] = new_socket;
     std::cout << "new_socket = " << new_socket->getSocketFd() << std::endl;
     kq.addEvent(EVFILT_READ, connect_fd, NULL);
-    kq.addEvent(EVFILT_WRITE, connect_fd,  NULL);
+    kq.addEvent(EVFILT_WRITE, connect_fd, NULL);
     kq.saved_fd[connect_fd] = "";
 }
 
 ServerSocket *Server::isServerFd(uintptr_t fd)
 {
-    std::cout << "[isServerFd] fd: " << fd << std::endl;
     if (socket[fd]->getSocketType() == SERVER_SOCKET)
     {
-        std::cout << "this is Server Socket" << std::endl;
         return dynamic_cast<ServerSocket *>(socket[fd]);
     }
     return NULL;
@@ -120,13 +118,11 @@ void Server::keventProcess()
     while (1)
     {
         int event_num = kq.initKevent();
-		std::cout << "event_num :" << event_num << std::endl;
         if (event_num == -1)
         {
             std::cout << "errrororroroor" << std::endl;
             exit(1);
         }
-        // std::cout << "event_num" << event_num << std::endl;
         for (int i = 0; i < event_num; i++)
         {
             if (kq.event_list[i].flags == EV_ERROR)
@@ -138,50 +134,61 @@ void Server::keventProcess()
             }
             switch (kq.event_list[i].filter)
             {
-                case EVFILT_READ:
+            case EVFILT_READ:
+            {
+                std::map<uintptr_t, Socket *>::iterator it = socket.find(kq.event_list[i].ident);
+                if (it == socket.end()) // Server의 socket 리스트에 저장되지 않은 fd면 넘기기
+                    continue;
+                ServerSocket *server_socket = isServerFd(kq.event_list[i].ident);
+                std::cout << server_socket << std::endl;
+                if (server_socket) // fd가 서버 소켓이면 클라이언트 accept
                 {
-                    std::map<uintptr_t, Socket *>::iterator it = socket.find(kq.event_list[i].ident);
-                    if (it == socket.end())	// Server의 socket 리스트에 저장되지 않은 fd면 넘기기
+                    acceptGetClientFd(server_socket);
+                }
+                else
+                {
+                    std::cout << "EVFILT_READ" << std::endl;
+                    Request *req = new Request(kq.event_list[i].ident);
+
+                    ClientSocket *cs = dynamic_cast<ClientSocket *>(socket[kq.event_list[i].ident]);
+					std::vector<ConfigLocation> locations = cs->getConnectServerInfo().getLocations();
+                    if (req == 0)
+                    {
+                        std::cerr << "Request() error" << std::endl;
                         continue;
-                    ServerSocket *server_socket = isServerFd(kq.event_list[i].ident);
-                    std::cout << server_socket << std::endl;
-                    if (server_socket) // fd가 서버 소켓이면 클라이언트 accept
-                    {
-                        acceptGetClientFd(server_socket);
                     }
-                    else
+                    if (req->parseRequest() == ERROR)
                     {
-                        std::cout << "EVFILT_READ" << std::endl;
-                        Request *req = new Request(kq.event_list[i].ident);
-                        if (req == 0)
-                        {
-                            std::cerr << "Request() error" << std::endl;
-                            continue;
-                        }
-                        if (req->parseRequest() == ERROR)
-                        {
-                            std::cerr << "parseRequest() error" << std::endl;
-                            continue;
-                        }
-                        request_map[kq.event_list[i].ident] = req;
-                        // if (MakeResponseMsg() == ERROR); // 만들어진 response를 어떤식으로 해당 fd에 저장할지 고민이 필요
-                        //     throw error;
+                        std::cerr << "parseRequest() error" << std::endl;
+                        continue;
+                    }
+                    std::cout << "dynamic_cast : " << cs << std::endl;
+                    std::cout << cs->getConnectServerInfo().getLocations().size() << std::endl;
+					for (size_t i = 0; i < locations.size(); i++)
+					{
+                        std::cout << "compare return : " << locations[i].getUrl().compare(req->getPath()) << std::endl;
+						std::cout << "locations[" << i << "] : " << locations[i].getUrl() << std::endl;
+						std::cout << "request path : " << req->getPath() << std::endl;
+					}
+                    request_map[kq.event_list[i].ident] = req;
+                    // if (MakeResponseMsg() == ERROR); // 만들어진 response를 어떤식으로 해당 fd에 저장할지 고민이 필요
+                    //     throw error;
+                }
+            }
+            case EVFILT_WRITE:
+            {
+                if (request_map.find(kq.event_list[i].ident) != request_map.end())
+                {
+                    std::cout << "EVFILT_WRITE" << std::endl;
+                    Request *req = request_map[kq.event_list[i].ident];
+                    if (req != 0)
+                    {
+                        send_data(req);
+                        std::cout << "EVFILT_WRITE - request_map[" << kq.event_list[i].ident << "]: " << request_map[kq.event_list[i].ident] << std::endl;
+                        request_map.erase(kq.event_list[i].ident);
+                        close(kq.event_list[i].ident);
                     }
                 }
-                case EVFILT_WRITE:
-                {
-                    if (request_map.find(kq.event_list[i].ident) != request_map.end())
-                    {
-                        std::cout << "EVFILT_WRITE" << std::endl;
-                        Request *req = request_map[kq.event_list[i].ident];
-                        if (req != 0)
-                        {
-                            send_data(req);
-                            std::cout << "EVFILT_WRITE - request_map[" << kq.event_list[i].ident << "]: " << request_map[kq.event_list[i].ident] << std::endl;
-                            request_map.erase(kq.event_list[i].ident);
-                            close(kq.event_list[i].ident);
-                        }
-                    }
                 //     if (current_fd_status == RESPONSE_SECCEED)
                 //     {
                 // send_data(req->_client_write, (char *)(req->_content_type).c_str(), (char *)(req->_file_name).c_str());
@@ -191,7 +198,7 @@ void Server::keventProcess()
                 // }
                 // default:
                 //     break;
-                }
+            }
             }
         }
     }
