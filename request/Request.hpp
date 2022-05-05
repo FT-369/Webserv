@@ -11,15 +11,15 @@
 class Request
 {
 public:
-	const int _socket_fd;
-	FILE* _socket_read;
-	FILE* _socket_write;
+	const int socket_fd;
+	FILE* socket_read;
+	// FILE* socket_write;
 
-	std::string _method;
-	std::string _path;
-	std::string _protocol;
-	std::string _request_body;
-	std::map<std::string, std::string> _request_header;
+	std::string method;
+	std::string path;
+	std::string protocol;
+	std::string request_body;
+	std::map<std::string, std::string> request_header;
 
 public:
 	Request(int socket_fd);
@@ -40,6 +40,7 @@ private:
 	int parseRequestHeader();
 	int parseRequestBody();
 	std::string ft_fgets_line(FILE* fp);
+	
 };
 
 #endif

@@ -2,7 +2,7 @@
 
 ConfigServer::ConfigServer() { }
 
-ConfigServer::ConfigServer(CommonDirective const &c) : common_directive(c), listen_port(-1) { }
+ConfigServer::ConfigServer(CommonDirective const &c) : common_directive(c), listen_port(80), listen_host("127.0.0.1") { }
 
 ConfigServer::~ConfigServer() { }
 
@@ -37,17 +37,38 @@ int ConfigServer::parseServerDirecive(std::map<std::string, std::string> &simple
 
 	if (simple.find(LISTEN) != simple.end()) {
 		std::vector<std::string> listen = ft_split_space(simple[LISTEN]);
-		if (listen.size() < 1 || listen.size() > 2)
+		if (listen.size() != 1)
 			return ERROR;
-		
-		char *endptr = 0;
-		double port = std::strtod(listen[0].c_str(), &endptr);
-		if (std::string(endptr) != "" || port != static_cast<int>(port) || port < 0)
-			return ERROR;
-		listen_port = static_cast<int>(port);
+		if (listen[0].find(":") != std::string::npos) {
+			std::vector<std::string> host_port = ft_split(listen[0], ":");
+			if (host_port.size() != 2)
+				return ERROR;
+			// if (host_port[0] //) // 만약 호스트의 주소가 형식에 맞지 않으면 에러 처리
+			// 	return ERROR;
+			listen_host = host_port[0];
 
-		if (listen.size() == 2) {
-			listen_host = listen[1];
+			char *endptr = 0;
+			double d_port = std::strtod(host_port[1].c_str(), &endptr);
+			int port = static_cast<int>(d_port);
+			if (std::string(endptr) != "" || d_port != port || d_port < 0)
+				return ERROR;
+			listen_port = port;
+		} else {
+			bool isNumber = true;
+			for (int i = 0; i < listen[0].size(); i++) {
+				if (std::isdigit(listen[0][i]) == 0)
+					isNumber = false;
+			}
+			if (isNumber) {
+				char *endptr = 0;
+				double d_port = std::strtod(listen[0].c_str(), &endptr);
+				int port = static_cast<int>(d_port);
+				if (std::string(endptr) != "" || d_port != port || d_port < 0)
+					return ERROR;
+				listen_port = port;
+			} else {
+				listen_host = listen[0];
+			}
 		}
 	}
 

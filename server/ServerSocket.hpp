@@ -5,15 +5,20 @@
 
 class ServerSocket : public Socket
 {
-private:
+public:
 	struct sockaddr_in addr;
+	ConfigServer server_info;
+	// std::vector<ConfigLocation> location;
+
+private:
+	ServerSocket();
 
 public:
-	ServerSocket();
 	ServerSocket(ConfigServer server);
 	~ServerSocket();
 	int binding();
 	int clientAccept(int &connectFD);
+	ConfigServer getServerInfo();
 };
 
 

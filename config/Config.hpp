@@ -36,7 +36,7 @@ private: // func
 	int readConfigFile();
 	int parsingConfig();
 	int parsingMimeTypes(std::string const &filename);
-	int setStatusCode();
+	void setStatusCode();
 };
 
 #endif

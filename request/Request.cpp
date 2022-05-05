@@ -1,25 +1,25 @@
 #include "Request.hpp"
 
 Request::Request(int socket_fd)
-	: _socket_fd(socket_fd), _socket_read(fdopen(socket_fd, "r")), _socket_write(fdopen(dup(socket_fd), "w"))
+	: socket_fd(socket_fd), socket_read(fdopen(socket_fd, "r"))
 {
 }
 
 Request::~Request()
 {
-	fclose(_socket_read);
-	fclose(_socket_write);
+	fclose(socket_read);
+	// fclose(socket_write);
 	// close(_socket_fd);
 }
 
-int Request::getSocketFD() const { return _socket_fd; }
-FILE* Request::getSocketReadFP() const { return _socket_read; }
-FILE* Request::getSocketWriteFP() const { return _socket_write; }
-std::string Request::getMethod() const { return _method; }
-std::string Request::getPath() const { return _path; }
-std::string Request::getProtocol() const { return _protocol; }
-std::string Request::getRequestBody() const { return _request_body; }
-std::map<std::string, std::string> Request::getRequestHeader() const { return _request_header; }
+int Request::getSocketFD() const { return socket_fd; }
+FILE* Request::getSocketReadFP() const { return socket_read; }
+// FILE* Request::getSocketWriteFP() const { return socket_write; }
+std::string Request::getMethod() const { return method; }
+std::string Request::getPath() const { return path; }
+std::string Request::getProtocol() const { return protocol; }
+std::string Request::getRequestBody() const { return request_body; }
+std::map<std::string, std::string> Request::getRequestHeader() const { return request_header; }
 
 std::string Request::ft_fgets_line(FILE* fp)
 {
@@ -40,14 +40,27 @@ std::string Request::ft_fgets_line(FILE* fp)
 	return getline;
 }
 
+void printReq(std::map<std::string, std::string> map) {
+	std::map<std::string, std::string>::iterator it;
+
+	std::cout << "\n!!! Start of REQUEST !!!\n";
+	for (it = map.begin(); it != map.end(); it++)
+	{
+		std::cout << "{" << it->first << ": " << it->second << "}" << std::endl;
+	}
+	std::cout << "!!! End of REQUEST !!!\n\n";
+}
+
 int Request::parseRequest()
 {
 	if (parseRequestLine() == ERROR)
 		return ERROR;
 	if (parseRequestHeader() == ERROR)
 		return ERROR;
-	if (this->_method == "POST")
+	if (this->method == "POST")
 		parseRequestBody();
+	std::cout << "!!! path of requtest !!! : " << this->getPath() << std::endl;
+	printReq(this->getRequestHeader());
 	return SUCCESS;
 }
 
@@ -66,15 +79,15 @@ int Request::parseRequestLine()
 	if (request_line.size() != 3)
 		return ERROR;
 
-	_method = request_line[0];
-	_path = request_line[1];
-	_protocol = request_line[2];
+	method = request_line[0];
+	path = request_line[1];
+	protocol = request_line[2];
 	
-	if (_method != "GET" && _method != "POST" && _method != "DELETE")
+	if (method != "GET" && method != "POST" && method != "DELETE")
 		return ERROR;
-	if (_path[0] != '/')
+	if (path[0] != '/')
 		return ERROR;
-	if ((pos = _protocol.find("HTTP/")) == std::string::npos)
+	if ((pos = protocol.find("HTTP/")) == std::string::npos)
 		return ERROR;
 
 	return SUCCESS;
@@ -92,18 +105,18 @@ int Request::parseRequestHeader()
 		key_value = ft_split(get_line, ": ");
 
 		if (key_value.size() != 2) {
-			_request_header.clear();
+			request_header.clear();
 			return ERROR;
 		}
 
 		key = key_value[0];
 		value = key_value[1].replace(key_value[1].find("\r\n"), 2, "\0");
-		_request_header[key] = value;
+		request_header[key] = value;
 
 		get_line = ft_fgets_line(getSocketReadFP());
 	}
-	if (_request_header.find("Host") == _request_header.end())
-		return ERROR;
+	if (request_header.find("Host") == request_header.end())
+		return ERROR; // 더 
 	
 	return SUCCESS;
 }
@@ -114,7 +127,7 @@ int Request::parseRequestBody()
 
 	while (fgets(line, GET_LINE_BUF, getSocketReadFP()) != NULL)
 	{
-		_request_body += (std::string(line));
+		request_body += (std::string(line));
 	}
 	return SUCCESS;
 }

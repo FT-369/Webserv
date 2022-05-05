@@ -2,14 +2,15 @@
 #define SERVER_HPP
 
 #include "KqueueHandler.hpp"
-#include "SocketController.hpp"
-
+#include "Socket.hpp"
+#include "ServerSocket.hpp"
+#include "ClientSocket.hpp"
 
 class Server
 {
 private :
 	KqueueHandler kq;
-	std::map<uintptr_t, Socket> socket;
+	std::map<uintptr_t, Socket *> socket;
 	Config config;
 
 private :
@@ -21,7 +22,7 @@ public:
 	void serverConnect();
 	void acceptGetClientFd(ServerSocket *server_socket);
 	void keventProcess();
-	ServerSocket *Server::isServerFd(uintptr_t fd);
+	ServerSocket *isServerFd(uintptr_t fd);
 };
 
 #endif
