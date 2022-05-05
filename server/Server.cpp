@@ -5,11 +5,7 @@
 
 Server::Server() {}
 
-Server::Server(Config &con) : config(con) {
-    std::cout << "create Server\n";
-    std::cout << (config.getHttpDirective()).getServers().size() << std::endl;
-    std::cout << (con.getHttpDirective()).getServers().size() << std::endl;
-}
+Server::Server(Config &con) : config(con) { }
 
 Server::~Server() {}
 
@@ -89,19 +85,27 @@ void send_data(Request *request)
     fputs(cnt_len, fp);
     fputs(cnt_type, fp);
 
-	char html[] =
-		"<html>\n \
-			<head> \
-				<title>HELLO</title> \
-			</head>\n \
-			<body>\n \
-				<center><h1>HELLO</h1></center>\n \
-				<hr><center>Webserv</center>\n \
-			</body>\n \
-		</html>";
+    char html[] =
+        "<!DOCTYPE html> \
+        <html> \
+        <head> \
+        <title>Welcome to 42 Webserv!</title> \
+        <style> \
+        html { color-scheme: light dark; } \
+        body { width: 35em; margin: 0 auto; \
+        font-family: Tahoma, Verdana, Arial, sans-serif; } \
+        </style> \
+        </head> \
+        <body> \
+        <h1>Welcome to 42 Webserv!</h1> \
+        <p>If you see this page, the 42 web server is successfully installed and \
+        working. Further configuration is required.</p> \
+        <p><em>Thank you for using 42 Webserv.</em></p> \
+        </body> \
+        </html>";
 
     // 데이터 전송
-	fputs(html, fp);
+    fputs(html, fp);
     fflush(fp);
     fclose(fp);
 }
@@ -116,6 +120,7 @@ void Server::keventProcess()
     while (1)
     {
         int event_num = kq.initKevent();
+		std::cout << "event_num :" << event_num << std::endl;
         if (event_num == -1)
         {
             std::cout << "errrororroroor" << std::endl;
