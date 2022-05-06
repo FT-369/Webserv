@@ -17,6 +17,7 @@ public:
 
 	std::string method;
 	std::string path;
+	std::map<std::string, std::string> query;
 	std::string protocol;
 	std::string request_body;
 	std::map<std::string, std::string> request_header;
@@ -31,6 +32,7 @@ public:
 	FILE* getSocketWriteFP() const;
 	std::string getMethod() const;
 	std::string getPath() const;
+	std::map<std::string, std::string> getQuery() const;
 	std::string getProtocol() const;
 	std::string getRequestBody() const;
 	std::map<std::string, std::string> getRequestHeader() const;

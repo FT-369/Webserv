@@ -17,6 +17,7 @@ FILE* Request::getSocketReadFP() const { return socket_read; }
 // FILE* Request::getSocketWriteFP() const { return socket_write; }
 std::string Request::getMethod() const { return method; }
 std::string Request::getPath() const { return path; }
+std::map<std::string, std::string>  Request::getQuery() const { return query; }
 std::string Request::getProtocol() const { return protocol; }
 std::string Request::getRequestBody() const { return request_body; }
 std::map<std::string, std::string> Request::getRequestHeader() const { return request_header; }
@@ -40,15 +41,15 @@ std::string Request::ft_fgets_line(FILE* fp)
 	return getline;
 }
 
-void printReq(std::map<std::string, std::string> map) {
+void printReq(std::string name, std::map<std::string, std::string> map) {
 	std::map<std::string, std::string>::iterator it;
 
-	std::cout << "\n!!! Start of REQUEST !!!\n";
+	std::cout << "\n!!! Start of " << name << " !!!\n";
 	for (it = map.begin(); it != map.end(); it++)
 	{
 		std::cout << "{" << it->first << ": " << it->second << "}" << std::endl;
 	}
-	std::cout << "!!! End of REQUEST !!!\n\n";
+	std::cout << "!!! End of " << name << " !!!\n\n";
 }
 
 int Request::parseRequest()
@@ -60,7 +61,8 @@ int Request::parseRequest()
 	if (this->method == "POST")
 		parseRequestBody();
 	std::cout << "!!! path of requtest !!! : " << this->getPath() << std::endl;
-	printReq(this->getRequestHeader());
+	printReq("REQUEST Query", this->getQuery());
+	printReq("REQUEST Header", this->getRequestHeader());
 	return SUCCESS;
 }
 
@@ -69,18 +71,33 @@ int Request::parseRequestLine()
 	char line[GET_LINE_BUF];
 	std::string get_line;
 	std::vector<std::string> request_line;
+	std::vector<std::string> query_list;
 	size_t pos;
 
 	get_line = ft_fgets_line(getSocketReadFP());
 	if (get_line == "" || get_line == "\r\n")
 		return ERROR;
 
-	request_line = ft_split(get_line, " ");
+	request_line = ft_split_space(get_line);
 	if (request_line.size() != 3)
 		return ERROR;
 
 	method = request_line[0];
-	path = request_line[1];
+	if ((pos = request_line[1].find("?") ) == std::string::npos) {
+		path = request_line[1];
+	} else {
+		path = request_line[1].substr(0, pos);
+		query_list = ft_split(request_line[1].substr(pos + 1), "&");
+		for (size_t i = 0; i < query_list.size(); i++)
+		{
+			if ((pos = query_list[i].find("=")) == std::string::npos) {
+				query[query_list[i]] = "";
+				// return ERROR;
+			} else {
+				query[query_list[i].substr(0, pos)] = query_list[i].substr(pos + 1);
+			}
+		}
+	}
 	protocol = request_line[2];
 	
 	if (method != "GET" && method != "POST" && method != "DELETE")
