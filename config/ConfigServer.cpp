@@ -27,8 +27,8 @@ int ConfigServer::identifyLocationBlock(std::string const &block)
 		ConfigLocation location(url, common_directive);
 		location.parsingLocation(block_content);
 		locations.push_back(location);
-	} else if (block_name != "") {
-		// return ERROR;
+	} else if (!(block_name == "" && block_content == "")) {
+		return ERROR;	// 유효하지 않은 블럭
 	}
 	return SUCCESS;
 }
@@ -70,13 +70,15 @@ int ConfigServer::parseServerDirecive(std::map<std::string, std::string> &simple
 				listen_host = listen[0];
 			}
 		}
+		simple.erase(LISTEN);
 	}
 
 	if (simple.find(SERVER_NAME) != simple.end()) {
 		std::vector<std::string> names = ft_split_space(simple[SERVER_NAME]);
-		// if (names.size() < 1)
-		// 	return ERROR;
+		if (names.empty())
+			return ERROR;	// 지시어 형식이 맞지 않음
 		server_name = names;
+		simple.erase(SERVER_NAME);
 	}
 	return SUCCESS;
 }
@@ -98,5 +100,8 @@ int ConfigServer::parsingServer(std::string const &block) {
 	for (size_t i = 0; i < blocks.size(); i++) {
 		identifyLocationBlock(blocks[i]);
 	}
+
+	// if (!simple_directive.empty())
+	// 	return ERROR;	// 유효하지 않은 지시어가 남아있으면 에러
 	return SUCCESS;
 }
