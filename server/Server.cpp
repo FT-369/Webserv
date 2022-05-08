@@ -71,6 +71,7 @@ void send_data(Request *request)
     std::cout << "send data!" << std::endl;
 
     FILE *fp = fdopen(dup(request->socket_fd), "w");
+	FILE *send_file = fopen("./static_file/index.html", "r");
 
     char protocol[] = "HTTP/1.0 200 OK\r\n";
     char server[] = "Server: Mac Web Server \r\n";
@@ -83,7 +84,8 @@ void send_data(Request *request)
     fputs(cnt_len, fp);
     fputs(cnt_type, fp);
 
-    char html[] =
+	if (send_file == NULL) {
+        char html[] =
         "<!DOCTYPE html> \
         <html> \
         <head> \
@@ -102,8 +104,18 @@ void send_data(Request *request)
         </body> \
         </html>";
 
-    // 데이터 전송
-    fputs(html, fp);
+		// 데이터 전송
+		fputs(html, fp);
+    } else {
+		char buf[1024];
+
+		while (fgets(buf, 1024, send_file) != NULL)
+		{
+			fputs(buf, fp);
+			fflush(fp);
+		}
+	}
+
     fflush(fp);
     fclose(fp);
 }
