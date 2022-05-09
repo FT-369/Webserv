@@ -8,7 +8,7 @@ class ClientSocket : public Socket
 {
 private:
 	// Response response;
-	// Request request;
+	Request *request;
 	// Status status;
 	// unsigned long start_time;
 	ConfigServer server_info;
@@ -20,7 +20,9 @@ public:
 	ClientSocket(int fd, ConfigServer server_info);
 	ConfigServer getConnectServerInfo();
 	~ClientSocket();
-	
+	Request* getRequest();
+	int recieveRequest();
+	Status getRequestStatus();
 };
 
 #endif
