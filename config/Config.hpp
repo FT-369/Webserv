@@ -16,7 +16,6 @@ private:
 	std::map<std::string, std::string> mime_types;
 	std::map<std::string, std::string> general_directive;
 	ConfigHttp http_directive;
-	std::map<int, std::string> status_code;
 
 public:
 	Config();
@@ -24,6 +23,7 @@ public:
 	~Config();
 	std::string getFileName();
 	std::string getConfigText();
+	std::string getDefaultType();
 	std::map<std::string, std::string> getMimeTypes();
 	std::map<std::string, std::string> getGeneralDirective();
 	ConfigHttp getHttpDirective();
@@ -36,7 +36,6 @@ private: // func
 	int readConfigFile();
 	int parsingConfig();
 	int parsingMimeTypes(std::string const &filename);
-	void setStatusCode();
 };
 
 #endif

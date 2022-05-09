@@ -1,13 +1,13 @@
 #ifndef CLIENTSOCKET_HPP
 #define CLIENTSOCKET_HPP
 #include "Socket.hpp"
-// #include "Response.hpp"
+#include "Response.hpp"
 #include "Request.hpp"
 
 class ClientSocket : public Socket
 {
 private:
-	// Response response;
+	Response *response;
 	Request *request;
 	// Status status;
 	// unsigned long start_time;
@@ -21,6 +21,7 @@ public:
 	ConfigServer getConnectServerInfo();
 	~ClientSocket();
 	Request* getRequest();
+	Response* getResponse();
 	int recieveRequest();
 	Status getRequestStatus();
 };
