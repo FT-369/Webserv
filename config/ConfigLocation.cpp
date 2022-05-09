@@ -9,7 +9,6 @@ ConfigLocation::ConfigLocation(std::string const &url, CommonDirective const &c)
 
 std::string ConfigLocation::getUrl() { return this->url; }
 CommonDirective ConfigLocation::getCommonDirective() { return common_directive; }
-std::vector<std::string> ConfigLocation::getLimitExcept() { return limit_except; }
 int ConfigLocation::getReturnCode() { return return_code; }
 std::string ConfigLocation::getReturnDate() { return return_data; }
 std::map<std::string, std::string> ConfigLocation::getSimpleDirective() { return simple_directive; }
@@ -46,16 +45,6 @@ int ConfigLocation::parseLocationDirecive(std::map<std::string, std::string> &si
 		simple.erase(REDIRECT);
 	}
 
-	if (simple.find(ALLOWED_METHOD) != simple.end()) {
-		std::vector<std::string> method = ft_split_space(simple[ALLOWED_METHOD]);
-		if (method.size() < 1 || method.size() > 3)
-			return ERROR;;	// 지시어 형식이 맞지 않음
-		
-		for (size_t i = 0; i < method.size(); i++) {
-			limit_except.push_back(method[i]);
-		}
-		simple.erase(ALLOWED_METHOD);
-	}
 	return SUCCESS;
 }
 

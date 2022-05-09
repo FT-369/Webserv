@@ -23,9 +23,13 @@ ConfigHttp Config::getHttpDirective() { return http_directive; }
 void Config::cutComment(std::string &buffer)
 {
 	size_t	pos = buffer.find("#");
+	size_t	pos2 = buffer.find("//");
 
 	if (pos != std::string::npos) {
 		buffer = buffer.substr(0, pos);
+	}
+	if (pos2 != std::string::npos) {
+		buffer = buffer.substr(0, pos2);
 	}
 }
 

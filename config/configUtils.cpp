@@ -2,7 +2,8 @@
 
 bool isCommonDirective(std::string key) {
 	return (key == ROOT || key == AUTOINDEX || key == INDEX || key == ERROR_PAGE
-		|| key == CLIENT_BODY_SIZE || key == CLIENT_HEADER_SIZE || key == CGI_PATH);
+		|| key == CLIENT_BODY_SIZE || key == CLIENT_HEADER_SIZE || key == CGI_PATH
+		|| key == ALLOWED_METHOD);
 }
 
 int getCommonRoot(CommonDirective &directive, std::vector<std::string> const &line) {
@@ -85,6 +86,20 @@ int getClientHeaderSize(CommonDirective &directive, std::vector<std::string> con
 	return SUCCESS;
 }
 
+int getAllowedMethod(CommonDirective &directive, std::vector<std::string> const &line) {
+	if (line.size() < 2)
+		return ERROR;
+	std::vector<std::string> new_directive;
+	for (int i = 1; i < line.size(); i++)
+	{
+		if (line[i] != "GET" && line[i] != "POST" && line[i] != "DELETE")
+			return ERROR;	// 지시어 형식이 맞지 않음
+		new_directive.push_back(line[i]);
+	}
+	directive.limit_except = new_directive;
+	return SUCCESS;
+}
+
 int parseCommonDirective(CommonDirective &directive, std::vector<std::string> const &line) {
 	int ret = SUCCESS;
 	std::string key = line[0];
@@ -103,6 +118,8 @@ int parseCommonDirective(CommonDirective &directive, std::vector<std::string> co
 		ret = getClientBodySize(directive, line);
 	} else if (key == CLIENT_HEADER_SIZE) {
 		ret = getClientHeaderSize(directive, line);
+	} else if (key == ALLOWED_METHOD) {
+		ret = getAllowedMethod(directive, line);
 	} else {
 		return ERROR;	// common directive에 해당하는 key값이 아님
 	}
@@ -185,3 +202,4 @@ std::string getBlockContent(std::string const &block)
 		return "";	// block이 없어 block_content를 찾지 못함
 	return block.substr(open_pos + 1, close_pos - open_pos - 1);
 }
+
