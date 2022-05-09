@@ -53,19 +53,6 @@ ServerSocket *Server::isServerFd(uintptr_t fd)
     return NULL;
 }
 
-std::string get_content_type(std::string file)
-{
-    std::string html = "text/html";
-    std::string plain = "text/plain";
-
-    std::string extension = ft_split(file, ".")[1];
-
-    if (extension == "html" || extension == "htm")
-        return html;
-    else
-        return plain;
-}
-
 void send_data(Request *request)
 {
     std::cout << "send data!" << std::endl;
@@ -187,8 +174,13 @@ void Server::keventProcess()
                 if (cs != 0 && cs->getRequest() != 0 && cs->getRequestStatus() == READ_END_OF_REQUEST)
                 {
                     std::cout << "EVFILT_WRITE" << std::endl;
-                    
-					send_data(cs->getRequest());
+					// send_data(cs->getRequest());
+
+					FILE *fp = fdopen(dup(cs->getRequest()->getSocketFD()), "w");
+					Response *res = new Response(config, cs->getRequest());
+					fputs(res->makeResponse().c_str(), fp);
+					fflush(fp);
+					fclose(fp);
 					std::cout << "EVFILT_WRITE - fd[" << kq.event_list[i].ident << "]: " << cs << std::endl;
 					socket.erase(kq.event_list[i].ident);
 					close(kq.event_list[i].ident);
