@@ -8,11 +8,20 @@
 
 # define GET_LINE_BUF 1024
 
+enum Status
+{
+	READ_REQUEST_LINE,
+	READ_REQUEST_HEADER,
+	READ_REQUEST_BODY,
+	READ_END_OF_REQUEST,
+};
+
 class Request
 {
 public:
 	const int socket_fd;
 	FILE* socket_read;
+	Status status;
 	// FILE* socket_write;
 
 	std::string method;
@@ -36,6 +45,7 @@ public:
 	std::string getProtocol() const;
 	std::string getRequestBody() const;
 	std::map<std::string, std::string> getRequestHeader() const;
+	Status getStatus();
 
 private:
 	int parseRequestLine();
