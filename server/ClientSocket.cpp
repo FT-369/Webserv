@@ -16,6 +16,7 @@ ConfigServer ClientSocket::getConnectServerInfo() { return server_info; }
 Request* ClientSocket::getRequest() { return request; }
 
 Response* ClientSocket::getResponse() { return response; }
+void ClientSocket::setResponse(Response* res) { response = res; }
 
 int ClientSocket::recieveRequest()
 {

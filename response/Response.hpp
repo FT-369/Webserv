@@ -12,19 +12,23 @@ private:
 	std::string status;
 	std::map<std::string, std::string> status_code;
 	Request *request;
-	Config config;
+	std::map<std::string, std::string> mime_types;
+	std::vector<ConfigLocation> locations;
+	ConfigLocation *route;
 
 public:
-	Response(Config const &config);
-	Response(Config const &config, Request *request);
+	Response(std::map<std::string, std::string> const &mime_types, std::vector<ConfigLocation> routes);
+	Response(std::map<std::string, std::string> const &mime_types, Request *request, std::vector<ConfigLocation> routes);
 	~Response();
 
 	void	setStatusCode();
 	void	makeStartLine();
 	void	makeHeader();
 	void	makeEntity();
-	std::string	makeResponse();
+	std::string	makeGetResponse();
 	std::string	getContentType(std::string file);
+	std::map<std::string, std::string>	getMimeType();
+	void mappingPath();
 };
 
 #endif

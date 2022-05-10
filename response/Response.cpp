@@ -1,10 +1,12 @@
 #include "Response.hpp"
 
-Response::Response(Config const &config) : config(config), request(NULL)
+Response::Response(std::map<std::string, std::string> const &mime_types, std::vector<ConfigLocation> locations)
+	: mime_types(mime_types), request(NULL), locations(locations), route(NULL)
 {
 }
 
-Response::Response(Config const &config, Request *request) : config(config), request(request)
+Response::Response(std::map<std::string, std::string> const &mime_types, Request *request, std::vector<ConfigLocation> locations)
+	: mime_types(mime_types), request(request), locations(locations), route(NULL)
 {
 }
 
@@ -12,11 +14,12 @@ Response::~Response()
 {
 }
 
+std::map<std::string, std::string>	Response::getMimeType() { return mime_types; }
+
 std::string Response::getContentType(std::string file)
 {
 	// std::string content_type = config.getDefaultType();
 	std::string content_type = "text/html";
-	std::map<std::string, std::string> mime_types = config.getMimeTypes();
 
 	size_t rpos = file.rfind(".");
 	std::string extension;
@@ -62,11 +65,52 @@ void	Response::makeEntity()
 	status = "200";
 }
 
-std::string	Response::makeResponse() {
+void Response::mappingPath() {
+	std::string path = request->getPath();
+	int path_len = path.size();
+
+	for (int i = path_len - 1; i >= 0; i++)
+	{
+		if (i == path_len - 1 || path[i] == '/') {
+			for (int j = 0; j < locations.size(); j++) {
+				if (path.substr(0, i) == locations[j].getUrl()) {
+					route = new ConfigLocation(locations[j].getUrl(), locations[j].getCommonDirective());
+				}
+			}
+		}
+	}
+}
+
+std::string	Response::makeGetResponse() {
 	std::string send_data;
 	std::map<std::string, std::string>::iterator it;
 
-	makeEntity();
+	/*
+	std::string filename;
+
+	if (파일명이 없고) { <- route의 url == request path 완벽히 일치
+		if (index가 있으면) { <- route의 멤버변수 확인
+			filename = IndexPage
+		} else (autoindex on) { <- route의 멤버변수 확인
+			filename = ListingPage
+		} else {
+			filename  = 403Page
+		}
+	} else if (파일명이 있지만 리소스가 없을 때) {	<- 함수 이용해서, 디렉토리 및 파일이 있는지 확인
+		if (autoindex on) { <- route의 멤버변수 확인
+			filename = ListingPage
+		} else {
+			filename = 403Page
+		}
+	} else {	// <- 파일명이 있고, 리소스가 있을 때
+		filename = StaticFile
+	}
+	
+	makeEntity(filename);
+	*/
+
+	mappingPath();
+	makeEntity( );
 	makeHeader();
 	makeStartLine();
 
