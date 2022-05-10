@@ -54,6 +54,11 @@ void printServerDirective(std::string name, ConfigServer server) {
 	for (size_t i = 0; i < server.getServerName().size(); i++) {
 		std::cout << server.getServerName()[i] << (i + 1 == server.getServerName().size() ? "" : ", ");
 	}
+	for (int i = 0; i < server.getCommonDirective().limit_except.size(); i++)
+	{
+		std::cout << " Except Method: " << server.getCommonDirective().limit_except[i] << std::endl;
+	}
+	
 	std::cout << std::endl;
 	std::cout << C_GREN << "End of [" << name << "]\n\n" << C_NRML;
 }
@@ -65,8 +70,8 @@ void printLocationDirective(std::string name, ConfigLocation location) {
 	std::cout << "return_code: " << location.getReturnCode() << std::endl;
 	std::cout << "return_data: " << location.getReturnDate() << std::endl;
 	std::cout << "allowed_method: ";
-	for (size_t i = 0; i < location.getLimitExcept().size(); i++) {
-		std::cout << location.getLimitExcept()[i] << (i + 1 == location.getLimitExcept().size() ? "" : ", ") << std::endl;
+	for (size_t i = 0; i < location.getCommonDirective().limit_except.size(); i++) {
+		std::cout << location.getCommonDirective().limit_except[i] << (i + 1 == location.getCommonDirective().limit_except.size() ? "" : ", ") << std::endl;
 	}
 	std::cout << std::endl;
 	std::cout << C_GREN << "End of [" << name << "]\n\n" << C_NRML;
@@ -77,31 +82,31 @@ int main(void)
 	Config config;
 	Server server = Server(config);
 
-	// std::cout << config.getConfigText() << std::endl;
-	// std::map<std::string, std::string> mime_types = config.getMimeTypes();
-	// std::map<std::string, std::string> main = config.getGeneralDirective();
-	// ConfigHttp http = config.getHttpDirective();
+	std::cout << config.getConfigText() << std::endl;
+	std::map<std::string, std::string> mime_types = config.getMimeTypes();
+	std::map<std::string, std::string> main = config.getGeneralDirective();
+	ConfigHttp http = config.getHttpDirective();
 
-	// printMap("mime_types", mime_types);
-	// printMap("general", main);
-	// printMap("http_simple", http.getSimpleDirective());
+	printMap("mime_types", mime_types);
+	printMap("general", main);
+	printMap("http_simple", http.getSimpleDirective());
 
-	// std::vector<ConfigServer> servers = http.getServers();
-	// for (int i = 0; i < servers.size(); i++) {
-	// 	ConfigServer server = servers[i];
-	// 	printCommonDirective("server_common_" + std::to_string(i + 1), server.getCommonDirective());
-	// 	printMap("server_simple_" + std::to_string(i + 1), server.getSimpleDirective());
-	// 	printServerDirective("server_directive_" + std::to_string(i + 1), server);
+	std::vector<ConfigServer> servers = http.getServers();
+	for (int i = 0; i < servers.size(); i++) {
+		ConfigServer server = servers[i];
+		printCommonDirective("server_common_" + std::to_string(i + 1), server.getCommonDirective());
+		printMap("server_simple_" + std::to_string(i + 1), server.getSimpleDirective());
+		printServerDirective("server_directive_" + std::to_string(i + 1), server);
 		
-	// 	std::vector<ConfigLocation> locations = server.getLocations();
-	// 	for (int j = 0; j < locations.size(); j++) {
-	// 		ConfigLocation location = locations[j];
-	// 		std::cout << C_YLLW << "location_url_" + std::to_string(i + 1) + "_" + std::to_string(j + 1) + ": " << C_NRML << location.getUrl() << std::endl;
-	// 		printCommonDirective("location_common_" + std::to_string(i + 1) + "_" + std::to_string(j + 1), location.getCommonDirective());
-	// 		printMap("location_simple_" + std::to_string(i + 1) + "_" + std::to_string(j + 1), location.getSimpleDirective());
-	// 		printLocationDirective("location_" + std::to_string(i + 1), location);
-	// 	}
-	// }
+		std::vector<ConfigLocation> locations = server.getLocations();
+		for (int j = 0; j < locations.size(); j++) {
+			ConfigLocation location = locations[j];
+			std::cout << C_YLLW << "location_url_" + std::to_string(i + 1) + "_" + std::to_string(j + 1) + ": " << C_NRML << location.getUrl() << std::endl;
+			printCommonDirective("location_common_" + std::to_string(i + 1) + "_" + std::to_string(j + 1), location.getCommonDirective());
+			printMap("location_simple_" + std::to_string(i + 1) + "_" + std::to_string(j + 1), location.getSimpleDirective());
+			printLocationDirective("location_" + std::to_string(i + 1), location);
+		}
+	}
 
 	try
 	{
