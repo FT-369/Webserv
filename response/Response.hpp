@@ -15,6 +15,7 @@ private:
 	std::map<std::string, std::string> mime_types;
 	std::vector<ConfigLocation> locations;
 	ConfigLocation *route;
+	std::string file;
 
 public:
 	Response(std::map<std::string, std::string> const &mime_types, std::vector<ConfigLocation> routes);

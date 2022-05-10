@@ -42,9 +42,7 @@ void	Response::makeStartLine()
 
 void	Response::makeHeader()
 {
-	std::cout << "getpath = " << request->getPath();
 	header["Content-type"] = getContentType(request->getPath());
-	std::cout << "!!!!!!" << header["Content-type"] << std::endl;
 	header["Content-length"] = std::to_string(entity.length());
 	header["Server"] = "Mac Web Server";
 }
@@ -69,12 +67,17 @@ void Response::mappingPath() {
 	std::string path = request->getPath();
 	int path_len = path.size();
 
-	for (int i = path_len - 1; i >= 0; i++)
+	file = path.substr(1);
+	for (int i = path_len - 1; i >= 0; i--)
 	{
 		if (i == path_len - 1 || path[i] == '/') {
 			for (int j = 0; j < locations.size(); j++) {
 				if (path.substr(0, i) == locations[j].getUrl()) {
 					route = new ConfigLocation(locations[j].getUrl(), locations[j].getCommonDirective());
+					if (i != path_len - 1)
+						file = path.substr(i + 1);
+				} else if (route == 0 && locations[j].getUrl() == "/") {
+					route = new ConfigLocation("/", locations[j].getCommonDirective());
 				}
 			}
 		}
@@ -109,7 +112,11 @@ std::string	Response::makeGetResponse() {
 	makeEntity(filename);
 	*/
 
+	std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" <<std::endl;
 	mappingPath();
+	std::cout << "[Mapping Path] url: " << route->getUrl() << ", file:" << file << std::endl;
+	std::cout << "????????????????????????????????????????????" << std::endl;
+
 	makeEntity( );
 	makeHeader();
 	makeStartLine();
