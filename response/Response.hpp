@@ -3,6 +3,7 @@
 
 #include "Config.hpp"
 #include "Request.hpp"
+#include "iostream"
 class Response
 {
 private:
@@ -24,9 +25,13 @@ public:
 
 	void	setStatusCode();
 	void	makeStartLine();
+	void	setRedirect();
 	void	makeHeader();
 	void	makeEntity();
-	std::string	makeGetResponse();
+	std::string makeResponse();
+	void	makeDeleteResponse();
+	void	makeGetResponse();
+	void	makeErrorResponse(std::string error_num);
 	std::string	getContentType(std::string file);
 	std::map<std::string, std::string>	getMimeType();
 	void mappingPath();

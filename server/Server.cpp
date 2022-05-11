@@ -180,7 +180,7 @@ void Server::keventProcess()
  
 					FILE *fp = fdopen(dup(cs->getRequest()->getSocketFD()), "w");
 					cs->setResponse(new Response(config.getMimeTypes(), cs->getRequest(), routes));
-					fputs(cs->getResponse()->makeGetResponse().c_str(), fp);
+					fputs(cs->getResponse()->makeResponse().c_str(), fp);
 					fflush(fp);
 					fclose(fp);
 					std::cout << "EVFILT_WRITE - fd[" << kq.event_list[i].ident << "]: " << cs << std::endl;
