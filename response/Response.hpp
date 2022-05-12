@@ -30,6 +30,7 @@ public:
 	void makeStartLine();
 	void setRedirect();
 	void makeHeader();
+	void makePostHeader();
 	void mappingPath();
 	void makeEntity(std::string file);
 	int isDirectory(const std::string &path);
