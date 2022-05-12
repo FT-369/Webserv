@@ -14,22 +14,20 @@
 class Socket
 {
 protected:
-	int	_socket_fd;
-	int	_socket_type;
-	int	_port;
+	int _socket_fd;
+	int _socket_type;
+	int _port;
 	std::string _host;
 
 public:
 	Socket();
 	Socket(int socket_type);
 	Socket(int socket_type, int fd);
-	virtual	~Socket();
-	int	getSocketFd();
-	int	getSocketPort();
-	std::string	getSocketHost();
-	int	getSocketType();
+	virtual ~Socket();
+	int getSocketFd();
+	int getSocketPort();
+	std::string getSocketHost();
+	int getSocketType();
 };
-
-
 
 #endif

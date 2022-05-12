@@ -16,11 +16,9 @@ private:
 public:
 	ServerSocket(ConfigServer server);
 	~ServerSocket();
-	int	binding();
-	int	clientAccept(int &connectFD);
-	ConfigServer	getServerInfo();
+	int binding();
+	int clientAccept(int &connectFD);
+	ConfigServer getServerInfo();
 };
-
-
 
 #endif
