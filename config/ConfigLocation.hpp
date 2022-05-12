@@ -23,7 +23,6 @@ public:
 	std::string getReturnDate();
 	std::map<std::string, std::string> getSimpleDirective();
 	int parsingLocation(std::string const &block);
-	
 private:
 	ConfigLocation();
 	int parseLocationDirecive(std::map<std::string, std::string> &simple);
