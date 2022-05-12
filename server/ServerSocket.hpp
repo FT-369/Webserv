@@ -6,8 +6,8 @@
 class ServerSocket : public Socket
 {
 public:
-	struct sockaddr_in addr;
-	ConfigServer server_info;
+	struct sockaddr_in _addr;
+	ConfigServer _server_info;
 	// std::vector<ConfigLocation> location;
 
 private:
@@ -16,9 +16,9 @@ private:
 public:
 	ServerSocket(ConfigServer server);
 	~ServerSocket();
-	int binding();
-	int clientAccept(int &connectFD);
-	ConfigServer getServerInfo();
+	int	binding();
+	int	clientAccept(int &connectFD);
+	ConfigServer	getServerInfo();
 };
 
 

@@ -8,12 +8,12 @@
 
 class Server
 {
-private :
-	KqueueHandler kq;
-	std::map<uintptr_t, Socket *> socket;
-	Config config;
+private:
+	KqueueHandler _kq;
+	std::map<uintptr_t, Socket *> _socket;
+	Config _config;
 
-private :
+private:
 	Server();
 
 public:

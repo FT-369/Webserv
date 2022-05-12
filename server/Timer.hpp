@@ -13,7 +13,7 @@ private:
 		int keep_alive_timeout;
 		time_t start;
 	} time_info;
-	std::map<int, time_info> timer_list;
+	std::map<int, time_info> _timer_list;
 	Timer();
 	~Timer();
 

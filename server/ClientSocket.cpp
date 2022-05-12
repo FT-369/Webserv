@@ -1,29 +1,27 @@
 #include "ClientSocket.hpp"
 
 ClientSocket::ClientSocket(int fd, ConfigServer server_info)
-	: Socket(CLIENT_SOCKET, fd), server_info(server_info), request(new Request(fd))
-{
+	: Socket(CLIENT_SOCKET, fd), _server_info(server_info), _request(new Request(fd)){
+
+															};
+
+ClientSocket::~ClientSocket(){
 
 };
 
-ClientSocket::~ClientSocket()
-{
+ConfigServer ClientSocket::getConnectServerInfo() { return _server_info; }
 
-};
+Request *ClientSocket::getRequest() { return _request; }
 
-ConfigServer ClientSocket::getConnectServerInfo() { return server_info; }
-
-Request* ClientSocket::getRequest() { return request; }
-
-Response* ClientSocket::getResponse() { return response; }
-void ClientSocket::setResponse(Response* res) { response = res; }
+Response *ClientSocket::getResponse() { return _response; }
+void ClientSocket::setResponse(Response *res) { _response = res; }
 
 int ClientSocket::recieveRequest()
 {
-	return request->parseRequest();
+	return _request->parseRequest();
 }
 
 Status ClientSocket::getRequestStatus()
 {
-	return request->getStatus();
+	return _request->getStatus();
 }

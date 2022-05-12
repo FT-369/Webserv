@@ -18,22 +18,23 @@
 #define CGI_PATH "cgi_path"
 #define ALLOWED_METHOD "limit_except"
 
+struct CommonDirective
+{
+	std::string _root;
+	bool _autoindex;
+	std::vector<std::string> _index;
+	std::map<int, std::string> _error_page;
+	std::vector<std::string> _limit_except;
+	int _client_limit_body_size;
+	int _request_limit_header_size;
+	std::map<std::string, std::string> _cgi_path;
 
-struct CommonDirective {
-	std::string root;
-	bool autoindex;
-	std::vector<std::string> index;
-	std::map<int, std::string> error_page;
-	std::vector<std::string> limit_except;
-	int client_limit_body_size;
-	int request_limit_header_size;
-	std::map<std::string, std::string> cgi_path;
-
-	CommonDirective() : autoindex(false), client_limit_body_size(1000000), 
-	request_limit_header_size(4000) {
-		limit_except.push_back("GET");
-		limit_except.push_back("POST");
-		limit_except.push_back("DELETE");
+	CommonDirective() : _autoindex(false), _client_limit_body_size(1000000),
+						_request_limit_header_size(4000)
+	{
+		_limit_except.push_back("GET");
+		_limit_except.push_back("POST");
+		_limit_except.push_back("DELETE");
 	}
 };
 
