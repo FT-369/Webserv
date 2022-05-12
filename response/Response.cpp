@@ -51,13 +51,11 @@ void Response::makeEntity(std::string file)
 {
 	std::string buffer;
 	std::string filePath;
-	// std::cout << "경로 : " << this->route->getCommonDirective().root + "/" + this->route->getCommonDirective().index[0] << std::endl;
-	// std::ifstream is(this->route->getCommonDirective().root + "/" + this->route->getCommonDirective().index[0]);
 	std::ifstream is(file);
 
 	if (is.fail())
 	{
-		_status = "404";
+		makeErrorResponse("404");
 		return; // throw error
 	}
 	while (std::getline(is, buffer))
@@ -112,10 +110,17 @@ std::string Response::makeResponse()
 	//요청 url <=> location 매핑
 	mappingPath();
 	std::cout << "[Mapping Path] url: " << _route->getUrl() << ", file:" << _file << std::endl;
+	std::cout << " _request->getMethod()" <<  _request->getMethod() << std::endl;
 	//요청 method가 limitExcept에 존재하지 않으면 405 error
+	// std::cout << _route->getCommonDirective()._limit_except.size() << std::endl;
+	for (int i = 0; i < _route->getCommonDirective()._limit_except.size(); i++)
+	{
+		std::cout << _route->getCommonDirective()._limit_except[i] << std::endl;
+	}
 	if (find(_route->getCommonDirective()._limit_except.begin(), _route->getCommonDirective()._limit_except.end(),
 			 _request->getMethod()) == _route->getCommonDirective()._limit_except.end())
 	{
+		std::cout << "ERROR Response " << std::endl;
 		makeErrorResponse("405");
 	}
 	else if (_request->getMethod() == "GET")
@@ -133,6 +138,8 @@ std::string Response::makeResponse()
 		std::cout << "DELETE" << std::endl;
 		makeDeleteResponse();
 	}
+	makeHeader();
+	makeStartLine();
 	setRedirect();
 	send_data += _start_line;
 	for (it = _header.begin(); it != _header.end(); it++)
@@ -151,20 +158,16 @@ std::string Response::settingRoute()
 
 	if (_file == "")
 	{
-
 		if (!indexPage.empty())
 		{
 			for (size_t i = 0; i < indexPage.size(); i++)
 			{
 				std::ifstream idx(root + "/" + indexPage[i]);
-				std::cout << "indexPage[" << i << "]: " << indexPage[i] << std::endl;
 				if (idx.is_open())
 				{
 					entityFile = root + "/" + indexPage[i];
-					std::cout << "indexPage[" << i << "] is open" << std::endl;
 					break;
 				}
-				std::cout << "indexPage[" << i << "] is fail" << std::endl;
 			}
 		}
 		else if (_route->getCommonDirective()._autoindex)
@@ -191,23 +194,41 @@ std::string Response::settingRoute()
 void Response::makeGetResponse()
 {
 	makeEntity(settingRoute());
-	makeHeader();
-	makeStartLine();
+
 }
 
 void Response::makeDeleteResponse()
 {
 	makeEntity(settingRoute());
-	makeHeader();
-	makeStartLine();
 }
 
 void Response::makeErrorResponse(std::string error_num)
 {
+std::string root = "./static_file/defaultErrorPage.html";
+	std::string buffer;
+
 	_status = error_num;
-	makeEntity(settingRoute());
-	makeHeader();
-	makeStartLine();
+	std::cout << _route->getCommonDirective()._error_page.size() << std::endl;
+	// std::cout << _route->getCommonDirective()._limit_except.size() << std::endl;
+	// for (int i = 0; i < _route->getCommonDirective()._limit_except.size(); i++)
+	// {
+	// 	std::cout << _route->getCommonDirective()._limit_except[i] << std::endl;
+	// }
+	if (_route->getCommonDirective()._error_page.find(_status) != _route->getCommonDirective()._error_page.end())
+	{
+		root =_route->getCommonDirective()._root + "/" + _route->getCommonDirective()._error_page[_status];
+		std::cout << "root : " << root << std::endl;
+	}
+	std::ifstream idx(root);
+	if (idx.is_open() == false)
+	{
+		_entity = "";
+		return ;
+	}
+	while (std::getline(idx, buffer))
+	{
+		_entity += buffer + "\n";
+	}
 }
 
 void Response::setStatusCode()
