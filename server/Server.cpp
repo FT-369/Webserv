@@ -5,15 +5,15 @@
 
 Server::Server() {}
 
-Server::Server(Config &con) : config(con) {}
+Server::Server(Config &con) : _config(con) {}
 
 Server::~Server() {}
 
 void Server::serverConnect()
 {
-    std::vector<ConfigServer> servers = (config.getHttpDirective()).getServers();
+    std::vector<ConfigServer> servers = (_config.getHttpDirective()).getServers();
     int server_size = servers.size();
-    std::cout << "origin_ server_size = " << (config.getHttpDirective()).getServers().size() << std::endl;
+    std::cout << "origin_ server_size = " << (_config.getHttpDirective()).getServers().size() << std::endl;
     std::cout << "server_size = " << server_size << std::endl;
     for (int i = 0; i < server_size; i++)
     {
@@ -24,10 +24,10 @@ void Server::serverConnect()
 
         if (new_socket->binding() == ERROR)
             continue;
-        socket[new_socket->getSocketFd()] = new_socket;
-        kq.addEvent(EVFILT_READ, new_socket->getSocketFd(), NULL);
+        _socket[new_socket->getSocketFd()] = new_socket;
+        _kq.addEvent(EVFILT_READ, new_socket->getSocketFd(), NULL);
     }
-    std::cout << "map_socket_size: " << socket.size() << std::endl;
+    std::cout << "map_socket_size: " << _socket.size() << std::endl;
 }
 
 void Server::acceptGetClientFd(ServerSocket *server_socket)
@@ -37,18 +37,18 @@ void Server::acceptGetClientFd(ServerSocket *server_socket)
     server_socket->clientAccept(connect_fd);
     fcntl(connect_fd, F_SETFL, O_NONBLOCK);
     ClientSocket *new_socket = new ClientSocket(connect_fd, server_socket->getServerInfo());
-    socket[new_socket->getSocketFd()] = new_socket;
+    _socket[new_socket->getSocketFd()] = new_socket;
     std::cout << "new_socket = " << new_socket->getSocketFd() << std::endl;
-    kq.addEvent(EVFILT_READ, connect_fd, NULL);
-    kq.addEvent(EVFILT_WRITE, connect_fd, NULL);
+    _kq.addEvent(EVFILT_READ, connect_fd, NULL);
+    _kq.addEvent(EVFILT_WRITE, connect_fd, NULL);
     // kq.saved_fd[connect_fd] = "";
 }
 
 ServerSocket *Server::isServerFd(uintptr_t fd)
 {
-    if (socket[fd]->getSocketType() == SERVER_SOCKET)
+    if (_socket[fd]->getSocketType() == SERVER_SOCKET)
     {
-        return dynamic_cast<ServerSocket *>(socket[fd]);
+        return dynamic_cast<ServerSocket *>(_socket[fd]);
     }
     return NULL;
 }
@@ -57,8 +57,8 @@ void send_data(Request *request)
 {
     std::cout << "send data!" << std::endl;
 
-    FILE *fp = fdopen(dup(request->socket_fd), "w");
-	FILE *send_file = fopen("./static_file/index.html", "r");
+    FILE *fp = fdopen(dup(request->_socket_fd), "w");
+    FILE *send_file = fopen("./static_file/index.html", "r");
 
     char protocol[] = "HTTP/1.0 200 OK\r\n";
     char server[] = "Server: Mac Web Server \r\n";
@@ -71,9 +71,10 @@ void send_data(Request *request)
     fputs(cnt_len, fp);
     fputs(cnt_type, fp);
 
-	if (send_file == NULL) {
+    if (send_file == NULL)
+    {
         char html[] =
-        "<!DOCTYPE html> \
+            "<!DOCTYPE html> \
         <html> \
         <head> \
         <title>Welcome to 42 Webserv!</title> \
@@ -91,17 +92,19 @@ void send_data(Request *request)
         </body> \
         </html>";
 
-		// 데이터 전송
-		fputs(html, fp);
-    } else {
-		char buf[1024];
+        // 데이터 전송
+        fputs(html, fp);
+    }
+    else
+    {
+        char buf[1024];
 
-		while (fgets(buf, 1024, send_file) != NULL)
-		{
-			fputs(buf, fp);
-			fflush(fp);
-		}
-	}
+        while (fgets(buf, 1024, send_file) != NULL)
+        {
+            fputs(buf, fp);
+            fflush(fp);
+        }
+    }
 
     fflush(fp);
     fclose(fp);
@@ -111,12 +114,12 @@ void Server::keventProcess()
 {
     // std::map<int, Request *> request_map;
     serverConnect();
-    if ((kq.kq_fd = kqueue()) == -1)
+    if ((_kq._kq_fd = kqueue()) == -1)
         std::cout << " errorororororo" << std::endl;
 
     while (1)
     {
-        int event_num = kq.initKevent();
+        int event_num = _kq.initKevent();
         if (event_num == -1)
         {
             std::cout << "errrororroroor" << std::endl;
@@ -124,21 +127,21 @@ void Server::keventProcess()
         }
         for (int i = 0; i < event_num; i++)
         {
-            if (kq.event_list[i].flags == EV_ERROR)
+            if (_kq._event_list[i].flags == EV_ERROR)
             {
                 std::cout << "errorororor" << std::endl;
-                kq.disableEvent(kq.event_list[i].filter, EVFILT_WRITE, NULL); //에러가 발생한 fd 삭제
-                socket.erase(kq.event_list[i].ident);
+                _kq.disableEvent(_kq._event_list[i].filter, EVFILT_WRITE, NULL); //에러가 발생한 fd 삭제
+                _socket.erase(_kq._event_list[i].ident);
                 continue;
             }
-            switch (kq.event_list[i].filter)
+            switch (_kq._event_list[i].filter)
             {
             case EVFILT_READ:
             {
-                std::map<uintptr_t, Socket *>::iterator it = socket.find(kq.event_list[i].ident);
-                if (it == socket.end()) // Server의 socket 리스트에 저장되지 않은 fd면 넘기기
+                std::map<uintptr_t, Socket *>::iterator it = _socket.find(_kq._event_list[i].ident);
+                if (it == _socket.end()) // Server의 socket 리스트에 저장되지 않은 fd면 넘기기
                     continue;
-                ServerSocket *server_socket = isServerFd(kq.event_list[i].ident);
+                ServerSocket *server_socket = isServerFd(_kq._event_list[i].ident);
                 std::cout << server_socket << std::endl;
                 if (server_socket) // fd가 서버 소켓이면 클라이언트 accept
                 {
@@ -147,19 +150,21 @@ void Server::keventProcess()
                 else
                 {
                     std::cout << "EVFILT_READ" << std::endl;
-                    ClientSocket *cs = dynamic_cast<ClientSocket *>(socket[kq.event_list[i].ident]);
+                    ClientSocket *cs = dynamic_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
 
                     if (cs->getRequest() == 0)
                     {
                         std::cerr << "Request() error" << std::endl;
                         continue;
                     }
-					while (cs->getRequestStatus() != READ_END_OF_REQUEST) {
-						if (cs->recieveRequest() == ERROR) {
-							std::cerr << "parseRequest() error" << std::endl;
-							continue;
-						}
-					}
+                    while (cs->getRequestStatus() != READ_END_OF_REQUEST)
+                    {
+                        if (cs->recieveRequest() == ERROR)
+                        {
+                            std::cerr << "parseRequest() error" << std::endl;
+                            continue;
+                        }
+                    }
                     // request_map[kq.event_list[i].ident] = cs->getRequest();
                     // if (MakeResponseMsg() == ERROR); // 만들어진 response를 어떤식으로 해당 fd에 저장할지 고민이 필요
                     //     throw error;
@@ -167,25 +172,25 @@ void Server::keventProcess()
             }
             case EVFILT_WRITE:
             {
-				std::map<uintptr_t, Socket *>::iterator it = socket.find(kq.event_list[i].ident);
-                if (it == socket.end()) // Server의 socket 리스트에 저장되지 않은 fd면 넘기기
+                std::map<uintptr_t, Socket *>::iterator it = _socket.find(_kq._event_list[i].ident);
+                if (it == _socket.end()) // Server의 socket 리스트에 저장되지 않은 fd면 넘기기
                     continue;
-				ClientSocket *cs = dynamic_cast<ClientSocket *>(socket[kq.event_list[i].ident]);
+                ClientSocket *cs = dynamic_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
                 if (cs != 0 && cs->getRequest() != 0 && cs->getRequestStatus() == READ_END_OF_REQUEST)
                 {
                     std::cout << "EVFILT_WRITE" << std::endl;
-					// send_data(cs->getRequest());
+                    // send_data(cs->getRequest());
 
-					std::vector<ConfigLocation> routes = cs->getConnectServerInfo().getLocations();
+                    std::vector<ConfigLocation> routes = cs->getConnectServerInfo().getLocations();
 
-					FILE *fp = fdopen(dup(cs->getRequest()->getSocketFD()), "w");
-					cs->setResponse(new Response(config.getMimeTypes(), cs->getRequest(), routes));
-					fputs(cs->getResponse()->makeGetResponse().c_str(), fp);
-					fflush(fp);
-					fclose(fp);
-					std::cout << "EVFILT_WRITE - fd[" << kq.event_list[i].ident << "]: " << cs << std::endl;
-					socket.erase(kq.event_list[i].ident);
-					close(kq.event_list[i].ident);
+                    FILE *fp = fdopen(dup(cs->getRequest()->getSocketFD()), "w");
+                    cs->setResponse(new Response(_config.getMimeTypes(), cs->getRequest(), routes));
+                    fputs(cs->getResponse()->makeResponse().c_str(), fp);
+                    fflush(fp);
+                    fclose(fp);
+                    std::cout << "EVFILT_WRITE - fd[" << _kq._event_list[i].ident << "]: " << cs << std::endl;
+                    _socket.erase(_kq._event_list[i].ident);
+                    close(_kq._event_list[i].ident);
                 }
             }
             }

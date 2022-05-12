@@ -1,12 +1,12 @@
 #ifndef REQUEST_HPP
-# define REQUEST_HPP
+#define REQUEST_HPP
 
-# include "utils.hpp"
-# include <stdio.h>
-# include <unistd.h>
-# include <map>
+#include "utils.hpp"
+#include <stdio.h>
+#include <unistd.h>
+#include <map>
 
-# define GET_LINE_BUF 1024
+#define GET_LINE_BUF 1024
 
 enum Status
 {
@@ -19,17 +19,17 @@ enum Status
 class Request
 {
 public:
-	const int socket_fd;
-	FILE* socket_read;
-	Status status;
+	const int _socket_fd;
+	FILE *_socket_read;
+	Status _status;
 	// FILE* socket_write;
 
-	std::string method;
-	std::string path;
-	std::map<std::string, std::string> query;
-	std::string protocol;
-	std::string request_body;
-	std::map<std::string, std::string> request_header;
+	std::string _method;
+	std::string _path;
+	std::map<std::string, std::string> _query;
+	std::string _protocol;
+	std::string _request_body;
+	std::map<std::string, std::string> _request_header;
 
 public:
 	Request(int socket_fd);
@@ -37,8 +37,8 @@ public:
 	int parseRequest();
 
 	int getSocketFD() const;
-	FILE* getSocketReadFP() const;
-	FILE* getSocketWriteFP() const;
+	FILE *getSocketReadFP() const;
+	FILE *getSocketWriteFP() const;
 	std::string getMethod() const;
 	std::string getPath() const;
 	std::map<std::string, std::string> getQuery() const;
@@ -51,8 +51,7 @@ private:
 	int parseRequestLine();
 	int parseRequestHeader();
 	int parseRequestBody();
-	std::string ft_fgets_line(FILE* fp);
-	
+	std::string ft_fgets_line(FILE *fp);
 };
 
 #endif

@@ -9,12 +9,12 @@
 class ConfigServer
 {
 private:
-	CommonDirective common_directive;
-	int listen_port;
-	std::string listen_host;
-	std::vector<std::string> server_name;
-	std::vector<ConfigLocation> locations;
-	std::map<std::string, std::string> simple_directive;
+	CommonDirective _common_directive;
+	int _listen_port;
+	std::string _listen_host;
+	std::vector<std::string> _server_name;
+	std::vector<ConfigLocation> _locations;
+	std::map<std::string, std::string> _simple_directive;
 
 public:
 	ConfigServer(CommonDirective const &c);

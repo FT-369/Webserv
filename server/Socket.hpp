@@ -14,10 +14,10 @@
 class Socket
 {
 protected:
-	int	socket_fd;
-	int	socket_type;
-	int	port;
-	std::string host;
+	int _socket_fd;
+	int _socket_type;
+	int _port;
+	std::string _host;
 
 public:
 	Socket();
@@ -29,7 +29,5 @@ public:
 	std::string getSocketHost();
 	int getSocketType();
 };
-
-
 
 #endif
