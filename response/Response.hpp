@@ -27,6 +27,7 @@ public:
 	void	makeStartLine();
 	void	makeHeader();
 	void	makeEntity(std::string file);
+	std::string	settingRoute();
 	std::string	makeGetResponse();
 	std::string	getContentType(std::string file);
 	std::map<std::string, std::string>	getMimeType();
