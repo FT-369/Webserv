@@ -1,7 +1,6 @@
 #include "ConfigLocation.hpp"
 
 ConfigLocation::ConfigLocation() { }
-
 ConfigLocation::~ConfigLocation() { }
 
 ConfigLocation::ConfigLocation(std::string const &url, CommonDirective const &c)

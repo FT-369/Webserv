@@ -24,10 +24,10 @@ struct CommonDirective {
 	bool autoindex;
 	std::vector<std::string> index;
 	std::map<int, std::string> error_page;
+	std::vector<std::string> limit_except;
 	int client_limit_body_size;
 	int request_limit_header_size;
 	std::map<std::string, std::string> cgi_path;
-	std::vector<std::string> limit_except;
 
 	CommonDirective() : autoindex(false), client_limit_body_size(1000000), 
 	request_limit_header_size(4000) {

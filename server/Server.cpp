@@ -176,9 +176,11 @@ void Server::keventProcess()
                     std::cout << "EVFILT_WRITE" << std::endl;
 					// send_data(cs->getRequest());
 
+					std::vector<ConfigLocation> routes = cs->getConnectServerInfo().getLocations();
+
 					FILE *fp = fdopen(dup(cs->getRequest()->getSocketFD()), "w");
-					Response *res = new Response(config, cs->getRequest());
-					fputs(res->makeResponse().c_str(), fp);
+					cs->setResponse(new Response(config.getMimeTypes(), cs->getRequest(), routes));
+					fputs(cs->getResponse()->makeResponse().c_str(), fp);
 					fflush(fp);
 					fclose(fp);
 					std::cout << "EVFILT_WRITE - fd[" << kq.event_list[i].ident << "]: " << cs << std::endl;

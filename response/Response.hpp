@@ -3,6 +3,7 @@
 
 #include "Config.hpp"
 #include "Request.hpp"
+#include <algorithm>
 class Response
 {
 private:
@@ -12,19 +13,29 @@ private:
 	std::string status;
 	std::map<std::string, std::string> status_code;
 	Request *request;
-	Config config;
+	std::map<std::string, std::string> mime_types;
+	std::vector<ConfigLocation> locations;
+	ConfigLocation *route;
+	std::string file;
 
 public:
-	Response(Config const &config);
-	Response(Config const &config, Request *request);
+	Response(std::map<std::string, std::string> const &mime_types, std::vector<ConfigLocation> routes);
+	Response(std::map<std::string, std::string> const &mime_types, Request *request, std::vector<ConfigLocation> routes);
 	~Response();
 
 	void	setStatusCode();
 	void	makeStartLine();
+	void	setRedirect();
 	void	makeHeader();
-	void	makeEntity();
+	void	makeEntity(std::string file);
 	std::string	makeResponse();
+	void	makeGetResponse();
+	void	makeDeleteResponse();
+	void	makeErrorResponse(std::string error_num);
+	std::string	settingRoute();
 	std::string	getContentType(std::string file);
+	std::map<std::string, std::string>	getMimeType();
+	void mappingPath();
 };
 
 #endif
