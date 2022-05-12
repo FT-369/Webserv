@@ -185,6 +185,7 @@ std::string Response::settingRoute()
 			entityFile = root + "/autoindex.html";
 		}
 	}
+	return entityFile;
 }
 
 void Response::makeGetResponse()
