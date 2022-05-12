@@ -135,6 +135,8 @@ std::string Response::makeResponse()
 		std::cout << "DELETE" << std::endl;
 		makeDeleteResponse();
 	}
+	makeHeader();
+	makeStartLine();
 	setRedirect();
 	makeHeader();
 	makeStartLine();
