@@ -20,8 +20,8 @@ int ConfigHttp::identifyServerBlock(std::string const &block)
 		ConfigServer server(common_directive);
 		server.parsingServer(block_content);
 		servers.push_back(server);
-	} else if (block_name != "") {
-		// return ERROR;
+	} else if (!(block_name == "" && block_content == "")) {
+		return ERROR;	// 유효하지 않은 블럭
 	}
 	return SUCCESS;
 }

@@ -177,7 +177,7 @@ void Server::keventProcess()
 					// send_data(cs->getRequest());
 
 					std::vector<ConfigLocation> routes = cs->getConnectServerInfo().getLocations();
- 
+
 					FILE *fp = fdopen(dup(cs->getRequest()->getSocketFD()), "w");
 					cs->setResponse(new Response(config.getMimeTypes(), cs->getRequest(), routes));
 					fputs(cs->getResponse()->makeResponse().c_str(), fp);
