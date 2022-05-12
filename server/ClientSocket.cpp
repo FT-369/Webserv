@@ -1,7 +1,7 @@
 #include "ClientSocket.hpp"
 
 ClientSocket::ClientSocket(int fd, ConfigServer server_info)
-	: Socket(CLIENT_SOCKET, fd), server_info(server_info), request(new Request(fd)), response(NULL)
+	: Socket(CLIENT_SOCKET, fd), server_info(server_info), request(new Request(fd))
 {
 
 };

@@ -9,7 +9,6 @@ ConfigLocation::ConfigLocation(std::string const &url, CommonDirective const &c)
 
 std::string ConfigLocation::getUrl() { return this->url; }
 CommonDirective ConfigLocation::getCommonDirective() { return common_directive; }
-std::vector<std::string> ConfigLocation::getLimitExcept() { return limit_except; }
 int ConfigLocation::getReturnCode() { return return_code; }
 std::string ConfigLocation::getReturnDate() { return return_data; }
 std::map<std::string, std::string> ConfigLocation::getSimpleDirective() { return simple_directive; }
@@ -17,11 +16,12 @@ std::map<std::string, std::string> ConfigLocation::getSimpleDirective() { return
 int ConfigLocation::identifyBlock(std::string const &block)
 {
 	std::string block_name = getBlockName(block);
+	std::string block_content = getBlockContent(block);
 
-	if (block_name != "") {
-		// return ERROR;
+	if (block_name == "" && block_content == "") {
+		return SUCCESS;
 	}
-	return SUCCESS;
+	return ERROR; // location 블록 안에 또 다른 블록이 들어온 경우
 }
 
 int ConfigLocation::parseLocationDirecive(std::map<std::string, std::string> &simple) {
@@ -29,28 +29,22 @@ int ConfigLocation::parseLocationDirecive(std::map<std::string, std::string> &si
 	if (simple.find(REDIRECT) != simple.end()) {
 		std::vector<std::string> redirect = ft_split_space(simple[REDIRECT]);
 		if (redirect.size() < 1 || redirect.size() > 2)
-			return ERROR;
+			return ERROR;	// 지시어 형식이 맞지 않음
 		
 		char *endptr = 0;
-		double port = std::strtod(redirect[0].c_str(), &endptr);
-		if (std::string(endptr) != "" || port != static_cast<int>(port) || port < 0)
-			return ERROR;
-		return_code = static_cast<int>(port);
+		double d_port = std::strtod(redirect[0].c_str(), &endptr);
+		int port = static_cast<int>(d_port);
+	
+		if (strlen(endptr) != 0 || d_port != port || d_port < 0)
+			return ERROR;	// !!! 올바른 value가 아님
 
+		return_code = port;
 		if (redirect.size() == 2) {
 			return_data = redirect[1];
 		}
+		simple.erase(REDIRECT);
 	}
 
-	if (simple.find(ALLOWED_METHOD) != simple.end()) {
-		std::vector<std::string> method = ft_split_space(simple[ALLOWED_METHOD]);
-		if (method.size() < 1 || method.size() > 3)
-			return ERROR;
-		
-		for (size_t i = 0; i < method.size(); i++) {
-			limit_except.push_back(method[i]);
-		}
-	}
 	return SUCCESS;
 }
 
@@ -72,5 +66,8 @@ int ConfigLocation::parsingLocation(std::string const &block) {
 	for (size_t i = 0; i < blocks.size(); i++) {
 		identifyBlock(blocks[i]);
 	}
+
+	// if (!simple_directive.empty())
+	// 	return ERROR;	// 유효하지 않은 지시어가 남아있으면 에러
 	return SUCCESS;
 }

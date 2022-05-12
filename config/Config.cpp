@@ -24,9 +24,13 @@ ConfigHttp Config::getHttpDirective() { return http_directive; }
 void Config::cutComment(std::string &buffer)
 {
 	size_t	pos = buffer.find("#");
+	size_t	pos2 = buffer.find("//");
 
 	if (pos != std::string::npos) {
 		buffer = buffer.substr(0, pos);
+	}
+	if (pos2 != std::string::npos) {
+		buffer = buffer.substr(0, pos2);
 	}
 }
 
@@ -96,8 +100,8 @@ int Config::identifyHttpBlock(std::string const &block)
 
 	if (block_name == "http") {
 		http_directive.parsingHttp(block_content);
-	} else if (block_name != "") {
-		// return ERROR;
+	} else if (!(block_name == "" && block_content == "")) {
+		return ERROR;	// 유효하지 않은 블럭
 	}
 	return SUCCESS;
 }
@@ -112,7 +116,7 @@ int Config::parseGeneralDirective(std::map<std::string, std::string> &directive,
 	{
 		split_line = ft_split_space(main_line[i]);
 		if (split_line.size() < 2)
-			return ERROR;
+			return ERROR;	// 지시어 형식이 맞지 않음
 		value = split_line[1];
 		for (size_t i = 2; i < split_line.size(); i++)
 			value += " " + split_line[i];
@@ -126,8 +130,7 @@ int Config::parsingConfig()
 	size_t pos;
 	std::vector<std::string> blocks;
 
-	if (readConfigFile() == ERROR)
-		return ERROR;
+	readConfigFile();
 	
 	pos = config_text.find(MAIN_SEPARATOR);
 	if (pos == std::string::npos) {
@@ -151,17 +154,23 @@ int Config::parsingMimeTypes(std::string const &filename) {
 
 	if (is.fail()) {
 		std::cerr << "Unable to find the file: " << filename << std::endl;
-		return ERROR;
+		return ERROR;	// 파일 열기 실패
 	}
 	while (std::getline(is, buffer)) {
 		line += buffer;
 	}
+
 	split_line = ft_split(line, ";");
+	if (ft_trim(split_line[split_line.size() - 1]) != "") {
+		return ERROR;	// line이 ;으로 끝나지 않음
+	} else {
+		split_line.pop_back();
+	}
 
 	for (size_t i = 0; i < split_line.size(); i++) {
 		std::vector<std::string> key_value = ft_split_space(split_line[i]);
 		if (key_value.size() < 2) {
-			return ERROR;
+			return ERROR;	// 지시어 형식이 맞지 않음
 		}
 		for (size_t i = 1; i < key_value.size(); i++) {
 			mime_types[key_value[i]] = key_value[0];
