@@ -27,7 +27,7 @@ public:
 	void	setRedirect();
 	void	makeHeader();
 	void	makeEntity();
-	std::string makeResponse();
+	std::string	makeResponse();
 	void	makeDeleteResponse();
 	void	makeGetResponse();
 	void	makeErrorResponse(std::string error_num);

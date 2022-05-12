@@ -109,14 +109,13 @@ std::string Response::makeResponse()
 	std::map<std::string, std::string>::iterator it;
 	//요청 url <=> location 매핑
 	mappingPath();
-	setRedirect();
 	std::cout << "[Mapping Path] url: " << route->getUrl() << ", file:" << file << std::endl;
 	//요청 method가 limitExcept에 존재하지 않으면 405 error
-	// if (find(route->getLimitExcept().begin(), route->getLimitExcept().end(),
-	// 		 request->getMethod()) == route->getLimitExcept().end())
-	// {
-	// 	makeErrorResponse("405");
-	// }
+	if (find(route->getLimitExcept().begin(), route->getLimitExcept().end(),
+			 request->getMethod()) == route->getLimitExcept().end())
+	{
+		makeErrorResponse("405");
+	}
 	if (request->getMethod() == "GET")
 	{
 		std::cout << "GET" << std::endl;
@@ -132,6 +131,7 @@ std::string Response::makeResponse()
 		std::cout << "DELETE" << std::endl;
 		makeDeleteResponse();
 	}
+	setRedirect();
 	send_data += this->start_line;
 	for (it = this->header.begin(); it != this->header.end(); it++)
 	{
