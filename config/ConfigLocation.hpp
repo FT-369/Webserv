@@ -10,17 +10,17 @@ class ConfigLocation
 private:
 	std::string _url;
 	CommonDirective _common_directive;
-	int _return_code;
+	std::string _return_code;
 	std::string _return_data;
 	std::map<std::string, std::string> _simple_directive;
 
 public:
-	ConfigLocation(std::string const &url, CommonDirective const &c);
+	ConfigLocation(std::string const &url, CommonDirective const &c, std::string const &return_code, std::string const &return_data);
 	~ConfigLocation();
 	std::string getUrl();
 	CommonDirective getCommonDirective();
-	int getReturnCode();
-	std::string getReturnDate();
+	std::string getReturnCode();
+	std::string getReturnData();
 	std::map<std::string, std::string> getSimpleDirective();
 	int parsingLocation(std::string const &block);
 
