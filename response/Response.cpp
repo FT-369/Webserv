@@ -50,6 +50,9 @@ void Response::makeHeader()
 void Response::makeEntity(std::string file)
 {
 	std::string buffer;
+	std::string filePath;
+	// std::cout << "경로 : " << this->route->getCommonDirective().root + "/" + this->route->getCommonDirective().index[0] << std::endl;
+	// std::ifstream is(this->route->getCommonDirective().root + "/" + this->route->getCommonDirective().index[0]);
 	std::ifstream is(file);
 
 	if (is.fail())
@@ -64,68 +67,84 @@ void Response::makeEntity(std::string file)
 	status = "200";
 }
 
+void Response::setRedirect()
+{
+	if (!route->getReturnCode())
+		return;
+	this->status = std::to_string(route->getReturnCode());
+	header["Location"] = route->getReturnDate();
+}
+
 void Response::mappingPath()
 {
-	int path_len = request->getPath().size();
-	std::string path;
-
-	for (int i = path_len - 1; i >= 0; i--)
+	std::string path = request->getPath();
+	int path_len = path.size();
+	std::cout << "path : " << path << std::endl;
+	file = "";
+	for (int i = path_len - 1; i >= -1; i--)
 	{
-		if (i == path_len - 1 || request->getPath()[i] == '/')
+		if (i == path_len - 1 || path[i + 1] == '/')
 		{
 			for (int j = 0; j < locations.size(); j++)
 			{
-				path = request->getPath();
-				if (i != path_len - 1)
-				{
-					path = request->getPath().substr(0, i);
-				}
-				if (path == locations[j].getUrl() || path == locations[j].getUrl() + "/")
+				if (path.substr(0, i + 1) == locations[j].getUrl() || path.substr(0, i + 1) == locations[j].getUrl() + "/")
 				{
 					route = new ConfigLocation(locations[j].getUrl(), locations[j].getCommonDirective());
 					if (i != path_len - 1)
-					{
-						file = request->getPath().substr(i);
-					}
-					else
-					{
-						file = "";
-					}
+						file = path.substr(i + 1);
+					return ;
 				}
-				else if (route == 0 && locations[j].getUrl() == "/")
+				else if (i == -1 && locations[j].getUrl() == "/")
 				{
 					route = new ConfigLocation("/", locations[j].getCommonDirective());
 					file = request->getPath();
+					return ;
 				}
 			}
 		}
 	}
 }
 
+std::string Response::makeResponse()
+{
+	std::string send_data;
+	std::map<std::string, std::string>::iterator it;
+	//요청 url <=> location 매핑
+	mappingPath();
+	std::cout << "[Mapping Path] url: " << route->getUrl() << ", file:" << file << std::endl;
+	//요청 method가 limitExcept에 존재하지 않으면 405 error
+	if (find(route->getCommonDirective().limit_except.begin(), route->getCommonDirective().limit_except.end(),
+			 request->getMethod()) == route->getCommonDirective().limit_except.end())
+	{
+		makeErrorResponse("405");
+	}
+	else if (request->getMethod() == "GET")
+	{
+		std::cout << "GET" << std::endl;
+		makeGetResponse();
+	}
+	else if (request->getMethod() == "POST")
+	{
+		std::cout << "POST" << std::endl;
+		// makePostResponse();
+	}
+	else if (request->getMethod() == "DELETE")
+	{
+		std::cout << "DELETE" << std::endl;
+		makeDeleteResponse();
+	}
+	setRedirect();
+	send_data += this->start_line;
+	for (it = this->header.begin(); it != this->header.end(); it++)
+	{
+		send_data += it->first + ": " + it->second + "\r\n";
+	}
+	send_data += "\r\n" + entity + "\r\n";
+	return send_data;
+}
+
 std::string Response::settingRoute()
 {
-	/*
-	std::string filename;
-	if (파일명이 없고) { <- route의 url == request path 완벽히 일치
-		if (index가 있으면) { <- route의 멤버변수 확인
-			filename = IndexPage
-		} else (autoindex on) { <- route의 멤버변수 확인
-			filename = ListingPage
-		} else {
-			filename  = 403Page
-		}
-	} else { // 파일명이 있고
-		if (리소스가 있으면) {	<- 함수 이용해서, 디렉토리 및 파일이 있는지 확인
-			filename = StaticFile
-		} else if (autoindex on) { <- route의 멤버변수 확인
-			filename = ListingPage
-		} else {
-			filename = 403Page
-		}
-	}
-	makeEntity(filename);
-	*/
-
 	std::string entityFile = "./static_file/404.html";
 	std::string root = route->getCommonDirective().root;
 	std::vector<std::string> indexPage = route->getCommonDirective().index;
@@ -168,25 +187,26 @@ std::string Response::settingRoute()
 	}
 }
 
-std::string Response::makeGetResponse()
+void Response::makeGetResponse()
 {
-	std::string send_data;
-	std::map<std::string, std::string>::iterator it;
-
-	mappingPath();
-	std::cout << "[Mapping Path] url: " << route->getUrl() << ", file:" << file << std::endl;
-
 	makeEntity(settingRoute());
 	makeHeader();
 	makeStartLine();
+}
 
-	send_data += start_line;
-	for (it = header.begin(); it != header.end(); it++)
-	{
-		send_data += it->first + ": " + it->second + "\r\n";
-	}
-	send_data += "\r\n" + entity + "\r\n";
-	return send_data;
+void Response::makeDeleteResponse()
+{
+	makeEntity(settingRoute());
+	makeHeader();
+	makeStartLine();
+}
+
+void Response::makeErrorResponse(std::string error_num)
+{
+	this->status = error_num;
+	makeEntity(settingRoute());
+	makeHeader();
+	makeStartLine();
 }
 
 void Response::setStatusCode()
