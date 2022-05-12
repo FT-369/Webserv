@@ -4,6 +4,9 @@
 #include "Config.hpp"
 #include "Request.hpp"
 #include <algorithm>
+#include <unistd.h>
+#include <sys/stat.h>
+
 class Response
 {
 private:
@@ -23,10 +26,14 @@ public:
 	Response(std::map<std::string, std::string> const &mime_types, Request *request, std::vector<ConfigLocation> routes);
 	~Response();
 
-	void	setStatusCode();
+	void	setStatusCode(int code);
 	void	makeStartLine();
 	void	makeHeader();
 	void	makeEntity(std::string file);
+	int		isDirectory(const std::string &path);
+	int		isFile(const std::string &path);
+
+	void	makePostResponse();
 	std::string	settingRoute();
 	std::string	makeGetResponse();
 	std::string	getContentType(std::string file);

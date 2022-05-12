@@ -168,6 +168,92 @@ std::string Response::settingRoute()
 	}
 }
 
+
+int	Response::isDirectory(const std::string &path)
+{
+	struct stat sb;
+
+	if (stat(path.c_str(), &sb) != 0)
+		return 0;
+	if ((sb.st_mode & S_IFMT) & S_IFDIR)
+		return 1;
+	else 
+		return 0;
+
+}
+
+int	Response::isFile(const std::string &path)
+{
+	struct stat sb;
+	
+	if (stat(path.c_str(), &sb) != 0)
+		return 0;
+	if ((sb.st_mode & S_IFMT) & S_IFREG)
+		return 1;
+	else
+		return 0;
+}
+
+void	Response::makePostResponse()
+{
+	std::string filename;
+	std::string path = route->getUrl();
+
+	if (file == "")
+		filename = path + "/NewFile";
+	else
+		filename = path + file;
+	if (!isDirectory(path))
+	{
+		//throw 404
+	}
+	// creatfilename();
+	if (isDirectory(filename))
+	{
+		setStatusCode(400);
+		return;
+		//throw 400
+	}
+	if (isFile(filename))
+	{
+		std::ofstream ofs;
+
+		ofs.open(filename, std::ios::app);
+		if (ofs.is_open())
+			setStatusCode(200);
+		else
+		{
+			setStatusCode(403);
+			return ;
+		}
+		ofs << request->request_body;
+		ofs.close();
+	}
+	else
+	{
+		std::ofstream ofs(filename);
+		if (ofs.fail())
+		{
+			setStatusCode(500);
+			return ;
+		}
+		else
+			setStatusCode(201);
+		ofs << request->request_body;
+		ofs.close();
+	}
+	makeEntity();
+	makeHeader();
+	makeStartLine();
+
+	send_data += start_line;
+	for (it = header.begin(); it != header.end(); it++) {
+		send_data += it->first + ": " + it->second + "\r\n";
+	}
+	send_data += "\r\n" + entity + "\r\n";
+	return send_data;
+}
+
 std::string Response::makeGetResponse()
 {
 	std::string send_data;
