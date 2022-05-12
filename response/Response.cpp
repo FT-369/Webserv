@@ -51,12 +51,13 @@ void Response::makeHeader()
 void Response::makeEntity()
 {
 	std::string buffer;
+	std::string filePath;
+	// std::cout << "경로 : " << this->route->getCommonDirective().root + "/" + this->route->getCommonDirective().index[0] << std::endl;
+	// std::ifstream is(this->route->getCommonDirective().root + "/" + this->route->getCommonDirective().index[0]);
 	std::ifstream is("./static_file/index.html");
-
 	if (is.fail())
 	{
-		status = "404";
-		return; // throw error
+		return makeErrorResponse("404"); // throw error
 	}
 	while (std::getline(is, buffer))
 	{
@@ -68,7 +69,7 @@ void Response::makeEntity()
 void Response::setRedirect()
 {
 	if (!route->getReturnCode())
-		return ;
+		return;
 	this->status = std::to_string(route->getReturnCode());
 	header["Location"] = route->getReturnDate();
 }
@@ -78,27 +79,28 @@ void Response::mappingPath()
 	std::string path = request->getPath();
 	int path_len = path.size();
 	std::cout << "path : " << path << std::endl;
-	file = path.substr(1);
-	for (int i = path_len - 1; i >= 0; i--)
+	file = "";
+	for (int i = path_len - 1; i >= -1; i--)
 	{
-		if (i == path_len - 1 || path[i] == '/')
+		if (i == path_len - 1 || path[i + 1] == '/')
 		{
 			for (int j = 0; j < locations.size(); j++)
 			{
-				if (path.substr(0, i) == locations[j].getUrl())
+				if (path.substr(0, i + 1) == locations[j].getUrl())
 				{
 					route = new ConfigLocation(locations[j].getUrl(), locations[j].getCommonDirective());
 					if (i != path_len - 1)
 						file = path.substr(i + 1);
+					return;
 				}
-				else if (route == 0 && locations[j].getUrl() == "/")
+				else if (i == -1 && locations[j].getUrl() == "/")
 				{
 					route = new ConfigLocation("/", locations[j].getCommonDirective());
+					return;
 				}
 			}
 		}
 	}
-	setRedirect();
 }
 
 std::string Response::makeResponse()
@@ -109,12 +111,12 @@ std::string Response::makeResponse()
 	mappingPath();
 	setRedirect();
 	std::cout << "[Mapping Path] url: " << route->getUrl() << ", file:" << file << std::endl;
-	//요청 method가 limitExcept에 존재하지 않으면 405 error 
-	if (find(route->getLimitExcept().begin(), route->getLimitExcept().end(),
-			 request->getMethod()) == route->getLimitExcept().end())
-	{
-		makeErrorResponse("405");
-	}
+	//요청 method가 limitExcept에 존재하지 않으면 405 error
+	// if (find(route->getLimitExcept().begin(), route->getLimitExcept().end(),
+	// 		 request->getMethod()) == route->getLimitExcept().end())
+	// {
+	// 	makeErrorResponse("405");
+	// }
 	if (request->getMethod() == "GET")
 	{
 		std::cout << "GET" << std::endl;
@@ -123,7 +125,7 @@ std::string Response::makeResponse()
 	else if (request->getMethod() == "POST")
 	{
 		std::cout << "POST" << std::endl;
-		//makePostResponse();
+		// makePostResponse();
 	}
 	else if (request->getMethod() == "DELETE")
 	{

@@ -225,24 +225,24 @@ int Request::parseRequest()
 	switch (status)
 	{
 	case READ_REQUEST_LINE:
-		std::cout << "!!! parseRequestLine !!!   before: " << status << std::endl;
+		// std::cout << "!!! parseRequestLine !!!   before: " << status << std::endl;
 		if (parseRequestLine() == ERROR)
 			return ERROR;
-		std::cout << "!!! parseRequestLine !!!    after: " << status << std::endl;
+		// std::cout << "!!! parseRequestLine !!!    after: " << status << std::endl;
 		break;
 
 	case READ_REQUEST_HEADER:
-		std::cout << "!!! parseRequestHeader !!!   before: " << status << std::endl;
+		// std::cout << "!!! parseRequestHeader !!!   before: " << status << std::endl;
 		if (parseRequestHeader() == ERROR)
 			return ERROR;
-		std::cout << "!!! parseRequestHeader !!!    after: " << status << std::endl;
+		// std::cout << "!!! parseRequestHeader !!!    after: " << status << std::endl;
 		break;
 
 	case READ_REQUEST_BODY:
-		std::cout << "!!! parseRequestBody !!!   before: " << status << std::endl;
+		// std::cout << "!!! parseRequestBody !!!   before: " << status << std::endl;
 		if (parseRequestBody() == ERROR)
 			return ERROR;
-		std::cout << "!!! parseRequestBody !!!    after: " << status << std::endl;
+		// std::cout << "!!! parseRequestBody !!!    after: " << status << std::endl;
 		break;
 	
 	default:
