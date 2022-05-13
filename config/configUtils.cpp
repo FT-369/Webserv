@@ -52,10 +52,9 @@ int getCommonErrorPage(CommonDirective &directive, std::vector<std::string> cons
 		char *endptr = 0;
 		double d = std::strtod(line[i].c_str(), &endptr);
 		int n = static_cast<int>(d);
-
-		if (strlen(endptr) != 0 || d != n || d < 0.0)
+		if (strlen(endptr) != 0 || d != n || n < 300 || n > 599)
 			return ERROR; // !!! 올바른 value가 아님
-		directive._error_page[n] = error_page;
+		directive._error_page[line[i]] = error_page;
 	}
 	return SUCCESS;
 }

@@ -23,7 +23,7 @@ struct CommonDirective
 	std::string _root;
 	bool _autoindex;
 	std::vector<std::string> _index;
-	std::map<int, std::string> _error_page;
+	std::map<std::string, std::string> _error_page;
 	std::vector<std::string> _limit_except;
 	int _client_limit_body_size;
 	int _request_limit_header_size;

@@ -25,7 +25,7 @@ int ConfigServer::identifyLocationBlock(std::string const &block)
 		for (int i = 2; i < block_name_arg.size(); i++)
 			url += " " + block_name_arg[i];
 
-		ConfigLocation location(url, _common_directive);
+		ConfigLocation location(url, _common_directive, "", "");
 		location.parsingLocation(block_content);
 		_locations.push_back(location);
 	}
