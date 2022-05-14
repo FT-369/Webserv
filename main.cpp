@@ -81,6 +81,8 @@ void printLocationDirective(std::string name, ConfigLocation location) {
 int main(void)
 {
 	Config config;
+
+	config.setting();
 	Server server = Server(config);
 
 	// std::cout << config.getConfigText() << std::endl;

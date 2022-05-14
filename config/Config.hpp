@@ -16,12 +16,13 @@ private:
 
 public:
 	Config();
-	Config(std::string const &filename);
 	~Config();
 	std::string getFileName();
 	std::string getConfigText();
 	std::map<std::string, std::string> getGeneralDirective();
 	ConfigHttp getHttpDirective();
+	void setting();
+	void setting(std::string const &filename);
 
 private: // func
 	int identifyHttpBlock(std::string const &block);
@@ -30,7 +31,6 @@ private: // func
 	void cutComment(std::string &buffer);
 	int readConfigFile();
 	int parsingConfig();
-	int parsingMimeTypes(std::string const &filename);
 };
 
 #endif

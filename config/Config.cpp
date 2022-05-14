@@ -1,15 +1,7 @@
 #include "Config.hpp"
 
-Config::Config() : _filename(DEFALUT_CONF), _config_text("")
+Config::Config() : _filename(""), _config_text("")
 {
-	parsingConfig();
-	GlobalConfig::initMimeTyeps();
-	GlobalConfig::initStatusCode();
-}
-
-Config::Config(std::string const &filename) : _filename(filename), _config_text("")
-{
-	parsingConfig();
 	GlobalConfig::initMimeTyeps();
 	GlobalConfig::initStatusCode();
 }
@@ -161,4 +153,16 @@ int Config::parsingConfig()
 		identifyHttpBlock(blocks[i]);
 	}
 	return SUCCESS;
+}
+
+void Config::setting()
+{
+	_filename = DEFALUT_CONF;
+	parsingConfig();
+}
+
+void Config::setting(std::string const &filename)
+{
+	_filename = filename;
+	parsingConfig();
 }
