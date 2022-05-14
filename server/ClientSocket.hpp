@@ -22,8 +22,8 @@ public:
 	~ClientSocket();
 	Request *getRequest();
 	Response *getResponse();
-	void setResponse(Response *res);
 	int recieveRequest();
+	void sendResponse();
 	Status getRequestStatus();
 };
 

@@ -1,24 +1,29 @@
 #include "Response.hpp"
 
-Response::Response(std::map<std::string, std::string> const &mime_types, std::vector<ConfigLocation> locations)
-	: _mime_types(mime_types), _request(NULL), _locations(locations), _route(NULL)
+Response::Response(Request *request, ConfigServer server_info)
+	: _request(request), _socket_fd(-1), _socket_write(NULL), _server_info(server_info), _route(NULL)
 {
-}
+	_socket_fd = _request->getSocketFD();
+	_socket_write = fdopen(dup(_socket_fd), "w");
 
-Response::Response(std::map<std::string, std::string> const &mime_types, Request *request, std::vector<ConfigLocation> locations)
-	: _mime_types(mime_types), _request(request), _locations(locations), _route(NULL)
-{
+	std::vector<ConfigLocation> locations = _server_info.getLocations();
+	for (int i = 0; i < locations.size(); i++) {
+		if (locations[i].getUrl() == "/") {
+			_route = new ConfigLocation("/", locations[i].getCommonDirective(), locations[i].getReturnCode(),
+					locations[i].getReturnData());
+		}
+	}
 }
 
 Response::~Response()
 {
 }
 
-std::map<std::string, std::string> Response::getMimeType() { return _mime_types; }
+FILE* Response::getSocketWriteFD() { return _socket_write; }
 
 std::string Response::getContentType(std::string file)
 {
-	// std::string content_type = config.getDefaultType();
+	// std::string content_type = GlobalConfig::getDefaultType();
 	std::string content_type = "text/html";
 
 	size_t rpos = file.rfind(".");
@@ -30,14 +35,14 @@ std::string Response::getContentType(std::string file)
 	}
 	extension = file.substr(rpos + 1);
 
-	if (_mime_types.find(extension) != _mime_types.end())
-		content_type = _mime_types[extension];
+	if (GlobalConfig::getMimeTypes().find(extension) != GlobalConfig::getMimeTypes().end())
+		content_type = GlobalConfig::getMimeTypes()[extension];
 	return content_type;
 }
 
 void Response::makeStartLine()
 {
-	_start_line = _request->_protocol + " " + _status + " " + _status_code[_status] + "\r\n";
+	_start_line = _request->_protocol + " " + _status + " " + GlobalConfig::getStatusCode()[_status] + "\r\n";
 }
 
 void Response::makeHeader()
@@ -76,6 +81,7 @@ void Response::setRedirect()
 
 void Response::mappingPath()
 {
+	std::vector<ConfigLocation> locations = _server_info.getLocations();
 	std::string path = _request->getPath();
 	int path_len = path.size();
 	std::cout << "path : " << path << std::endl;
@@ -84,20 +90,20 @@ void Response::mappingPath()
 	{
 		if (i == path_len - 1 || path[i + 1] == '/')
 		{
-			for (int j = 0; j < _locations.size(); j++)
+			for (int j = 0; j < locations.size(); j++)
 			{
-				if (path.substr(0, i + 1) == _locations[j].getUrl() || path.substr(0, i + 1) == _locations[j].getUrl() + "/")
+				if (path.substr(0, i + 1) == locations[j].getUrl() || path.substr(0, i + 1) == locations[j].getUrl() + "/")
 				{
-					_route = new ConfigLocation(_locations[j].getUrl(), _locations[j].getCommonDirective(), _locations[j].getReturnCode(),
-					_locations[j].getReturnData());
+					_route = new ConfigLocation(locations[j].getUrl(), locations[j].getCommonDirective(), locations[j].getReturnCode(),
+					locations[j].getReturnData());
 					if (i != path_len - 1)
 						_file = path.substr(i + 1);
 					return;
 				}
-				else if (i == -1 && _locations[j].getUrl() == "/")
+				else if (i == -1 && locations[j].getUrl() == "/")
 				{
-					_route = new ConfigLocation("/", _locations[j].getCommonDirective(), _locations[j].getReturnCode(),
-					_locations[j].getReturnData());
+					_route = new ConfigLocation("/", locations[j].getCommonDirective(), locations[j].getReturnCode(),
+					locations[j].getReturnData());
 					_file = _request->getPath();
 					return;
 				}
@@ -106,11 +112,10 @@ void Response::mappingPath()
 	}
 }
 
-std::string Response::makeResponse()
+void Response::makeResponse()
 {
-	std::string send_data;
-	std::map<std::string, std::string>::iterator it;
 	std::vector<std::string> temp;
+
 	//요청 url <=> location 매핑
 	mappingPath();
 	temp = _route->getCommonDirective()._limit_except;
@@ -140,13 +145,25 @@ std::string Response::makeResponse()
 	setRedirect();
 	makeHeader();
 	makeStartLine();
+}
+
+void Response::combineResponse()
+{
+	std::string send_data;
+	std::map<std::string, std::string>::iterator it;
+
+	makeResponse();
+
 	send_data += _start_line;
 	for (it = _header.begin(); it != _header.end(); it++)
 	{
 		send_data += it->first + ": " + it->second + "\r\n";
 	}
 	send_data += "\r\n" + _entity + "\r\n";
-	return send_data;
+
+	fputs(send_data.c_str(), _socket_write);
+	fflush(_socket_write);
+	fclose(_socket_write);
 }
 
 std::string Response::settingRoute()
@@ -222,46 +239,4 @@ void Response::makeErrorResponse(std::string error_num)
 	{
 		_entity += buffer + "\n";
 	}
-}
-
-void Response::setStatusCode()
-{
-	_status_code["100"] = "Continue";
-	_status_code["101"] = "Switching Protocols";
-	_status_code["200"] = "OK";
-	_status_code["201"] = "Created";
-	_status_code["202"] = "Accepted";
-	_status_code["203"] = "Non-Authoritative";
-	_status_code["204"] = "No Content";
-	_status_code["205"] = "Reset Content";
-	_status_code["206"] = "Partial Content";
-	_status_code["300"] = "Multiple Choices";
-	_status_code["301"] = "Moved Permanently";
-	_status_code["302"] = "Found";
-	_status_code["303"] = "See Other";
-	_status_code["304"] = "Not Modified";
-	_status_code["305"] = "Use Proxy";
-	_status_code["307"] = "Temporary Redirect";
-	_status_code["400"] = "Bad Request";
-	_status_code["401"] = "Unauthorized";
-	_status_code["403"] = "Forbidden";
-	_status_code["404"] = "Not Found";
-	_status_code["405"] = "Method Not Allowed";
-	_status_code["406"] = "Not Acceptable";
-	_status_code["407"] = "Proxy Authentication";
-	_status_code["408"] = "Request Timeout";
-	_status_code["409"] = "Conflict";
-	_status_code["410"] = "Gone";
-	_status_code["411"] = "Length Required";
-	_status_code["412"] = "Precondition Failed";
-	_status_code["413"] = "Request Entity Too Large";
-	_status_code["414"] = "Request URI Too Long";
-	_status_code["415"] = "Unsupported Media Type";
-	_status_code["416"] = "Requested Range Not Satisfiable";
-	_status_code["500"] = "Expectation Failed";
-	_status_code["501"] = "Internal Server Error";
-	_status_code["502"] = "Not Implemented";
-	_status_code["503"] = "Bad Gateway";
-	_status_code["504"] = "Gateway Timeout";
-	_status_code["505"] = "HTTP Version Not Supported";
 }
