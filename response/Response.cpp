@@ -1,18 +1,9 @@
 #include "Response.hpp"
 
-Response::Response(Request *request, ConfigServer server_info)
-	: _request(request), _socket_fd(-1), _socket_write(NULL), _server_info(server_info), _route(NULL)
+Response::Response(Request *request)
+	: _request(request), _socket_write(NULL), _route(NULL)
 {
-	_socket_fd = _request->getSocketFD();
-	_socket_write = fdopen(dup(_socket_fd), "w");
-
-	std::vector<ConfigLocation> locations = _server_info.getLocations();
-	for (int i = 0; i < locations.size(); i++) {
-		if (locations[i].getUrl() == "/") {
-			_route = new ConfigLocation("/", locations[i].getCommonDirective(), locations[i].getReturnCode(),
-					locations[i].getReturnData());
-		}
-	}
+	_socket_write = fdopen(dup(_request->getSocketFD()), "w");
 }
 
 Response::~Response()
@@ -79,9 +70,9 @@ void Response::setRedirect()
 	_header["Location"] = _route->getReturnData();
 }
 
-void Response::mappingPath()
+void Response::mappingPath(std::vector<ConfigLocation> locations)
 {
-	std::vector<ConfigLocation> locations = _server_info.getLocations();
+	// std::vector<ConfigLocation> locations = _server_info.getLocations();
 	std::string path = _request->getPath();
 	int path_len = path.size();
 	std::cout << "path : " << path << std::endl;
@@ -117,7 +108,7 @@ void Response::makeResponse()
 	std::vector<std::string> temp;
 
 	//요청 url <=> location 매핑
-	mappingPath();
+	// mappingPath();
 	temp = _route->getCommonDirective()._limit_except;
 	std::cout << "[Mapping Path] url: " << _route->getUrl() << ", file:" << _file << std::endl;
 	if (find(temp.begin(), temp.end(), _request->getMethod()) == temp.end())

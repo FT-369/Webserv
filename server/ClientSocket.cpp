@@ -3,7 +3,7 @@
 ClientSocket::ClientSocket(int fd, ConfigServer server_info)
 	: Socket(CLIENT_SOCKET, fd), _server_info(server_info), _request(new Request(fd)), _response(NULL)
 {
-	_response = new Response(_request, server_info);
+	_response = new Response(_request);
 };
 
 ClientSocket::~ClientSocket(){
@@ -28,5 +28,6 @@ Status ClientSocket::getRequestStatus()
 
 void ClientSocket::sendResponse()
 {
+	_response->mappingPath(_server_info.getLocations());
 	return _response->combineResponse();
 }
