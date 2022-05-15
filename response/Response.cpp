@@ -40,6 +40,11 @@ void Response::makeStartLine()
 	_start_line = _request->_protocol + " " + _status + " " + _status_code[_status] + "\r\n";
 }
 
+void Response::makePostHeader()
+{
+	_header["Server"] = "Mac Web Server";
+}
+
 void Response::makeHeader()
 {
 	_header["Content-type"] = getContentType(_request->getPath());
@@ -51,13 +56,11 @@ void Response::makeEntity(std::string file)
 {
 	std::string buffer;
 	std::string filePath;
-	// std::cout << "경로 : " << this->route->getCommonDirective().root + "/" + this->route->getCommonDirective().index[0] << std::endl;
-	// std::ifstream is(this->route->getCommonDirective().root + "/" + this->route->getCommonDirective().index[0]);
 	std::ifstream is(file);
 
 	if (is.fail())
 	{
-		_status = "404";
+		makeErrorResponse("404");
 		return; // throw error
 	}
 	while (std::getline(is, buffer))
@@ -69,10 +72,11 @@ void Response::makeEntity(std::string file)
 
 void Response::setRedirect()
 {
-	if (!_route->getReturnCode())
+
+	if (_route->getReturnCode() == "")
 		return;
-	_status = std::to_string(_route->getReturnCode());
-	_header["Location"] = _route->getReturnDate();
+	_status = _route->getReturnCode();
+	_header["Location"] = _route->getReturnData();
 }
 
 void Response::mappingPath()
@@ -89,14 +93,16 @@ void Response::mappingPath()
 			{
 				if (path.substr(0, i + 1) == _locations[j].getUrl() || path.substr(0, i + 1) == _locations[j].getUrl() + "/")
 				{
-					_route = new ConfigLocation(_locations[j].getUrl(), _locations[j].getCommonDirective());
+					_route = new ConfigLocation(_locations[j].getUrl(), _locations[j].getCommonDirective(), _locations[j].getReturnCode(),
+					_locations[j].getReturnData());
 					if (i != path_len - 1)
 						_file = path.substr(i + 1);
 					return;
 				}
 				else if (i == -1 && _locations[j].getUrl() == "/")
 				{
-					_route = new ConfigLocation("/", _locations[j].getCommonDirective());
+					_route = new ConfigLocation("/", _locations[j].getCommonDirective(), _locations[j].getReturnCode(),
+					_locations[j].getReturnData());
 					_file = _request->getPath();
 					return;
 				}
@@ -109,13 +115,14 @@ std::string Response::makeResponse()
 {
 	std::string send_data;
 	std::map<std::string, std::string>::iterator it;
+	std::vector<std::string> temp;
 	//요청 url <=> location 매핑
 	mappingPath();
+	temp = _route->getCommonDirective()._limit_except;
 	std::cout << "[Mapping Path] url: " << _route->getUrl() << ", file:" << _file << std::endl;
-	//요청 method가 limitExcept에 존재하지 않으면 405 error
-	if (find(_route->getCommonDirective()._limit_except.begin(), _route->getCommonDirective()._limit_except.end(),
-			 _request->getMethod()) == _route->getCommonDirective()._limit_except.end())
+	if (find(temp.begin(), temp.end(), _request->getMethod()) == temp.end())
 	{
+		std::cout << "ERROR Response " << std::endl;
 		makeErrorResponse("405");
 	}
 	else if (_request->getMethod() == "GET")
@@ -133,7 +140,11 @@ std::string Response::makeResponse()
 		std::cout << "DELETE" << std::endl;
 		makeDeleteResponse();
 	}
+	makeHeader();
+	makeStartLine();
 	setRedirect();
+	makeHeader();
+	makeStartLine();
 	send_data += _start_line;
 	for (it = _header.begin(); it != _header.end(); it++)
 	{
@@ -151,20 +162,16 @@ std::string Response::settingRoute()
 
 	if (_file == "")
 	{
-
 		if (!indexPage.empty())
 		{
 			for (size_t i = 0; i < indexPage.size(); i++)
 			{
 				std::ifstream idx(root + "/" + indexPage[i]);
-				std::cout << "indexPage[" << i << "]: " << indexPage[i] << std::endl;
 				if (idx.is_open())
 				{
 					entityFile = root + "/" + indexPage[i];
-					std::cout << "indexPage[" << i << "] is open" << std::endl;
 					break;
 				}
-				std::cout << "indexPage[" << i << "] is fail" << std::endl;
 			}
 		}
 		else if (_route->getCommonDirective()._autoindex)
@@ -188,26 +195,132 @@ std::string Response::settingRoute()
 	return entityFile;
 }
 
+
+int	Response::isDirectory(const std::string &path)
+{
+	struct stat sb;
+
+	if (stat(path.c_str(), &sb) != 0)
+		return 0;
+	if ((sb.st_mode & S_IFMT) & S_IFDIR)
+		return 1;
+	else 
+		return 0;
+
+}
+
+int	Response::isFile(const std::string &path)
+{
+	struct stat sb;
+	
+	if (stat(path.c_str(), &sb) != 0)
+		return 0;
+	if ((sb.st_mode & S_IFMT) & S_IFREG)
+		return 1;
+	else
+		return 0;
+}
+
+void	Response::makePostResponse()
+{
+	std::string path = _route->getCommonDirective()._root;
+	std::string dir, filename;
+	size_t rpos = _file.rfind("/");
+	std::string dirpath;
+
+	if (rpos != std::string::npos)
+		dir = _file.substr(0, rpos);
+	if (dir == "")
+	{
+		dirpath = path;
+		if (_file == "")
+			filename = dirpath + "/NewFile";
+		else
+			filename = dirpath + _file;
+	}
+	else
+	{
+		dirpath = dir;
+		if (_file == "")
+			filename = dirpath + "/NewFile";
+		else
+			filename = _file;
+	}
+	// creatfilename();
+	if (isDirectory(filename))
+	{
+		_status = "400";
+		//makeErrorPage()
+		return;
+		//throw 400
+	}
+	if (isFile(filename))
+	{
+		std::ofstream ofs;
+
+		ofs.open(filename, std::ios::app);
+		if (ofs.is_open())
+			_status = "200";
+		else
+		{
+			_status = "403";
+			// makeErrorPage();
+			return ;
+		}
+		ofs << _request->_request_body;
+		ofs.close();
+	}
+	else
+	{
+		std::ofstream ofs(filename);
+		if (ofs.fail())
+		{
+			_status = "500";
+			// makeErrorPage();
+			return ;
+		}
+		else
+			_status = "201";
+		ofs << _request->_request_body;
+		ofs.close();
+	}
+	// makeEntity(settingRoute()); entity가 없다 post는
+	makePostHeader();
+	makeStartLine();
+}
+
 void Response::makeGetResponse()
 {
 	makeEntity(settingRoute());
-	makeHeader();
-	makeStartLine();
+
 }
 
 void Response::makeDeleteResponse()
 {
 	makeEntity(settingRoute());
-	makeHeader();
-	makeStartLine();
 }
 
 void Response::makeErrorResponse(std::string error_num)
 {
+	std::string root = "./static_file/defaultErrorPage.html";
+	std::map<std::string, std::string> temp = _route->getCommonDirective()._error_page;
+	std::string buffer;
+
 	_status = error_num;
-	makeEntity(settingRoute());
-	makeHeader();
-	makeStartLine();
+	if (temp.find(_status) != temp.end())
+	{
+		root =_route->getCommonDirective()._root + "/" + _route->getCommonDirective()._error_page[_status];
+	}
+	std::ifstream idx(root);
+	if (idx.is_open() == false)
+	{
+		_entity = "";
+		return ;
+	}
+	while (std::getline(idx, buffer))
+	{
+		_entity += buffer + "\n";
+	}
 }
 
 void Response::setStatusCode()

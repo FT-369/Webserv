@@ -3,13 +3,14 @@
 ConfigLocation::ConfigLocation() {}
 ConfigLocation::~ConfigLocation() {}
 
-ConfigLocation::ConfigLocation(std::string const &url, CommonDirective const &c)
-	: _url(url), _common_directive(c), _return_code(-1) {}
+ConfigLocation::ConfigLocation(std::string const &url, CommonDirective const &c, std::string const &return_code,
+ std::string const &return_data)
+	: _url(url), _common_directive(c), _return_code(return_code), _return_data(return_data) {}
 
 std::string ConfigLocation::getUrl() { return _url; }
 CommonDirective ConfigLocation::getCommonDirective() { return _common_directive; }
-int ConfigLocation::getReturnCode() { return _return_code; }
-std::string ConfigLocation::getReturnDate() { return _return_data; }
+std::string ConfigLocation::getReturnCode() { return _return_code; }
+std::string ConfigLocation::getReturnData() { return _return_data; }
 std::map<std::string, std::string> ConfigLocation::getSimpleDirective() { return _simple_directive; }
 
 int ConfigLocation::identifyBlock(std::string const &block)
@@ -37,10 +38,9 @@ int ConfigLocation::parseLocationDirecive(std::map<std::string, std::string> &si
 		double d_port = std::strtod(redirect[0].c_str(), &endptr);
 		int port = static_cast<int>(d_port);
 
-		if (strlen(endptr) != 0 || d_port != port || d_port < 0)
+		if (strlen(endptr) != 0 || d_port != port || d_port > 399 || d_port < 300)
 			return ERROR; // !!! 올바른 value가 아님
-
-		_return_code = port;
+		_return_code = redirect[0];
 		if (redirect.size() == 2)
 		{
 			_return_data = redirect[1];
