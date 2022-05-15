@@ -1,4 +1,5 @@
 #include "Response.hpp"
+#include <dirent.h>
 
 Response::Response(Request *request)
 	: _request(request), _socket_write(NULL), _route(NULL)
@@ -189,11 +190,17 @@ std::string Response::settingRoute()
 	}
 	else
 	{
+		DIR* isDir = 0;
 		std::ifstream is(root + _file);
 
 		if (!is.fail())
 		{
 			entityFile = root + _file;
+			if ((isDir = opendir(entityFile.c_str())) != NULL)
+			{
+				entityFile = root + "/test/directory.html";
+				// autoIndexPage 만들기?
+			}
 		}
 		else if (_route->getCommonDirective()._autoindex)
 		{
