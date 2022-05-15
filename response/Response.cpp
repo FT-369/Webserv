@@ -40,6 +40,11 @@ void Response::makeStartLine()
 	_start_line = _request->_protocol + " " + _status + " " + _status_code[_status] + "\r\n";
 }
 
+void Response::makePostHeader()
+{
+	_header["Server"] = "Mac Web Server";
+}
+
 void Response::makeHeader()
 {
 	_header["Content-type"] = getContentType(_request->getPath());
@@ -188,6 +193,100 @@ std::string Response::settingRoute()
 		}
 	}
 	return entityFile;
+}
+
+
+int	Response::isDirectory(const std::string &path)
+{
+	struct stat sb;
+
+	if (stat(path.c_str(), &sb) != 0)
+		return 0;
+	if ((sb.st_mode & S_IFMT) & S_IFDIR)
+		return 1;
+	else 
+		return 0;
+
+}
+
+int	Response::isFile(const std::string &path)
+{
+	struct stat sb;
+	
+	if (stat(path.c_str(), &sb) != 0)
+		return 0;
+	if ((sb.st_mode & S_IFMT) & S_IFREG)
+		return 1;
+	else
+		return 0;
+}
+
+void	Response::makePostResponse()
+{
+	std::string path = _route->getCommonDirective()._root;
+	std::string dir, filename;
+	size_t rpos = _file.rfind("/");
+	std::string dirpath;
+
+	if (rpos != std::string::npos)
+		dir = _file.substr(0, rpos);
+	if (dir == "")
+	{
+		dirpath = path;
+		if (_file == "")
+			filename = dirpath + "/NewFile";
+		else
+			filename = dirpath + _file;
+	}
+	else
+	{
+		dirpath = dir;
+		if (_file == "")
+			filename = dirpath + "/NewFile";
+		else
+			filename = _file;
+	}
+	// creatfilename();
+	if (isDirectory(filename))
+	{
+		_status = "400";
+		//makeErrorPage()
+		return;
+		//throw 400
+	}
+	if (isFile(filename))
+	{
+		std::ofstream ofs;
+
+		ofs.open(filename, std::ios::app);
+		if (ofs.is_open())
+			_status = "200";
+		else
+		{
+			_status = "403";
+			// makeErrorPage();
+			return ;
+		}
+		ofs << _request->_request_body;
+		ofs.close();
+	}
+	else
+	{
+		std::ofstream ofs(filename);
+		if (ofs.fail())
+		{
+			_status = "500";
+			// makeErrorPage();
+			return ;
+		}
+		else
+			_status = "201";
+		ofs << _request->_request_body;
+		ofs.close();
+	}
+	// makeEntity(settingRoute()); entity가 없다 post는
+	makePostHeader();
+	makeStartLine();
 }
 
 void Response::makeGetResponse()
