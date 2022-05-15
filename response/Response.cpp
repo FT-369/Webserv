@@ -1,5 +1,4 @@
 #include "Response.hpp"
-#include <dirent.h>
 
 Response::Response(Request *request)
 	: _request(request), _socket_write(NULL), _route(NULL)
@@ -163,9 +162,38 @@ void Response::combineResponse()
 	fclose(_socket_write);
 }
 
-std::string Response::settingRoute()
+void Response::makeAutoIndex(std::string directory, DIR *dir)
 {
-	std::string entityFile = "./static_file/404.html";
+	std::string host = "http://" + _request->getRequestHeader()["Host"];
+	std::string pos = directory[directory.size() - 1] == '/' ? directory : directory + "/";
+
+	_entity += "<!DOCTYPE html>\n";
+	_entity += "<html>\n";
+	_entity += "<head>\n</head>\n";
+	_entity += "<body>\n";
+	_entity += "<h1> Index of "+ pos + "</h1>\n";
+
+	if (dir == NULL)
+		dir = opendir(_route->getCommonDirective()._root.c_str());
+
+	struct dirent *file = NULL;
+	while ((file = readdir(dir)) != NULL) {
+		std::string d_name = file->d_type == DT_DIR ? std::string(file->d_name) + "/" : std::string(file->d_name);
+		_entity += "<a href=\"" + host + pos + file->d_name + "\">";
+		_entity += file->d_name;
+		if (file->d_type == DT_DIR)
+			_entity += + "/";
+		_entity += "</a><br>\n";
+	}
+	closedir(dir);
+
+	_entity += "</body>\n";
+	_entity += "</html>\n";
+}
+
+void Response::settingRoute()
+{
+	std::string entityFile;
 	std::string root = _route->getCommonDirective()._root;
 	std::vector<std::string> indexPage = _route->getCommonDirective()._index;
 
@@ -178,14 +206,13 @@ std::string Response::settingRoute()
 				std::ifstream idx(root + "/" + indexPage[i]);
 				if (idx.is_open())
 				{
-					entityFile = root + "/" + indexPage[i];
-					break;
+					return makeEntity(entityFile = root + "/" + indexPage[i]);
 				}
 			}
 		}
 		else if (_route->getCommonDirective()._autoindex)
 		{
-			entityFile = root + "/autoindex.html";
+			return makeAutoIndex("/", 0);
 		}
 	}
 	else
@@ -193,21 +220,25 @@ std::string Response::settingRoute()
 		DIR* isDir = 0;
 		std::ifstream is(root + _file);
 
-		if (!is.fail())
+		if (!is.fail()) // 존재하는 파일 or 디렉토리
 		{
 			entityFile = root + _file;
-			if ((isDir = opendir(entityFile.c_str())) != NULL)
+			if ((isDir = opendir(entityFile.c_str())) == NULL) // 파일인 경우
 			{
-				entityFile = root + "/test/directory.html";
-				// autoIndexPage 만들기?
+				return makeEntity(entityFile);
+			}
+			else if (_route->getCommonDirective()._autoindex) // 디렉토리인데 autoindex가 켜져있으면
+			{
+				return makeAutoIndex(_file, isDir);
 			}
 		}
 		else if (_route->getCommonDirective()._autoindex)
 		{
-			entityFile = root + "/autoindex.html";
+			return makeAutoIndex("/", 0);
 		}
 	}
-	return entityFile;
+	// return makeEntity("./static_file/404.html");
+	return makeErrorResponse("404");
 }
 
 
@@ -306,13 +337,12 @@ void	Response::makePostResponse()
 
 void Response::makeGetResponse()
 {
-	makeEntity(settingRoute());
-
+	settingRoute();
 }
 
 void Response::makeDeleteResponse()
 {
-	makeEntity(settingRoute());
+	settingRoute();
 }
 
 void Response::makeErrorResponse(std::string error_num)

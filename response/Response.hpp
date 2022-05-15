@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <dirent.h>
 
 class Response
 {
@@ -39,7 +40,8 @@ public:
 	void makePostResponse();
 	void makeDeleteResponse();
 	void makeErrorResponse(std::string error_num);
-	std::string settingRoute();
+	void makeAutoIndex(std::string directory, DIR* dir);
+	void settingRoute();
 	std::string getContentType(std::string file);
 	void mappingPath(std::vector<ConfigLocation> loacations);
 };
