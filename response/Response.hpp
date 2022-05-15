@@ -4,6 +4,8 @@
 #include "Config.hpp"
 #include "Request.hpp"
 #include <algorithm>
+#include <unistd.h>
+#include <sys/stat.h>
 
 class Response
 {
@@ -25,10 +27,16 @@ public:
 	void makeStartLine();
 	void setRedirect();
 	void makeHeader();
+	void makePostHeader();
+	void mappingPath();
 	void makeEntity(std::string file);
 	void makeResponse();
 	void combineResponse();
+	int isDirectory(const std::string &path);
+	int isFile(const std::string &path);
+
 	void makeGetResponse();
+	void makePostResponse();
 	void makeDeleteResponse();
 	void makeErrorResponse(std::string error_num);
 	std::string settingRoute();
