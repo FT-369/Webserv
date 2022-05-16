@@ -1,24 +1,20 @@
 #include "Response.hpp"
 
-Response::Response(std::map<std::string, std::string> const &mime_types, std::vector<ConfigLocation> locations)
-	: _mime_types(mime_types), _request(NULL), _locations(locations), _route(NULL)
+Response::Response(Request *request)
+	: _request(request), _socket_write(NULL), _route(NULL)
 {
-}
-
-Response::Response(std::map<std::string, std::string> const &mime_types, Request *request, std::vector<ConfigLocation> locations)
-	: _mime_types(mime_types), _request(request), _locations(locations), _route(NULL)
-{
+	_socket_write = fdopen(dup(_request->getSocketFD()), "w");
 }
 
 Response::~Response()
 {
 }
 
-std::map<std::string, std::string> Response::getMimeType() { return _mime_types; }
+FILE* Response::getSocketWriteFD() const { return _socket_write; }
 
 std::string Response::getContentType(std::string file)
 {
-	// std::string content_type = config.getDefaultType();
+	// std::string content_type = GlobalConfig::getDefaultType();
 	std::string content_type = "text/html";
 
 	size_t rpos = file.rfind(".");
@@ -30,14 +26,14 @@ std::string Response::getContentType(std::string file)
 	}
 	extension = file.substr(rpos + 1);
 
-	if (_mime_types.find(extension) != _mime_types.end())
-		content_type = _mime_types[extension];
+	if (GlobalConfig::getMimeTypes().find(extension) != GlobalConfig::getMimeTypes().end())
+		content_type = GlobalConfig::getMimeTypes()[extension];
 	return content_type;
 }
 
 void Response::makeStartLine()
 {
-	_start_line = _request->_protocol + " " + _status + " " + _status_code[_status] + "\r\n";
+	_start_line = _request->_protocol + " " + _status + " " + GlobalConfig::getStatusCode()[_status] + "\r\n";
 }
 
 void Response::makePostHeader()
@@ -79,8 +75,9 @@ void Response::setRedirect()
 	_header["Location"] = _route->getReturnData();
 }
 
-void Response::mappingPath()
+void Response::mappingPath(std::vector<ConfigLocation> const &locations)
 {
+	// std::vector<ConfigLocation> locations = _server_info.getLocations();
 	std::string path = _request->getPath();
 	int path_len = path.size();
 	std::cout << "path : " << path << std::endl;
@@ -89,20 +86,20 @@ void Response::mappingPath()
 	{
 		if (i == path_len - 1 || path[i + 1] == '/')
 		{
-			for (int j = 0; j < _locations.size(); j++)
+			for (int j = 0; j < locations.size(); j++)
 			{
-				if (path.substr(0, i + 1) == _locations[j].getUrl() || path.substr(0, i + 1) == _locations[j].getUrl() + "/")
+				if (path.substr(0, i + 1) == locations[j].getUrl() || path.substr(0, i + 1) == locations[j].getUrl() + "/")
 				{
-					_route = new ConfigLocation(_locations[j].getUrl(), _locations[j].getCommonDirective(), _locations[j].getReturnCode(),
-					_locations[j].getReturnData());
+					_route = new ConfigLocation(locations[j].getUrl(), locations[j].getCommonDirective(), locations[j].getReturnCode(),
+					locations[j].getReturnData());
 					if (i != path_len - 1)
 						_file = path.substr(i + 1);
 					return;
 				}
-				else if (i == -1 && _locations[j].getUrl() == "/")
+				else if (i == -1 && locations[j].getUrl() == "/")
 				{
-					_route = new ConfigLocation("/", _locations[j].getCommonDirective(), _locations[j].getReturnCode(),
-					_locations[j].getReturnData());
+					_route = new ConfigLocation("/", locations[j].getCommonDirective(), locations[j].getReturnCode(),
+					locations[j].getReturnData());
 					_file = _request->getPath();
 					return;
 				}
@@ -111,13 +108,12 @@ void Response::mappingPath()
 	}
 }
 
-std::string Response::makeResponse()
+void Response::makeResponse()
 {
-	std::string send_data;
-	std::map<std::string, std::string>::iterator it;
 	std::vector<std::string> temp;
+
 	//요청 url <=> location 매핑
-	mappingPath();
+	// mappingPath();
 	temp = _route->getCommonDirective()._limit_except;
 	std::cout << "[Mapping Path] url: " << _route->getUrl() << ", file:" << _file << std::endl;
 	if (find(temp.begin(), temp.end(), _request->getMethod()) == temp.end())
@@ -145,18 +141,59 @@ std::string Response::makeResponse()
 	setRedirect();
 	makeHeader();
 	makeStartLine();
+}
+
+void Response::combineResponse()
+{
+	std::string send_data;
+	std::map<std::string, std::string>::iterator it;
+
+	makeResponse();
+
 	send_data += _start_line;
 	for (it = _header.begin(); it != _header.end(); it++)
 	{
 		send_data += it->first + ": " + it->second + "\r\n";
 	}
 	send_data += "\r\n" + _entity + "\r\n";
-	return send_data;
+
+	fputs(send_data.c_str(), _socket_write);
+	fflush(_socket_write);
+	fclose(_socket_write);
 }
 
-std::string Response::settingRoute()
+void Response::makeAutoIndex(std::string directory, DIR *dir)
 {
-	std::string entityFile = "./static_file/404.html";
+	std::string host = "http://" + _request->getRequestHeader()["Host"];
+	std::string pos = directory[directory.size() - 1] == '/' ? directory : directory + "/";
+
+	_entity += "<!DOCTYPE html>\n";
+	_entity += "<html>\n";
+	_entity += "<head>\n</head>\n";
+	_entity += "<body>\n";
+	_entity += "<h1> Index of "+ pos + "</h1>\n";
+
+	if (dir == NULL)
+		dir = opendir(_route->getCommonDirective()._root.c_str());
+
+	struct dirent *file = NULL;
+	while ((file = readdir(dir)) != NULL) {
+		std::string d_name = file->d_type == DT_DIR ? std::string(file->d_name) + "/" : std::string(file->d_name);
+		_entity += "<a href=\"" + host + pos + file->d_name + "\">";
+		_entity += file->d_name;
+		if (file->d_type == DT_DIR)
+			_entity += + "/";
+		_entity += "</a><br>\n";
+	}
+	closedir(dir);
+
+	_entity += "</body>\n";
+	_entity += "</html>\n";
+}
+
+void Response::settingRoute()
+{
+	std::string entityFile;
 	std::string root = _route->getCommonDirective()._root;
 	std::vector<std::string> indexPage = _route->getCommonDirective()._index;
 
@@ -169,30 +206,39 @@ std::string Response::settingRoute()
 				std::ifstream idx(root + "/" + indexPage[i]);
 				if (idx.is_open())
 				{
-					entityFile = root + "/" + indexPage[i];
-					break;
+					return makeEntity(entityFile = root + "/" + indexPage[i]);
 				}
 			}
 		}
 		else if (_route->getCommonDirective()._autoindex)
 		{
-			entityFile = root + "/autoindex.html";
+			return makeAutoIndex("/", 0);
 		}
 	}
 	else
 	{
+		DIR* isDir = 0;
 		std::ifstream is(root + _file);
 
-		if (!is.fail())
+		if (!is.fail()) // 존재하는 파일 or 디렉토리
 		{
 			entityFile = root + _file;
+			if ((isDir = opendir(entityFile.c_str())) == NULL) // 파일인 경우
+			{
+				return makeEntity(entityFile);
+			}
+			else if (_route->getCommonDirective()._autoindex) // 디렉토리인데 autoindex가 켜져있으면
+			{
+				return makeAutoIndex(_file, isDir);
+			}
 		}
 		else if (_route->getCommonDirective()._autoindex)
 		{
-			entityFile = root + "/autoindex.html";
+			return makeAutoIndex("/", 0);
 		}
 	}
-	return entityFile;
+	// return makeEntity("./static_file/404.html");
+	return makeErrorResponse("404");
 }
 
 
@@ -291,13 +337,12 @@ void	Response::makePostResponse()
 
 void Response::makeGetResponse()
 {
-	makeEntity(settingRoute());
-
+	settingRoute();
 }
 
 void Response::makeDeleteResponse()
 {
-	makeEntity(settingRoute());
+	settingRoute();
 }
 
 void Response::makeErrorResponse(std::string error_num)
@@ -321,46 +366,4 @@ void Response::makeErrorResponse(std::string error_num)
 	{
 		_entity += buffer + "\n";
 	}
-}
-
-void Response::setStatusCode()
-{
-	_status_code["100"] = "Continue";
-	_status_code["101"] = "Switching Protocols";
-	_status_code["200"] = "OK";
-	_status_code["201"] = "Created";
-	_status_code["202"] = "Accepted";
-	_status_code["203"] = "Non-Authoritative";
-	_status_code["204"] = "No Content";
-	_status_code["205"] = "Reset Content";
-	_status_code["206"] = "Partial Content";
-	_status_code["300"] = "Multiple Choices";
-	_status_code["301"] = "Moved Permanently";
-	_status_code["302"] = "Found";
-	_status_code["303"] = "See Other";
-	_status_code["304"] = "Not Modified";
-	_status_code["305"] = "Use Proxy";
-	_status_code["307"] = "Temporary Redirect";
-	_status_code["400"] = "Bad Request";
-	_status_code["401"] = "Unauthorized";
-	_status_code["403"] = "Forbidden";
-	_status_code["404"] = "Not Found";
-	_status_code["405"] = "Method Not Allowed";
-	_status_code["406"] = "Not Acceptable";
-	_status_code["407"] = "Proxy Authentication";
-	_status_code["408"] = "Request Timeout";
-	_status_code["409"] = "Conflict";
-	_status_code["410"] = "Gone";
-	_status_code["411"] = "Length Required";
-	_status_code["412"] = "Precondition Failed";
-	_status_code["413"] = "Request Entity Too Large";
-	_status_code["414"] = "Request URI Too Long";
-	_status_code["415"] = "Unsupported Media Type";
-	_status_code["416"] = "Requested Range Not Satisfiable";
-	_status_code["500"] = "Expectation Failed";
-	_status_code["501"] = "Internal Server Error";
-	_status_code["502"] = "Not Implemented";
-	_status_code["503"] = "Bad Gateway";
-	_status_code["504"] = "Gateway Timeout";
-	_status_code["505"] = "HTTP Version Not Supported";
 }

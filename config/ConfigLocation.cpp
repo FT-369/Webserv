@@ -7,11 +7,11 @@ ConfigLocation::ConfigLocation(std::string const &url, CommonDirective const &c,
  std::string const &return_data)
 	: _url(url), _common_directive(c), _return_code(return_code), _return_data(return_data) {}
 
-std::string ConfigLocation::getUrl() { return _url; }
-CommonDirective ConfigLocation::getCommonDirective() { return _common_directive; }
-std::string ConfigLocation::getReturnCode() { return _return_code; }
-std::string ConfigLocation::getReturnData() { return _return_data; }
-std::map<std::string, std::string> ConfigLocation::getSimpleDirective() { return _simple_directive; }
+std::string ConfigLocation::getUrl() const { return _url; }
+CommonDirective ConfigLocation::getCommonDirective() const { return _common_directive; }
+std::string ConfigLocation::getReturnCode() const { return _return_code; }
+std::string ConfigLocation::getReturnData() const { return _return_data; }
+std::map<std::string, std::string> ConfigLocation::getSimpleDirective() const { return _simple_directive; }
 
 int ConfigLocation::identifyBlock(std::string const &block)
 {

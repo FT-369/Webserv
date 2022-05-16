@@ -1,11 +1,9 @@
 #ifndef CONFIGUTILS_HPP
 #define CONFIGUTILS_HPP
 
-#include "utils.hpp"
-#include <map>
+#include "GlobalConfig.hpp"
 #include <stack>
 #include <cstdlib>
-#include <vector>
 
 #define MAIN_SEPARATOR "\n\n"
 #define BLOCK_SEPARATOR "\n"

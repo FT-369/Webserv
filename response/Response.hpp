@@ -6,44 +6,44 @@
 #include <algorithm>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <dirent.h>
 
 class Response
 {
 private:
+	FILE* _socket_write;
 	std::string _start_line;
 	std::map<std::string, std::string> _header;
 	std::string _entity;
 	std::string _status;
-	std::map<std::string, std::string> _status_code;
 	Request *_request;
-	std::map<std::string, std::string> _mime_types;
-	std::vector<ConfigLocation> _locations;
 	ConfigLocation *_route;
 	std::string _file;
 
 public:
-	Response(std::map<std::string, std::string> const &mime_types, std::vector<ConfigLocation> routes);
-	Response(std::map<std::string, std::string> const &mime_types, Request *request, std::vector<ConfigLocation> routes);
+	Response(Request *request);
 	~Response();
+	FILE* getSocketWriteFD() const;
 
-	void setStatusCode();
 	void makeStartLine();
 	void setRedirect();
 	void makeHeader();
 	void makePostHeader();
 	void mappingPath();
 	void makeEntity(std::string file);
+	void makeResponse();
+	void combineResponse();
 	int isDirectory(const std::string &path);
 	int isFile(const std::string &path);
 
-	std::string makeResponse();
 	void makeGetResponse();
 	void makePostResponse();
 	void makeDeleteResponse();
 	void makeErrorResponse(std::string error_num);
-	std::string settingRoute();
+	void makeAutoIndex(std::string directory, DIR* dir);
+	void settingRoute();
 	std::string getContentType(std::string file);
-	std::map<std::string, std::string> getMimeType();
+	void mappingPath(std::vector<ConfigLocation> const &locations);
 };
 
 #endif

@@ -10,7 +10,7 @@ Socket::~Socket()
 	// close(socket_fd);
 }
 
-int Socket::getSocketFd() { return _socket_fd; }
-int Socket::getSocketPort() { return _port; }
-std::string Socket::getSocketHost() { return _host; }
-int Socket::getSocketType() { return _socket_type; }
+int Socket::getSocketFd() const { return _socket_fd; }
+int Socket::getSocketPort() const { return _port; }
+std::string Socket::getSocketHost() const { return _host; }
+int Socket::getSocketType() const { return _socket_type; }

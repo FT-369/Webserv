@@ -19,12 +19,12 @@ private:
 public:
 	ConfigServer(CommonDirective const &c);
 	~ConfigServer();
-	CommonDirective getCommonDirective();
-	int getListenPort();
-	std::string getListenHost();
-	std::vector<std::string> getServerName();
-	std::vector<ConfigLocation> getLocations();
-	std::map<std::string, std::string> getSimpleDirective();
+	CommonDirective getCommonDirective() const;
+	int getListenPort() const;
+	std::string getListenHost() const;
+	std::vector<std::string> getServerName() const;
+	std::vector<ConfigLocation> getLocations() const;
+	std::map<std::string, std::string> getSimpleDirective() const;
 	int parsingServer(std::string const &block);
 
 private:

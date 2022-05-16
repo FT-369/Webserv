@@ -1,25 +1,17 @@
 #include "Config.hpp"
 
-Config::Config() : _filename(DEFALUT_CONF), _config_text(""), _default_type("text/plain")
+Config::Config() : _filename(""), _config_text("")
 {
-	parsingConfig();
-	parsingMimeTypes(MIME_TYPES);
-}
-
-Config::Config(std::string const &filename) : _filename(filename), _config_text(""), _default_type("text/plain")
-{
-	parsingConfig();
-	parsingMimeTypes(MIME_TYPES);
+	GlobalConfig::initMimeTyeps();
+	GlobalConfig::initStatusCode();
 }
 
 Config::~Config() {}
 
-std::string Config::getFileName() { return _filename; }
-std::string Config::getConfigText() { return _config_text; }
-std::string Config::getDefaultType() { return _default_type; }
-std::map<std::string, std::string> Config::getMimeTypes() { return _mime_types; }
-std::map<std::string, std::string> Config::getGeneralDirective() { return _general_directive; }
-ConfigHttp Config::getHttpDirective() { return _http_directive; }
+std::string Config::getFileName() const { return _filename; }
+std::string Config::getConfigText() const { return _config_text; }
+std::map<std::string, std::string> Config::getGeneralDirective() const { return _general_directive; }
+ConfigHttp Config::getHttpDirective() const { return _http_directive; }
 
 void Config::cutComment(std::string &buffer)
 {
@@ -163,44 +155,14 @@ int Config::parsingConfig()
 	return SUCCESS;
 }
 
-int Config::parsingMimeTypes(std::string const &filename)
+void Config::setting()
 {
-	std::ifstream is(filename);
-	std::string buffer;
-	std::string line = "";
-	std::vector<std::string> split_line;
+	_filename = DEFALUT_CONF;
+	parsingConfig();
+}
 
-	if (is.fail())
-	{
-		std::cerr << "Unable to find the file: " << filename << std::endl;
-		return ERROR; // 파일 열기 실패
-	}
-	while (std::getline(is, buffer))
-	{
-		line += buffer;
-	}
-
-	split_line = ft_split(line, ";");
-	if (ft_trim(split_line[split_line.size() - 1]) != "")
-	{
-		return ERROR; // line이 ;으로 끝나지 않음
-	}
-	else
-	{
-		split_line.pop_back();
-	}
-
-	for (size_t i = 0; i < split_line.size(); i++)
-	{
-		std::vector<std::string> key_value = ft_split_space(split_line[i]);
-		if (key_value.size() < 2)
-		{
-			return ERROR; // 지시어 형식이 맞지 않음
-		}
-		for (size_t i = 1; i < key_value.size(); i++)
-		{
-			_mime_types[key_value[i]] = key_value[0];
-		}
-	}
-	return SUCCESS;
+void Config::setting(std::string const &filename)
+{
+	_filename = filename;
+	parsingConfig();
 }

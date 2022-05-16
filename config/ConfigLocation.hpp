@@ -17,11 +17,11 @@ private:
 public:
 	ConfigLocation(std::string const &url, CommonDirective const &c, std::string const &return_code, std::string const &return_data);
 	~ConfigLocation();
-	std::string getUrl();
-	CommonDirective getCommonDirective();
-	std::string getReturnCode();
-	std::string getReturnData();
-	std::map<std::string, std::string> getSimpleDirective();
+	std::string getUrl() const;
+	CommonDirective getCommonDirective() const;
+	std::string getReturnCode() const;
+	std::string getReturnData() const;
+	std::map<std::string, std::string> getSimpleDirective() const;
 	int parsingLocation(std::string const &block);
 
 private:

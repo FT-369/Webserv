@@ -6,12 +6,12 @@ ConfigServer::ConfigServer(CommonDirective const &c) : _common_directive(c), _li
 
 ConfigServer::~ConfigServer() {}
 
-CommonDirective ConfigServer::getCommonDirective() { return _common_directive; }
-int ConfigServer::getListenPort() { return _listen_port; }
-std::string ConfigServer::getListenHost() { return _listen_host; }
-std::vector<std::string> ConfigServer::getServerName() { return _server_name; }
-std::vector<ConfigLocation> ConfigServer::getLocations() { return _locations; }
-std::map<std::string, std::string> ConfigServer::getSimpleDirective() { return _simple_directive; }
+CommonDirective ConfigServer::getCommonDirective() const { return _common_directive; }
+int ConfigServer::getListenPort() const { return _listen_port; }
+std::string ConfigServer::getListenHost() const { return _listen_host; }
+std::vector<std::string> ConfigServer::getServerName() const { return _server_name; }
+std::vector<ConfigLocation> ConfigServer::getLocations() const { return _locations; }
+std::map<std::string, std::string> ConfigServer::getSimpleDirective() const { return _simple_directive; }
 
 int ConfigServer::identifyLocationBlock(std::string const &block)
 {

@@ -53,63 +53,6 @@ ServerSocket *Server::isServerFd(uintptr_t fd)
     return NULL;
 }
 
-void send_data(Request *request)
-{
-    std::cout << "send data!" << std::endl;
-
-    FILE *fp = fdopen(dup(request->_socket_fd), "w");
-    FILE *send_file = fopen("./static_file/index.html", "r");
-
-    char protocol[] = "HTTP/1.0 200 OK\r\n";
-    char server[] = "Server: Mac Web Server \r\n";
-    char cnt_len[] = "Content-length:2048\r\n";
-    char cnt_type[] = "Content-type:text/html\r\n\r\n";
-
-    // 헤더 정보 전송
-    fputs(protocol, fp);
-    fputs(server, fp);
-    fputs(cnt_len, fp);
-    fputs(cnt_type, fp);
-
-    if (send_file == NULL)
-    {
-        char html[] =
-            "<!DOCTYPE html> \
-        <html> \
-        <head> \
-        <title>Welcome to 42 Webserv!</title> \
-        <style> \
-        html { color-scheme: light dark; } \
-        body { width: 35em; margin: 0 auto; \
-        font-family: Tahoma, Verdana, Arial, sans-serif; } \
-        </style> \
-        </head> \
-        <body> \
-        <h1>Welcome to 42 Webserv!</h1> \
-        <p>If you see this page, the 42 web server is successfully installed and \
-        working. Further configuration is required.</p> \
-        <p><em>Thank you for using 42 Webserv.</em></p> \
-        </body> \
-        </html>";
-
-        // 데이터 전송
-        fputs(html, fp);
-    }
-    else
-    {
-        char buf[1024];
-
-        while (fgets(buf, 1024, send_file) != NULL)
-        {
-            fputs(buf, fp);
-            fflush(fp);
-        }
-    }
-
-    fflush(fp);
-    fclose(fp);
-}
-
 void Server::keventProcess()
 {
     // std::map<int, Request *> request_map;
@@ -178,17 +121,8 @@ void Server::keventProcess()
                 ClientSocket *cs = dynamic_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
                 if (cs != 0 && cs->getRequest() != 0 && cs->getRequestStatus() == READ_END_OF_REQUEST)
                 {
-                    std::cout << "EVFILT_WRITE" << std::endl;
-                    // send_data(cs->getRequest());
-
-                    std::vector<ConfigLocation> routes = cs->getConnectServerInfo().getLocations();
-
-                    FILE *fp = fdopen(dup(cs->getRequest()->getSocketFD()), "w");
-                    cs->setResponse(new Response(_config.getMimeTypes(), cs->getRequest(), routes));
-                    fputs(cs->getResponse()->makeResponse().c_str(), fp);
-                    fflush(fp);
-                    fclose(fp);
                     std::cout << "EVFILT_WRITE - fd[" << _kq._event_list[i].ident << "]: " << cs << std::endl;
+                    cs->sendResponse();
                     _socket.erase(_kq._event_list[i].ident);
                     close(_kq._event_list[i].ident);
                 }

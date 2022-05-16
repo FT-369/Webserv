@@ -13,9 +13,10 @@ private:
 public:
 	ConfigHttp();
 	~ConfigHttp();
-	CommonDirective getCommonDirective();
+	CommonDirective getCommonDirective() const;
 	std::vector<ConfigServer> &getServers();
-	std::map<std::string, std::string> getSimpleDirective();
+	const std::vector<ConfigServer> &getServers() const;
+	std::map<std::string, std::string> getSimpleDirective() const;
 	int parsingHttp(std::string const &block);
 
 private:
