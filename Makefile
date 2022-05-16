@@ -30,7 +30,7 @@ REQUEST_OBJECT = $(foreach src, $(REQUEST_SOURCE), $(REQUEST_INCLUDE)/$(src).o)
 REQUEST_HEADER = $(foreach header, $(REQUEST_SOURCE), $(REQUEST_INCLUDE)/$(header).hpp)
 
 # response
-RESPONSE_SOURCE = Response
+RESPONSE_SOURCE = Response CgiHandler
 RESPONSE_OBJECT = $(foreach src, $(RESPONSE_SOURCE), $(RESPONSE_INCLUDE)/$(src).o)
 RESPONSE_HEADER = $(foreach header, $(RESPONSE_SOURCE), $(RESPONSE_INCLUDE)/$(header).hpp)
 

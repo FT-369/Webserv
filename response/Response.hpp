@@ -3,6 +3,7 @@
 
 #include "Config.hpp"
 #include "Request.hpp"
+#include "CgiHandler.hpp"
 #include <algorithm>
 #include <unistd.h>
 #include <sys/stat.h>

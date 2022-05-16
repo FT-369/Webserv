@@ -337,6 +337,10 @@ void	Response::makePostResponse()
 
 void Response::makeGetResponse()
 {
+	if (_file.find("cgi_tester") != std::string::npos) {
+		CgiHandler cgi(_route, _request);
+		cgi.executeCgi();
+	}
 	settingRoute();
 }
 

@@ -22,11 +22,10 @@ public:
 	const int _socket_fd;
 	FILE *_socket_read;
 	Status _status;
-	// FILE* socket_write;
 
 	std::string _method;
 	std::string _path;
-	std::map<std::string, std::string> _query;
+	std::string _query;
 	std::string _protocol;
 	std::string _request_body;
 	std::map<std::string, std::string> _request_header;
@@ -41,11 +40,14 @@ public:
 	FILE *getSocketWriteFP() const;
 	std::string getMethod() const;
 	std::string getPath() const;
-	std::map<std::string, std::string> getQuery() const;
+	std::string getQuery() const;
+	std::string getPort() const;
+	std::string getServerName() const;
+	std::string getContentType() const;
 	std::string getProtocol() const;
 	std::string getRequestBody() const;
 	std::map<std::string, std::string> getRequestHeader() const;
-	Status getStatus();
+	Status getStatus() const;
 
 private:
 	int parseRequestLine();

@@ -14,14 +14,40 @@ Request::~Request()
 
 int Request::getSocketFD() const { return _socket_fd; }
 FILE *Request::getSocketReadFP() const { return _socket_read; }
-// FILE* Request::getSocketWriteFP() const { return socket_write; }
+
+std::string Request::getPort() const {
+	size_t pos = getRequestHeader()["Host"].find(":");
+	if (pos == std::string::npos) {
+		return "80";
+	} else {
+		return getRequestHeader()["Host"].substr(pos + 1);
+	}
+}
+
+std::string Request::getServerName() const {
+	size_t pos = getRequestHeader()["Host"].find(":");
+	if (pos == std::string::npos) {
+		return getRequestHeader()["Host"];
+	} else {
+		return getRequestHeader()["Host"].substr(0, pos);
+	}
+}
+
+std::string Request::getContentType() const
+{
+	if (_request_header.find("content-type") == _request_header.end()) {
+		return "text/plain";
+	}
+	return getRequestHeader()["content-type"];
+}
+
 std::string Request::getMethod() const { return _method; }
 std::string Request::getPath() const { return _path; }
-std::map<std::string, std::string> Request::getQuery() const { return _query; }
+std::string Request::getQuery() const { return _query; }
 std::string Request::getProtocol() const { return _protocol; }
 std::string Request::getRequestBody() const { return _request_body; }
 std::map<std::string, std::string> Request::getRequestHeader() const { return _request_header; }
-Status Request::getStatus() { return _status; }
+Status Request::getStatus() const { return _status; }
 
 std::string Request::ft_fgets_line(FILE *fp)
 {
@@ -164,19 +190,7 @@ int Request::parseRequestLine()
 	else
 	{
 		_path = request_line[1].substr(0, pos);
-		query_list = ft_split(request_line[1].substr(pos + 1), "&");
-		for (size_t i = 0; i < query_list.size(); i++)
-		{
-			if ((pos = query_list[i].find("=")) == std::string::npos)
-			{
-				_query[query_list[i]] = "";
-				// return ERROR;
-			}
-			else
-			{
-				_query[query_list[i].substr(0, pos)] = query_list[i].substr(pos + 1);
-			}
-		}
+		_query = request_line[1].substr(pos + 1);
 	}
 	_protocol = request_line[2];
 
