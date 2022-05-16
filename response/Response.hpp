@@ -23,7 +23,7 @@ private:
 public:
 	Response(Request *request);
 	~Response();
-	FILE* getSocketWriteFD();
+	FILE* getSocketWriteFD() const;
 
 	void makeStartLine();
 	void setRedirect();
@@ -43,7 +43,7 @@ public:
 	void makeAutoIndex(std::string directory, DIR* dir);
 	void settingRoute();
 	std::string getContentType(std::string file);
-	void mappingPath(std::vector<ConfigLocation> loacations);
+	void mappingPath(std::vector<ConfigLocation> const &locations);
 };
 
 #endif

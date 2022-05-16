@@ -8,10 +8,10 @@ Config::Config() : _filename(""), _config_text("")
 
 Config::~Config() {}
 
-std::string Config::getFileName() { return _filename; }
-std::string Config::getConfigText() { return _config_text; }
-std::map<std::string, std::string> Config::getGeneralDirective() { return _general_directive; }
-ConfigHttp Config::getHttpDirective() { return _http_directive; }
+std::string Config::getFileName() const { return _filename; }
+std::string Config::getConfigText() const { return _config_text; }
+std::map<std::string, std::string> Config::getGeneralDirective() const { return _general_directive; }
+ConfigHttp Config::getHttpDirective() const { return _http_directive; }
 
 void Config::cutComment(std::string &buffer)
 {

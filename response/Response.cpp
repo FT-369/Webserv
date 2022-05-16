@@ -10,7 +10,7 @@ Response::~Response()
 {
 }
 
-FILE* Response::getSocketWriteFD() { return _socket_write; }
+FILE* Response::getSocketWriteFD() const { return _socket_write; }
 
 std::string Response::getContentType(std::string file)
 {
@@ -75,7 +75,7 @@ void Response::setRedirect()
 	_header["Location"] = _route->getReturnData();
 }
 
-void Response::mappingPath(std::vector<ConfigLocation> locations)
+void Response::mappingPath(std::vector<ConfigLocation> const &locations)
 {
 	// std::vector<ConfigLocation> locations = _server_info.getLocations();
 	std::string path = _request->getPath();

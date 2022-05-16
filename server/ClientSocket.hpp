@@ -20,8 +20,8 @@ public:
 	ClientSocket(int fd, ConfigServer server_info);
 	ConfigServer getConnectServerInfo();
 	~ClientSocket();
-	Request *getRequest();
-	Response *getResponse();
+	Request *getRequest() const;
+	Response *getResponse() const;
 	int recieveRequest();
 	void sendResponse();
 	Status getRequestStatus();

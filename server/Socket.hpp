@@ -24,10 +24,10 @@ public:
 	Socket(int socket_type);
 	Socket(int socket_type, int fd);
 	virtual ~Socket();
-	int getSocketFd();
-	int getSocketPort();
-	std::string getSocketHost();
-	int getSocketType();
+	int getSocketFd() const;
+	int getSocketPort() const;
+	std::string getSocketHost() const;
+	int getSocketType() const;
 };
 
 #endif

@@ -17,10 +17,10 @@ private:
 public:
 	Config();
 	~Config();
-	std::string getFileName();
-	std::string getConfigText();
-	std::map<std::string, std::string> getGeneralDirective();
-	ConfigHttp getHttpDirective();
+	std::string getFileName() const;
+	std::string getConfigText() const;
+	std::map<std::string, std::string> getGeneralDirective() const;
+	ConfigHttp getHttpDirective() const;
 	void setting();
 	void setting(std::string const &filename);
 

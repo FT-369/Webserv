@@ -12,9 +12,9 @@ ClientSocket::~ClientSocket(){
 
 ConfigServer ClientSocket::getConnectServerInfo() { return _server_info; }
 
-Request *ClientSocket::getRequest() { return _request; }
+Request *ClientSocket::getRequest() const { return _request; }
 
-Response *ClientSocket::getResponse() { return _response; }
+Response *ClientSocket::getResponse() const { return _response; }
 
 int ClientSocket::recieveRequest()
 {
