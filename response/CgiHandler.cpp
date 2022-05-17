@@ -89,7 +89,6 @@ int CgiHandler::executeCgi()
 		std::string cgi_file = _location_info->getCommonDirective()._cgi_path[extension];
 		char *argv[4];
 		int result = -1;
-
 		char **envp = convertEnv();
 		argv[0] = const_cast<char*>(cgi_file.c_str());
 		argv[1] = const_cast<char*>(_request->getPath().c_str());

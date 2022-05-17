@@ -129,7 +129,7 @@ void Response::makeResponse()
 	else if (_request->getMethod() == "POST")
 	{
 		std::cout << "POST" << std::endl;
-		// makePostResponse();
+		makePostResponse();
 	}
 	else if (_request->getMethod() == "DELETE")
 	{
@@ -237,7 +237,6 @@ void Response::settingRoute()
 			return makeAutoIndex("/", 0);
 		}
 	}
-	// return makeEntity("./static_file/404.html");
 	return makeErrorResponse("404");
 }
 
