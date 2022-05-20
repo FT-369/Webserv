@@ -205,11 +205,18 @@ void Response::settingRoute()
 		{
 			for (size_t i = 0; i < indexPage.size(); i++)
 			{
-				std::ifstream idx(root + "/" + indexPage[i]);
-				if (idx.is_open())
+				std::string indexfile = root + "/" + indexPage[i];
+				if (isFile(indexfile) == 1)
 				{
-					return makeEntity(entityFile = root + "/" + indexPage[i]);
+					int resource_fd = open(indexfile.c_str(), O_RDONLY);
+					// socket list에 new Resource 해서 추가
+					// addEvent
 				}
+				// std::ifstream idx(root + "/" + indexPage[i]);
+				// if (idx.is_open())
+				// {
+				// 	return makeEntity(entityFile = root + "/" + indexPage[i]);
+				// }
 			}
 		}
 		else if (_route->getCommonDirective()._autoindex)
@@ -227,7 +234,14 @@ void Response::settingRoute()
 			entityFile = root + _file;
 			if ((isDir = opendir(entityFile.c_str())) == NULL) // 파일인 경우
 			{
-				return makeEntity(entityFile);
+				if (isFile(entityFile) == 1)
+				{
+					int resource_fd = open(entityFile.c_str(), O_RDONLY);
+					// socket list에 new Resource 해서 추가
+					// addEvent
+				}
+				return;
+				// return makeEntity(entityFile);
 			}
 			else if (_route->getCommonDirective()._autoindex) // 디렉토리인데 autoindex가 켜져있으면
 			{

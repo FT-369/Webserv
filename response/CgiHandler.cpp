@@ -1,4 +1,5 @@
 #include "CgiHandler.hpp"
+#include "Server.hpp"
 
 CgiHandler::CgiHandler(ConfigLocation *location_info, Request *req) 
 : _location_info(location_info), _request(req)
@@ -116,7 +117,7 @@ int CgiHandler::executeCgi()
 		close(read_fd[1]);
 		_request->getResource()->setReadFd(read_fd[0]);
 		_request->getResource()->setWriteFd(write_fd[1]);
-		// addEvent(EVFILT_WRITE, write_fd[1], NULL);
+		// addEvent(EVFILT_WRITE, write_fd[1], resource);
 		std::cerr << "response read_fd: " << read_fd[0] << std::endl;
 		std::cerr << "response write_fd: " << write_fd[1] << std::endl;
 	}

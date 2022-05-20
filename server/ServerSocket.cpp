@@ -4,8 +4,13 @@ ServerSocket::ServerSocket(ConfigServer server) : Socket(SERVER_SOCKET), _server
 {
 	if ((_socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
 	{
+		// throw error
 	}
-	// throw error
+
+	int true_option = 1;
+	setsockopt(_socket_fd, SOL_SOCKET, SO_REUSEADDR, &true_option, sizeof(true_option));
+	setsockopt(_socket_fd, SOL_SOCKET, SO_REUSEPORT, &true_option, sizeof(true_option));
+
 	_port = server.getListenPort();
 	_host = server.getListenHost().c_str();
 	memset(&_addr, 0, sizeof(_addr));
@@ -51,6 +56,11 @@ int ServerSocket::clientAccept(int &connectFD)
 		return ERROR;
 	}
 	fcntl(connectFD, F_SETFL, O_NONBLOCK);
+	struct timeval timeout;
+	timeout.tv_sec = 10;
+	timeout.tv_usec = 0;
+	setsockopt(connectFD, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(struct timeval));
+	setsockopt(connectFD, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(struct timeval));
 	return ERROR;
 }
 
