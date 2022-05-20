@@ -41,25 +41,14 @@ void Server::acceptGetClientFd(ServerSocket *server_socket)
     std::cout << "new_socket = " << new_socket->getSocketFd() << std::endl;
     _kq.addEvent(EVFILT_READ, connect_fd, NULL);
     _kq.addEvent(EVFILT_WRITE, connect_fd, NULL);
-    // kq.saved_fd[connect_fd] = "";
-}
-
-ServerSocket *Server::isServerFd(uintptr_t fd)
-{
-    if (_socket[fd]->getSocketType() == SERVER_SOCKET)
-    {
-        return dynamic_cast<ServerSocket *>(_socket[fd]);
-    }
-    return NULL;
 }
 
 void Server::keventProcess()
 {
     // std::map<int, Request *> request_map;
-    serverConnect();
+    serverConnect(); // config server의 서버별 kqueue등록
     if ((_kq._kq_fd = kqueue()) == -1)
         std::cout << " errorororororo" << std::endl;
-
     while (1)
     {
         int event_num = _kq.initKevent();
@@ -70,6 +59,9 @@ void Server::keventProcess()
         }
         for (int i = 0; i < event_num; i++)
         {
+            std::map<uintptr_t, Socket *>::iterator it = _socket.find(_kq._event_list[i].ident);
+            if (it == _socket.end()) // Server의 socket 리스트에 저장되지 않은 fd면 넘기기
+                continue;
             if (_kq._event_list[i].flags == EV_ERROR)
             {
                 std::cout << "errorororor" << std::endl;
@@ -79,55 +71,100 @@ void Server::keventProcess()
             }
             switch (_kq._event_list[i].filter)
             {
-            case EVFILT_READ:
-            {
-                std::map<uintptr_t, Socket *>::iterator it = _socket.find(_kq._event_list[i].ident);
-                if (it == _socket.end()) // Server의 socket 리스트에 저장되지 않은 fd면 넘기기
-                    continue;
-                ServerSocket *server_socket = isServerFd(_kq._event_list[i].ident);
-                std::cout << server_socket << std::endl;
-                if (server_socket) // fd가 서버 소켓이면 클라이언트 accept
+                case EVFILT_READ:
                 {
-                    acceptGetClientFd(server_socket);
-                }
-                else
-                {
-                    std::cout << "EVFILT_READ" << std::endl;
-                    ClientSocket *cs = dynamic_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
-
-                    if (cs->getRequest() == 0)
-                    {
-                        std::cerr << "Request() error" << std::endl;
+                    if (it == _socket.end()) // Server의 socket 리스트에 저장되지 않은 fd면 넘기기
                         continue;
-                    }
-                    while (cs->getRequestStatus() != READ_END_OF_REQUEST)
+                    switch (_socket[_kq._event_list[i].ident]->getSocketType())
                     {
-                        if (cs->recieveRequest() == ERROR)
+                    case SERVER_SOCKET:
+                    {
+                        std::cout << server_socket << std::endl;
+                        ServerSocket *server_socket = dynamic_cast<ServerSocket *>(_socket[_kq._event_list[i].ident]);
+                        acceptGetClientFd(server_socket);
+                    }
+                    case CLIENT_SOCKET:
+                    {
+                        std::cout << client_socket << std::endl;
+                        ClientSocket *client_socket = dynamic_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
+                        if (client_socket->getRequest() == 0)
                         {
-                            std::cerr << "parseRequest() error" << std::endl;
+                            std::cerr << "Request() error" << std::endl;
                             continue;
                         }
+                        while (client_socket->getRequestStatus() != READ_END_OF_REQUEST)
+                        {
+                            if (client_socket->recieveRequest() == ERROR)
+                            {
+                                std::cerr << "parseRequest() error" << std::endl;
+                                continue;
+                            }
+                        }
                     }
-                    // request_map[kq.event_list[i].ident] = cs->getRequest();
-                    // if (MakeResponseMsg() == ERROR); // 만들어진 response를 어떤식으로 해당 fd에 저장할지 고민이 필요
-                    //     throw error;
+                    case RESOURCE_FD:
+                    {
+                        int stat;
+                        int ret;
+                        int n;
+                        Response *res = reinterpret_cast<Response *>(_kq._event_list[i].udata);
+                        ret = waitpid(res->pid, &stat, WNOHANG);
+                        if (ret < 0)
+                        {
+                            // process error
+                        }
+                        else if (ret == 0)
+                        {
+                            // process not finished yet
+                        }
+                        if (WIFSIGNALED(stat))
+                        {
+                            // cgi error
+                        }
+                        else if (WIFEXITED(stat) == true)
+                        {
+                            n = read(res->getReadFd(), buffer, BUFFERSIZE - 1);
+                            if (n < 0)
+                            {
+                                // read erroor
+                            }
+                        }
+                    }
+                    }
                 }
-            }
-            case EVFILT_WRITE:
-            {
-                std::map<uintptr_t, Socket *>::iterator it = _socket.find(_kq._event_list[i].ident);
-                if (it == _socket.end()) // Server의 socket 리스트에 저장되지 않은 fd면 넘기기
-                    continue;
-                ClientSocket *cs = dynamic_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
-                if (cs != 0 && cs->getRequest() != 0 && cs->getRequestStatus() == READ_END_OF_REQUEST)
+                case EVFILT_WRITE:
                 {
-                    std::cout << "EVFILT_WRITE - fd[" << _kq._event_list[i].ident << "]: " << cs << std::endl;
-                    cs->sendResponse();
-                    _socket.erase(_kq._event_list[i].ident);
-                    close(_kq._event_list[i].ident);
+                    switch (_socket[_kq._event_list[i].ident]->getSocketType())
+                    {
+                    case CLIENT_SOCKET:
+                    {
+                        ClientSocket *cs = dynamic_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
+                        if (cs != 0 && cs->getRequest() != 0 && cs->getRequestStatus() == READ_END_OF_REQUEST)
+                        {
+                            std::cout << "EVFILT_WRITE - fd[" << _kq._event_list[i].ident << "]: " << cs << std::endl;
+                            cs->sendResponse();
+                            _socket.erase(_kq._event_list[i].ident);
+                            close(_kq._event_list[i].ident);
+                        }
+                    }
+                    case RESOURCE_FD:
+                    {
+
+                        int ret;
+                        Response *res = reinterpret_cast<Response *>(_kq._event_list[i].udata);
+                        write(res->getSocketWriteFD(), res->request->getBody(), res->request->getBody.size());
+                        // if (WIFSIGNALED(stat) == true)
+                        // {
+                        //     // cgi error
+                        // }
+                        // if (WEXITSTATUS(stat) == true)
+                        // {
+                        //     write(res->getSocketWriteFD(), getBody(), getBody.size());
+                        // }
+                    }
+                    }
                 }
-            }
             }
         }
     }
 }
+

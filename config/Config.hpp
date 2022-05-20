@@ -2,7 +2,6 @@
 #define CONFIG_HPP
 
 #include "ConfigHttp.hpp"
-#include <fstream>
 
 #define DEFALUT_CONF "./setting/default.conf"
 

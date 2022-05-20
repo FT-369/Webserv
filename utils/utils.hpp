@@ -1,11 +1,7 @@
 #ifndef UTILS_HPP
 #define UTILS_HPP
 
-#include <vector>
-#include <iostream>
-#include <string>
-#include <cctype>
-
+#include "webserv.hpp"
 #define ERROR 1
 #define SUCCESS 0
 

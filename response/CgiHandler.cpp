@@ -75,7 +75,6 @@ int CgiHandler::executeCgi()
 		close(read_fd[1]);
 		return 500;
 	}
-
 	pid_t pid = fork();
 	int status;
 
@@ -115,7 +114,9 @@ int CgiHandler::executeCgi()
 	{
 		close(write_fd[0]);
 		close(read_fd[1]);
-		wait(&status);
+		_request->getResource()->setReadFd(read_fd[0]);
+		_request->getResource()->setWriteFd(write_fd[1]);
+		// addEvent(EVFILT_WRITE, write_fd[1], NULL);
 		std::cerr << "response read_fd: " << read_fd[0] << std::endl;
 		std::cerr << "response write_fd: " << write_fd[1] << std::endl;
 	}

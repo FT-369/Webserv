@@ -2,8 +2,7 @@
 #define CONFIGUTILS_HPP
 
 #include "GlobalConfig.hpp"
-#include <stack>
-#include <cstdlib>
+#include "webserv.hpp"
 
 #define MAIN_SEPARATOR "\n\n"
 #define BLOCK_SEPARATOR "\n"

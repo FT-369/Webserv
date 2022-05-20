@@ -1,7 +1,7 @@
 # compile flag
 CXX = clang++
 CXXFLAGS = -std=c++98 $(IFLAGS)
-IFLAGS = -I$(UTILS_INCLUDE) -I$(CONFIG_INCLUDE) -I$(REQUEST_INCLUDE) -I$(RESPONSE_INCLUDE) -I$(SERVER_INCLUDE)
+IFLAGS = -I$(UTILS_INCLUDE) -I$(CONFIG_INCLUDE) -I$(REQUEST_INCLUDE) -I$(RESPONSE_INCLUDE) -I$(SERVER_INCLUDE) -I$(WEBSERV_INCLUDE)
 
 # exec name
 NAME = webserv
@@ -13,9 +13,10 @@ SETTING_INCLUDE = setting
 REQUEST_INCLUDE = request
 RESPONSE_INCLUDE = response
 SERVER_INCLUDE = server
+WEBSERV_INCLUDE = utils/webserv.hpp
 
 # config
-CONFIG_SOURCE = Config ConfigHttp ConfigLocation ConfigServer configUtils
+CONFIG_SOURCE = Config ConfigHttp ConfigLocation ConfigServer configUtils 
 CONFIG_OBJECT = $(foreach src, $(CONFIG_SOURCE), $(CONFIG_INCLUDE)/$(src).o)
 CONFIG_HEADER = $(foreach header, $(CONFIG_SOURCE), $(CONFIG_INCLUDE)/$(header).hpp)
 
@@ -30,7 +31,7 @@ REQUEST_OBJECT = $(foreach src, $(REQUEST_SOURCE), $(REQUEST_INCLUDE)/$(src).o)
 REQUEST_HEADER = $(foreach header, $(REQUEST_SOURCE), $(REQUEST_INCLUDE)/$(header).hpp)
 
 # response
-RESPONSE_SOURCE = Response CgiHandler
+RESPONSE_SOURCE = Response CgiHandler Resource
 RESPONSE_OBJECT = $(foreach src, $(RESPONSE_SOURCE), $(RESPONSE_INCLUDE)/$(src).o)
 RESPONSE_HEADER = $(foreach header, $(RESPONSE_SOURCE), $(RESPONSE_INCLUDE)/$(header).hpp)
 
@@ -42,7 +43,7 @@ SERVER_HEADER = $(foreach header, $(SERVER_SOURCE), $(SERVER_INCLUDE)/$(header).
 # source
 MAIN = main.cpp
 OBJECT = $(CONFIG_OBJECT) $(UTILS_OBJECT) $(REQUEST_OBJECT) $(SERVER_OBJECT) $(RESPONSE_OBJECT)
-HEADER = $(CONFIG_HEADER) $(UTILS_HEADER) $(REQUEST_HEADER) $(SERVER_HEADER) $(RESPONSE_HEADER)
+HEADER = $(CONFIG_HEADER) $(UTILS_HEADER) $(REQUEST_HEADER) $(SERVER_HEADER) $(RESPONSE_HEADER) $(WEBSERV_INCLUDE)
 
 # dependency
 $(NAME): $(MAIN) $(OBJECT) $(HEADER)

@@ -2,9 +2,7 @@
 #define REQUEST_HPP
 
 #include "utils.hpp"
-#include <stdio.h>
-#include <unistd.h>
-#include <map>
+#include "Resource.hpp"
 
 #define GET_LINE_BUF 1024
 
@@ -29,6 +27,7 @@ public:
 	std::string _protocol;
 	std::string _request_body;
 	std::map<std::string, std::string> _request_header;
+	Resource *_resource;
 
 public:
 	Request(int socket_fd);
@@ -48,6 +47,7 @@ public:
 	std::string getRequestBody() const;
 	std::map<std::string, std::string> getRequestHeader() const;
 	Status getStatus() const;
+	Resource* getResource() const;
 
 private:
 	int parseRequestLine();

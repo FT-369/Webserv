@@ -1,7 +1,7 @@
 #include "Request.hpp"
 
 Request::Request(int socket_fd)
-	: _socket_fd(socket_fd), _socket_read(fdopen(socket_fd, "r")), _status(READ_REQUEST_LINE)
+	: _socket_fd(socket_fd), _socket_read(fdopen(socket_fd, "r")), _status(READ_REQUEST_LINE), _resource(new Resource)
 {
 }
 
@@ -68,6 +68,11 @@ std::string Request::ft_fgets_line(FILE *fp)
 		getline += std::string(line);
 	}
 	return getline;
+}
+
+Resource* Request::getResource() const
+{
+	return _resource;
 }
 
 // int Request::parseRequest()

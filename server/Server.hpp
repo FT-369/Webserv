@@ -22,7 +22,6 @@ public:
 	void serverConnect();
 	void acceptGetClientFd(ServerSocket *server_socket);
 	void keventProcess();
-	ServerSocket *isServerFd(uintptr_t fd);
 };
 
 #endif

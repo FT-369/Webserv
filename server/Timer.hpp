@@ -1,10 +1,7 @@
 #ifndef TIMER_HPP
 #define TIMER_HPP
-#include <map>
-#include <sys/time.h>
-#include <string>
-#include <ctime>
-#include <iostream>
+
+#include "webserv.hpp"
 class Timer
 {
 private:

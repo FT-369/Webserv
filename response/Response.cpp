@@ -112,14 +112,18 @@ void Response::makeResponse()
 {
 	std::vector<std::string> temp;
 
-	//요청 url <=> location 매핑
-	// mappingPath();
 	temp = _route->getCommonDirective()._limit_except;
 	std::cout << "[Mapping Path] url: " << _route->getUrl() << ", file:" << _file << std::endl;
+
 	if (find(temp.begin(), temp.end(), _request->getMethod()) == temp.end())
 	{
 		std::cout << "ERROR Response " << std::endl;
 		makeErrorResponse("405");
+	}
+	else if (_file.find(".php") != std::string::npos) {
+		CgiHandler cgi(_route, _request);
+		cgi.executeCgi();
+		return ;
 	}
 	else if (_request->getMethod() == "GET")
 	{
@@ -136,8 +140,6 @@ void Response::makeResponse()
 		std::cout << "DELETE" << std::endl;
 		makeDeleteResponse();
 	}
-	makeHeader();
-	makeStartLine();
 	setRedirect();
 	makeHeader();
 	makeStartLine();
@@ -336,10 +338,6 @@ void	Response::makePostResponse()
 
 void Response::makeGetResponse()
 {
-	if (_file.find("cgi_tester") != std::string::npos) {
-		CgiHandler cgi(_route, _request);
-		cgi.executeCgi();
-	}
 	settingRoute();
 }
 

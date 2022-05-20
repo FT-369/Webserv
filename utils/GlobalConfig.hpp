@@ -2,8 +2,7 @@
 #define GLOBALCONFIG_HPP
 
 #include "utils.hpp"
-#include <map>
-#include <fstream>
+#include "webserv.hpp"
 
 #define MIME_TYPES "./setting/mime.types"
 

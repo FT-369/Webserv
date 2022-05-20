@@ -1,10 +1,9 @@
 #ifndef CGIHANDLER_HPP
 #define CGIHANDLER_HPP
 
-#include <sys/socket.h>
-#include <arpa/inet.h>
 #include "ConfigServer.hpp"
 #include "Request.hpp"
+#include "webserv.hpp"
 
 class CgiHandler
 {

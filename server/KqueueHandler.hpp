@@ -2,17 +2,14 @@
 #define KQUEUEHANDLER_HPP
 
 #include "Config.hpp"
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <sys/event.h>
-#include <sys/time.h>
+#include "webserv.hpp"
 
 class KqueueHandler
 {
 public:
 	int _n_event;
 	std::vector<struct kevent> _change_list;
-	struct kevent _event_list[10];
+	struct kevent _event_list[1024];
 	std::map<int, std::string> _saved_fd;
 	int _kq_fd;
 
