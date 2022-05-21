@@ -11,7 +11,9 @@ private:       // read_fd[1]로 cgi가 데이터를 보내주면 read_fd[0]에�
 	int _write_fd;
 	int _read_fd;
 	pid_t _pid;
-	std::string content;
+	std::string _content;
+	std::string _extension;
+	std::string _content_type;
 
 public:
 	Resource();
@@ -21,11 +23,16 @@ public:
 	pid_t getPid();
 	std::string &getContent();
 	std::string const &getContent() const;
+	std::string getSrcExtension() const;
+	std::string getSrcContentType() const;
 	void setContent(std::string const &content);
 	void setRequest(Request *req);
 	void setWriteFd(int fd);
 	void setReadFd(int fd);
-	void getPid(pid_t pid);
+	void setPid(pid_t pid);
+	void setExtension(std::string const &extension);
+	void setContentType(std::string const &content_type);
+	void makeAutoIndex(std::string root, std::string directory);
 };
 
 #endif

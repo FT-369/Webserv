@@ -11,41 +11,47 @@ Resource::~Resource()
 
 }
 
-int Resource::getWriteFd()
-{
-	return _write_fd;
-}
+int Resource::getWriteFd() { return _write_fd; }
+int Resource::getReadFd() { return _read_fd; }
+pid_t Resource::getPid() { return _pid; }
+std::string &Resource::getContent() { return _content; }
+std::string const &Resource::getContent() const { return _content; }
+std::string Resource::getSrcExtension() const { return _extension; }
+std::string Resource::getSrcContentType() const { return _content_type; }
 
-int Resource::getReadFd()
-{
-	return _read_fd;
-}
+void Resource::setWriteFd(int fd) { _write_fd = fd; }
+void Resource::setReadFd(int fd) { _read_fd = fd; }
+void Resource::setPid(pid_t pid) { _pid = pid; }
+void Resource::setExtension(std::string const &extension) { _extension = extension; }
+void Resource::setContentType(std::string const &content_type) { _content_type = content_type; }
 
-pid_t Resource::getPid()
+void Resource::makeAutoIndex(std::string root, std::string directory)
 {
-	return _pid;
-}
+	std::string host = "http://" + getSocketHost() + ":" + std::to_string(getSocketPort());
+	std::string pos = (directory == "" || directory[directory.size() - 1] != '/') ? directory + "/" : directory;
+	DIR *dir = NULL;
 
-std::string &Resource::getContent()
-{
-	return (content);
-}
+	_content += "<!DOCTYPE html>\n";
+	_content += "<html>\n";
+	_content += "<head>\n</head>\n";
+	_content += "<body>\n";
+	_content += "<h1> Index of "+ pos + "</h1>\n";
 
-std::string const &Resource::getContent() const
-{
-	return (content);
-}
+	dir = opendir((root + directory).c_str());
+	if (dir == NULL)
+		return ; // error
 
-void Resource::setWriteFd(int fd)
-{
-	_write_fd = fd;
-}
+	struct dirent *file = NULL;
+	while ((file = readdir(dir)) != NULL) {
+		std::string d_name = file->d_type == DT_DIR ? std::string(file->d_name) + "/" : std::string(file->d_name);
+		_content += "<a href=\"" + host + pos + file->d_name + "\">";
+		_content += file->d_name;
+		if (file->d_type == DT_DIR)
+			_content += + "/";
+		_content += "</a><br>\n";
+	}
+	closedir(dir);
 
-void Resource::setReadFd(int fd)
-{
-	_read_fd = fd;
-}
-void Resource::getPid(pid_t pid)
-{
-	_pid = pid;
+	_content += "</body>\n";
+	_content += "</html>\n";
 }

@@ -2,9 +2,9 @@
 #include "Response.hpp"
 
 ClientSocket::ClientSocket(int fd, ConfigServer server_info)
-	: Socket(CLIENT_SOCKET, fd), _server_info(server_info), _request(new Request(fd)), _response(NULL)
+	: Socket(CLIENT_SOCKET, fd), _server_info(server_info), _request(new Request(fd)), _response(NULL), _resource(new Resource())
 {
-	_response = new Response(_request);
+	_response = new Response(_request, _resource);
 };
 
 ClientSocket::~ClientSocket(){
@@ -29,7 +29,7 @@ RequestStage ClientSocket::getRequestStage()
 
 void ClientSocket::sendResponse()
 {
-	// _request->setRoute(_server_info.getLocations());
+	// _response->setEntity(_resource->getContent());
 	return _response->combineResponse();
 }
 
@@ -50,6 +50,8 @@ std::string ClientSocket::getErrorPage(std::string error_num)
 void ClientSocket::setResourceFd()
 {
 	_request->setRoute(_server_info.getLocations());
+	_resource->setExtension(getExtension(_request->getFile()));
+	_resource->setContentType(getContentType(_resource->getSrcContentType()));
 
 	std::string entity_file;
 	std::string root = _request->getRoute()->getCommonDirective()._root;
@@ -64,7 +66,7 @@ void ClientSocket::setResourceFd()
 		if (fd < 0)
 		{
 			_resource->setContent("Error");
-			// content type은 text plain
+			_resource->setContentType("text/plain");
 		}
 		return ;
 	}
@@ -102,14 +104,23 @@ void ClientSocket::setResourceFd()
 			if (getFileType(entity_file)) // 존재하는 파일 or 디렉토리
 			{
 				// resource content에 autoindex 만들기 (_request->getFile() 기준)
+				_resource->makeAutoIndex(root, _request->getFile());
 				return ;
 			}
 			// resource content에 autoindex 만들기 (/) // root
+			_resource->makeAutoIndex(root, "/");
 			return ;
 		}
 		else 
 		{
 			// _resource->setReadFd(open(getErrorPage("404"), O_RDONLY));
+			int fd = open(getErrorPage("404").c_str(), O_RDONLY);
+			_resource->setReadFd(fd);
+			if (fd < 0)
+			{
+				_resource->setContent("Error");
+				_resource->setContentType("text/plain");
+			}
 			return;
 		}
 	}
@@ -169,28 +180,13 @@ void ClientSocket::setResourceFd()
 				_response->setStatusCode("201");
 				_resource->setWriteFd(fd);
 		}
-		//
 	}
-}
-
-std::string ClientSocket::getCgiType(std::string file)
-{
-	std::string cgi_type = "php";
-
-	size_t rpos = file.rfind(".");
-	std::string extension = "";
-
-	if (rpos != std::string::npos)
-	{
-		extension = file.substr(rpos + 1);
-	}
-	return extension;
 }
 
 bool ClientSocket::isCGI(const std::string &path)
 {
 	std::string type;
-	type = getCgiType(path);
+	type = getExtension(path);
 	std::map<std::string, std::string> cgi_path = _request->getRoute()->getCommonDirective()._cgi_path;
 	if (cgi_path.find(type) != cgi_path.end())
 	{

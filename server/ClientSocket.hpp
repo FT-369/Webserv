@@ -24,7 +24,6 @@ private:
 	Response *_response;
 	Resource *_resource;
 	Stage _stage;
-	// unsigned long start_time;
 	ConfigServer _server_info;
 
 private:
@@ -42,7 +41,6 @@ public:
 	RequestStage getRequestStage();
 	std::string getErrorPage(std::string error_num);
 	void setResourceFd();
-	std::string getCgiType(std::string file);
 	bool isCGI(const std::string &path);
 };
 

@@ -2,6 +2,7 @@
 #define UTILS_HPP
 
 #include "webserv.hpp"
+#include "GlobalConfig.hpp"
 #define ERROR 1
 #define SUCCESS 0
 #define FILE_TYPE 1
@@ -16,5 +17,7 @@ std::vector<std::string> ft_split_space(std::string const &line);
 int	isDirectory(const std::string &path);
 int	isFile(const std::string &path);
 int	getFileType(const std::string &path);
+std::string getExtension(std::string file);
+std::string getContentType(std::string file);
 
 #endif
