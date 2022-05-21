@@ -121,7 +121,7 @@ void Server::keventProcess()
 							// if (client_socket->_resource->getReadFd() != -1)
 							// {
 							// 	addReadEvent(fd, client_socket->_request);
-							// 	socket.push_back(resource);
+							// 	socket.push_back(client_socket->resource);
 							// }
 							// if (client_socket->_resource->getWriteFd() != -1)
 							// {
