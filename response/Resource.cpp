@@ -36,11 +36,6 @@ std::string const &Resource::getContent() const
 	return (content);
 }
 
-void Resource::setRequest(Request *req)
-{
-	_req = req;
-}
-
 void Resource::setWriteFd(int fd)
 {
 	_write_fd = fd;

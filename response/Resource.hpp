@@ -11,7 +11,6 @@ private:       // read_fd[1]로 cgi가 데이터를 보내주면 read_fd[0]에�
 	int _write_fd;
 	int _read_fd;
 	pid_t _pid;
-	Request *_req;
 	std::string content;
 
 public:

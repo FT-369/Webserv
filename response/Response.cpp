@@ -1,7 +1,7 @@
 #include "Response.hpp"
 
 Response::Response(Request *request)
-	: _request(request), _socket_write(NULL), _route(NULL)
+	: _request(request), _socket_write(NULL), _resource(new Resource())
 {
 	_socket_write = fdopen(dup(_request->getSocketFD()), "w");
 }
@@ -11,6 +11,8 @@ Response::~Response()
 }
 
 FILE* Response::getSocketWriteFD() const { return _socket_write; }
+
+void Response::setStatusCode(std::string const &status_code) { _status_code = status_code; }
 
 std::string Response::getContentType(std::string file)
 {
@@ -33,7 +35,7 @@ std::string Response::getContentType(std::string file)
 
 void Response::makeStartLine()
 {
-	_start_line = _request->_protocol + " " + _status + " " + GlobalConfig::getStatusCode()[_status] + "\r\n";
+	_start_line = _request->_protocol + " " + _status_code + " " + GlobalConfig::getStatusCode()[_status_code] + "\r\n";
 }
 
 void Response::makePostHeader()
@@ -63,65 +65,32 @@ void Response::makeEntity(std::string file)
 	{
 		_entity += buffer + "\n";
 	}
-	_status = "200";
+	_status_code = "200";
 }
 
 void Response::setRedirect()
 {
 
-	if (_route->getReturnCode() == "")
+	if (_request->getRoute()->getReturnCode() == "")
 		return;
-	_status = _route->getReturnCode();
-	_header["Location"] = _route->getReturnData();
-}
-
-void Response::mappingPath(std::vector<ConfigLocation> const &locations)
-{
-	// std::vector<ConfigLocation> locations = _server_info.getLocations();
-	std::string path = _request->getPath();
-	int path_len = path.size();
-	std::cout << "path : " << path << std::endl;
-	_file = "";
-	for (int i = path_len - 1; i >= -1; i--)
-	{
-		if (i == path_len - 1 || path[i + 1] == '/')
-		{
-			for (int j = 0; j < locations.size(); j++)
-			{
-				if (path.substr(0, i + 1) == locations[j].getUrl() || path.substr(0, i + 1) == locations[j].getUrl() + "/")
-				{
-					_route = new ConfigLocation(locations[j].getUrl(), locations[j].getCommonDirective(), locations[j].getReturnCode(),
-					locations[j].getReturnData());
-					if (i != path_len - 1)
-						_file = path.substr(i + 1);
-					return;
-				}
-				else if (i == -1 && locations[j].getUrl() == "/")
-				{
-					_route = new ConfigLocation("/", locations[j].getCommonDirective(), locations[j].getReturnCode(),
-					locations[j].getReturnData());
-					_file = _request->getPath();
-					return;
-				}
-			}
-		}
-	}
+	_status_code = _request->getRoute()->getReturnCode();
+	_header["Location"] = _request->getRoute()->getReturnData();
 }
 
 void Response::makeResponse()
 {
 	std::vector<std::string> temp;
 
-	temp = _route->getCommonDirective()._limit_except;
-	std::cout << "[Mapping Path] url: " << _route->getUrl() << ", file:" << _file << std::endl;
+	temp = _request->getRoute()->getCommonDirective()._limit_except;
+	std::cout << "[Mapping Path] url: " << _request->getRoute()->getUrl() << ", file:" << _request->getFile() << std::endl;
 
 	if (find(temp.begin(), temp.end(), _request->getMethod()) == temp.end())
 	{
 		std::cout << "ERROR Response " << std::endl;
 		makeErrorResponse("405");
 	}
-	else if (_file.find(".php") != std::string::npos) {
-		CgiHandler cgi(_route, _request);
+	else if (_request->getFile().find(".php") != std::string::npos) {
+		CgiHandler cgi(_request->getRoute(), _request);
 		cgi.executeCgi();
 		return ;
 	}
@@ -176,7 +145,7 @@ void Response::makeAutoIndex(std::string directory, DIR *dir)
 	_entity += "<h1> Index of "+ pos + "</h1>\n";
 
 	if (dir == NULL)
-		dir = opendir(_route->getCommonDirective()._root.c_str());
+		dir = opendir(_request->getRoute()->getCommonDirective()._root.c_str());
 
 	struct dirent *file = NULL;
 	while ((file = readdir(dir)) != NULL) {
@@ -193,13 +162,13 @@ void Response::makeAutoIndex(std::string directory, DIR *dir)
 	_entity += "</html>\n";
 }
 
-void Response::settingRoute()
+void Response::makeGetResponse()
 {
 	std::string entityFile;
-	std::string root = _route->getCommonDirective()._root;
-	std::vector<std::string> indexPage = _route->getCommonDirective()._index;
+	std::string root = _request->getRoute()->getCommonDirective()._root;
+	std::vector<std::string> indexPage = _request->getRoute()->getCommonDirective()._index;
 
-	if (_file == "")
+	if (_request->getFile() == "")
 	{
 		if (!indexPage.empty())
 		{
@@ -211,7 +180,9 @@ void Response::settingRoute()
 					int resource_fd = open(indexfile.c_str(), O_RDONLY);
 					// socket list에 new Resource 해서 추가
 					// addEvent
+					// return;
 				}
+				// return; 실패
 				// std::ifstream idx(root + "/" + indexPage[i]);
 				// if (idx.is_open())
 				// {
@@ -219,7 +190,7 @@ void Response::settingRoute()
 				// }
 			}
 		}
-		else if (_route->getCommonDirective()._autoindex)
+		else if (_request->getRoute()->getCommonDirective()._autoindex)
 		{
 			return makeAutoIndex("/", 0);
 		}
@@ -227,13 +198,16 @@ void Response::settingRoute()
 	else
 	{
 		DIR* isDir = 0;
-		std::ifstream is(root + _file);
+		std::ifstream is(root + _request->getFile());
 
 		if (!is.fail()) // 존재하는 파일 or 디렉토리
 		{
-			entityFile = root + _file;
+			entityFile = root + _request->getFile();
 			if ((isDir = opendir(entityFile.c_str())) == NULL) // 파일인 경우
 			{
+				// if (isCGI == true)
+				// {
+				// }
 				if (isFile(entityFile) == 1)
 				{
 					int resource_fd = open(entityFile.c_str(), O_RDONLY);
@@ -243,12 +217,12 @@ void Response::settingRoute()
 				return;
 				// return makeEntity(entityFile);
 			}
-			else if (_route->getCommonDirective()._autoindex) // 디렉토리인데 autoindex가 켜져있으면
+			else if (_request->getRoute()->getCommonDirective()._autoindex) // 디렉토리인데 autoindex가 켜져있으면
 			{
-				return makeAutoIndex(_file, isDir);
+				return makeAutoIndex(_request->getFile(), isDir);
 			}
 		}
-		else if (_route->getCommonDirective()._autoindex)
+		else if (_request->getRoute()->getCommonDirective()._autoindex)
 		{
 			return makeAutoIndex("/", 0);
 		}
@@ -256,75 +230,50 @@ void Response::settingRoute()
 	return makeErrorResponse("404");
 }
 
-
-int	Response::isDirectory(const std::string &path)
-{
-	struct stat sb;
-
-	if (stat(path.c_str(), &sb) != 0)
-		return 0;
-	if ((sb.st_mode & S_IFMT) & S_IFDIR)
-		return 1;
-	else 
-		return 0;
-
-}
-
-int	Response::isFile(const std::string &path)
-{
-	struct stat sb;
-	
-	if (stat(path.c_str(), &sb) != 0)
-		return 0;
-	if ((sb.st_mode & S_IFMT) & S_IFREG)
-		return 1;
-	else
-		return 0;
-}
-
 void	Response::makePostResponse()
 {
-	std::string path = _route->getCommonDirective()._root;
-	std::string dir, filename;
-	size_t rpos = _file.rfind("/");
-	std::string dirpath;
+	std::string path = _request->getRoute()->getCommonDirective()._root;
+	std::string dir, dirpath, filename;
+	size_t rpos = _request->getFile().rfind("/");
 
 	if (rpos != std::string::npos)
-		dir = _file.substr(0, rpos);
-	if (dir == "")
+		dir = _request->getFile().substr(0, rpos);
+	dir == "" ? dirpath = path : dirpath = dir;
+	if (_request->getFile() == "")
 	{
-		dirpath = path;
-		if (_file == "")
-			filename = dirpath + "/NewFile";
-		else
-			filename = dirpath + _file;
+		filename = dirpath + "/NewFile";
+		std::string temp = filename;
+		int i = 0;
+		while (isDirectory(filename) || isFile(filename))
+		{
+			temp = filename + '(' + std::to_string(i) + ')';
+			i++;
+		}
+		filename = temp;
 	}
 	else
 	{
-		dirpath = dir;
-		if (_file == "")
-			filename = dirpath + "/NewFile";
-		else
-			filename = _file;
+		filename = dirpath + _request->getFile();
 	}
 	// creatfilename();
 	if (isDirectory(filename))
 	{
-		_status = "400";
+		_status_code = "400";
 		//makeErrorPage()
 		return;
-		//throw 400
 	}
 	if (isFile(filename))
 	{
+		// if (isCGI() == true)
+		// {
+		// }
 		std::ofstream ofs;
-
 		ofs.open(filename, std::ios::app);
 		if (ofs.is_open())
-			_status = "200";
+			_status_code = "200";
 		else
 		{
-			_status = "403";
+			_status_code = "403";
 			// makeErrorPage();
 			return ;
 		}
@@ -336,12 +285,12 @@ void	Response::makePostResponse()
 		std::ofstream ofs(filename);
 		if (ofs.fail())
 		{
-			_status = "500";
+			_status_code = "500";
 			// makeErrorPage();
 			return ;
 		}
 		else
-			_status = "201";
+			_status_code = "201";
 		ofs << _request->_request_body;
 		ofs.close();
 	}
@@ -350,26 +299,51 @@ void	Response::makePostResponse()
 	makeStartLine();
 }
 
-void Response::makeGetResponse()
-{
-	settingRoute();
-}
-
 void Response::makeDeleteResponse()
 {
-	settingRoute();
+	std::string entityFile;
+	std::string root = _request->getRoute()->getCommonDirective()._root;
+	std::vector<std::string> indexPage = _request->getRoute()->getCommonDirective()._index;
+
+	if (_request->getFile() == "")
+	{
+		if (!indexPage.empty())
+		{
+			for (size_t i = 0; i < indexPage.size(); i++)
+			{
+				std::string indexfile = root + "/" + indexPage[i];
+				if (isFile(indexfile) == 1)
+				{
+					return ; // 성공 응답
+				}
+			}
+		}
+	}
+	else
+	{
+		entityFile = root + _request->getFile();
+		if (isFile(entityFile) == 1)
+		{
+			return ; // 성공 응답
+		}
+		else if (isDirectory(entityFile) == 1)
+		{
+			return ; // 뭐라고 응답?
+		}
+	}
+	return ;	// 실패 응답
 }
 
 void Response::makeErrorResponse(std::string error_num)
 {
 	std::string root = "./static_file/defaultErrorPage.html";
-	std::map<std::string, std::string> temp = _route->getCommonDirective()._error_page;
+	std::map<std::string, std::string> temp = _request->getRoute()->getCommonDirective()._error_page;
 	std::string buffer;
 
-	_status = error_num;
-	if (temp.find(_status) != temp.end())
+	_status_code = error_num;
+	if (temp.find(_status_code) != temp.end())
 	{
-		root =_route->getCommonDirective()._root + "/" + _route->getCommonDirective()._error_page[_status];
+		root =_request->getRoute()->getCommonDirective()._root + "/" + _request->getRoute()->getCommonDirective()._error_page[_status_code];
 	}
 	std::ifstream idx(root);
 	if (idx.is_open() == false)

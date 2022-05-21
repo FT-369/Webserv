@@ -1,7 +1,7 @@
 #include "Request.hpp"
 
 Request::Request(int socket_fd)
-	: _socket_fd(socket_fd), _socket_read(fdopen(socket_fd, "r")), _status(READ_REQUEST_LINE), _resource(new Resource)
+	: _socket_fd(socket_fd), _socket_read(fdopen(socket_fd, "r")), _stage(READ_REQUEST_LINE)
 {
 }
 
@@ -47,7 +47,9 @@ std::string Request::getQuery() const { return _query; }
 std::string Request::getProtocol() const { return _protocol; }
 std::string Request::getRequestBody() const { return _request_body; }
 std::map<std::string, std::string> Request::getRequestHeader() const { return _request_header; }
-Status Request::getStatus() const { return _status; }
+RequestStage Request::getStage() const { return _stage; }
+ConfigLocation *Request::getRoute() const { return _route; }
+std::string Request::getFile() const { return _file; }
 
 std::string Request::ft_fgets_line(FILE *fp)
 {
@@ -68,11 +70,6 @@ std::string Request::ft_fgets_line(FILE *fp)
 		getline += std::string(line);
 	}
 	return getline;
-}
-
-Resource* Request::getResource() const
-{
-	return _resource;
 }
 
 // int Request::parseRequest()
@@ -206,7 +203,7 @@ int Request::parseRequestLine()
 	if ((pos = _protocol.find("HTTP/")) == std::string::npos)
 		return ERROR;
 
-	_status = READ_REQUEST_HEADER;
+	_stage = READ_REQUEST_HEADER;
 	return SUCCESS;
 }
 
@@ -218,7 +215,7 @@ int Request::parseRequestHeader()
 	get_line = ft_fgets_line(getSocketReadFP());
 	if (get_line == "" || get_line == "\r\n")
 	{
-		_status = READ_REQUEST_BODY;
+		_stage = READ_REQUEST_BODY;
 		return SUCCESS;
 	}
 
@@ -242,7 +239,7 @@ int Request::parseRequestBody()
 
 	if (fgets(line, GET_LINE_BUF, getSocketReadFP()) == NULL)
 	{
-		_status = READ_END_OF_REQUEST;
+		_stage = READ_END_OF_REQUEST;
 	}
 	else
 	{
@@ -253,7 +250,7 @@ int Request::parseRequestBody()
 
 int Request::parseRequest()
 {
-	switch (_status)
+	switch (_stage)
 	{
 	case READ_REQUEST_LINE:
 		if (parseRequestLine() == ERROR)
@@ -274,4 +271,36 @@ int Request::parseRequest()
 		break;
 	}
 	return SUCCESS;
+}
+
+void Request::setRoute(std::vector<ConfigLocation> const &locations)
+{
+	int path_len = _path.size();
+	std::cout << "setRoute path: " << _path << std::endl;
+	_file = "";
+
+	for (int i = path_len - 1; i >= -1; i--)
+	{
+		if (i == path_len - 1 || _path[i + 1] == '/')
+		{
+			for (int j = 0; j < locations.size(); j++)
+			{
+				if (_path.substr(0, i + 1) == locations[j].getUrl() || _path.substr(0, i + 1) == locations[j].getUrl() + "/")
+				{
+					_route = new ConfigLocation(locations[j].getUrl(), locations[j].getCommonDirective(), locations[j].getReturnCode(),
+					locations[j].getReturnData());
+					if (i != path_len - 1)
+						_file = _path.substr(i + 1);
+					return;
+				}
+				else if (i == -1 && locations[j].getUrl() == "/")
+				{
+					_route = new ConfigLocation("/", locations[j].getCommonDirective(), locations[j].getReturnCode(),
+					locations[j].getReturnData());
+					_file = _path;
+					return;
+				}
+			}
+		}
+	}
 }

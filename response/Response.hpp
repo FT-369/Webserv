@@ -13,10 +13,9 @@ private:
 	std::string _start_line;
 	std::map<std::string, std::string> _header;
 	std::string _entity;
-	std::string _status;
+	std::string _status_code;
 	Request *_request;
-	ConfigLocation *_route;
-	std::string _file;
+	Resource *_resource;
 
 public:
 	Response(Request *request);
@@ -31,17 +30,15 @@ public:
 	void makeEntity(std::string file);
 	void makeResponse();
 	void combineResponse();
-	int isDirectory(const std::string &path);
-	int isFile(const std::string &path);
-
+	void setStatusCode(std::string const &status_code);
 	void makeGetResponse();
 	void makePostResponse();
 	void makeDeleteResponse();
 	void makeErrorResponse(std::string error_num);
 	void makeAutoIndex(std::string directory, DIR* dir);
-	void settingRoute();
+	// void settingRoute();
 	std::string getContentType(std::string file);
-	void mappingPath(std::vector<ConfigLocation> const &locations);
+	// void mappingPath(std::vector<ConfigLocation> const &locations);
 };
 
 #endif

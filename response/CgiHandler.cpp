@@ -117,7 +117,6 @@ int CgiHandler::executeCgi()
 		close(read_fd[1]);
 		_request->getResource()->setReadFd(read_fd[0]);
 		_request->getResource()->setWriteFd(write_fd[1]);
-		// addEvent(EVFILT_WRITE, write_fd[1], resource);
 		std::cerr << "response read_fd: " << read_fd[0] << std::endl;
 		std::cerr << "response write_fd: " << write_fd[1] << std::endl;
 	}

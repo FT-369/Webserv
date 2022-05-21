@@ -6,7 +6,7 @@
 
 #define GET_LINE_BUF 1024
 
-enum Status
+enum RequestStage
 {
 	READ_REQUEST_LINE,
 	READ_REQUEST_HEADER,
@@ -19,7 +19,7 @@ class Request
 public:
 	const int _socket_fd;
 	FILE *_socket_read;
-	Status _status;
+	RequestStage _stage;
 
 	std::string _method;
 	std::string _path;
@@ -27,12 +27,14 @@ public:
 	std::string _protocol;
 	std::string _request_body;
 	std::map<std::string, std::string> _request_header;
-	Resource *_resource;
+	ConfigLocation *_route;
+	std::string _file; // 라우팅 경로를 제외한 파일  // _route->getUrl() + _file = _path;
 
 public:
 	Request(int socket_fd);
 	~Request();
 	int parseRequest();
+	void setRoute(std::vector<ConfigLocation> const &locations);
 
 	int getSocketFD() const;
 	FILE *getSocketReadFP() const;
@@ -46,8 +48,10 @@ public:
 	std::string getProtocol() const;
 	std::string getRequestBody() const;
 	std::map<std::string, std::string> getRequestHeader() const;
-	Status getStatus() const;
+	RequestStage getStage() const;
 	Resource* getResource() const;
+	ConfigLocation *getRoute() const;
+	std::string getFile() const;
 
 private:
 	int parseRequestLine();

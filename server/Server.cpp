@@ -95,18 +95,39 @@ void Server::keventProcess()
 					{
 						ClientSocket *client_socket = dynamic_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
 						std::cout << client_socket << std::endl;
+						int error = 0;
+
 						if (client_socket->getRequest() == 0)
 						{
 							std::cerr << "Request() error" << std::endl;
 							continue;
 						}
-						while (client_socket->getRequestStatus() != READ_END_OF_REQUEST)
+						while (client_socket->getRequestStage() != READ_END_OF_REQUEST)
 						{
 							if (client_socket->recieveRequest() == ERROR)
 							{
 								std::cerr << "parseRequest() error" << std::endl;
-								continue;
+								error = 1;
+								break;
 							}
+						}
+						if (error)
+						{
+							continue;
+						}
+						else
+						{
+							client_socket->setResourceFd();
+							// if (client_socket->_resource->getReadFd() != -1)
+							// {
+							// 	addReadEvent(fd, client_socket->_request);
+							// 	socket.push_back(resource);
+							// }
+							// if (client_socket->_resource->getWriteFd() != -1)
+							// {
+							// 	addWriteEvent(fd, client_socket->_request);
+							// 	socket.push_back(resource);
+							// }
 						}
 					}
 					case RESOURCE_FD:
@@ -162,11 +183,10 @@ void Server::keventProcess()
 					case CLIENT_SOCKET:
 					{
 						ClientSocket *cs = dynamic_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
-						if (cs != 0 && cs->getRequest() != 0 && cs->getRequestStatus() == READ_END_OF_REQUEST)
+						if (cs != 0 && cs->getRequest() != 0 && cs->getRequestStage() == READ_END_OF_REQUEST) // + 리소스도 다 읽었으면
 						{
 							std::cout << "EVFILT_WRITE - fd[" << _kq._event_list[i].ident << "]: " << cs << std::endl;
-							// if (cs->sendResponse())
-							// 	addEvent();
+							//  cs->_respose->sendResponse();
 							_socket.erase(_kq._event_list[i].ident);
 							close(_kq._event_list[i].ident);
 						}
@@ -175,22 +195,16 @@ void Server::keventProcess()
 					{
 						int ret;
 						Resource *resource = dynamic_cast<Resource *>(_socket[_kq._event_list[i].ident]);
+						// udata로 request 넣어주기
 						if (resource->getPid() > 0) // cgi
 						{
+							// resource write_fd (cgi pipe) 에 쓰기 <- 정확히 뭘쓰는지??
 						}
 						else
 						{
+							// POST 요청 다 받아오면 파일(resource write_fd)에 request body를 한번에 쓰기
+							// write(resource);
 						}
-						// Resource *res = reinterpret_cast<Resource *>(_kq._event_list[i].udata);
-						// write(resource->getWriteFD(), resource->request->getBody(), resource->request->getBody.size());
-						// if (WIFSIGNALED(stat) == true)
-						// {
-						//     // cgi error
-						// }
-						// if (WEXITSTATUS(stat) == true)
-						// {
-						//     write(res->getSocketWriteFD(), getBody(), getBody.size());
-						// }
 					}
 					}
 				}

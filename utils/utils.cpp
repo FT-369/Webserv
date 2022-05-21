@@ -70,3 +70,41 @@ std::vector<std::string> ft_split_space(std::string const &line)
 		words.push_back(new_line);
 	return words;
 }
+
+int	isDirectory(const std::string &path)
+{
+	struct stat sb;
+
+	if (stat(path.c_str(), &sb) != 0)
+		return 0;
+	if ((sb.st_mode & S_IFMT) & S_IFDIR)
+		return 1;
+	else 
+		return 0;
+
+}
+
+int	isFile(const std::string &path)
+{
+	struct stat sb;
+	
+	if (stat(path.c_str(), &sb) != 0)
+		return 0;
+	if ((sb.st_mode & S_IFMT) & S_IFREG)
+		return 1;
+	else
+		return 0;
+}
+
+int	getFileType(const std::string &path)
+{
+	struct stat sb;
+	
+	if (stat(path.c_str(), &sb) != 0)
+		return 0;
+	if ((sb.st_mode & S_IFMT) & S_IFDIR)
+		return DIRECTORY;
+	if ((sb.st_mode & S_IFMT) & S_IFREG)
+		return FILE_TYPE;
+	return 0;
+}
