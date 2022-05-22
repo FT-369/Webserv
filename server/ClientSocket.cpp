@@ -169,7 +169,6 @@ void ClientSocket::setResourceFd()
 				_response->setStatusCode("201");
 				_resource->setWriteFd(fd);
 		}
-		//
 	}
 }
 
