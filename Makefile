@@ -21,7 +21,7 @@ CONFIG_OBJECT = $(foreach src, $(CONFIG_SOURCE), $(CONFIG_INCLUDE)/$(src).o)
 CONFIG_HEADER = $(foreach header, $(CONFIG_SOURCE), $(CONFIG_INCLUDE)/$(header).hpp)
 
 # utils
-UTILS_SOURCE = GlobalConfig utils
+UTILS_SOURCE = GlobalConfig utils ExceptionHandler
 UTILS_OBJECT = $(foreach src, $(UTILS_SOURCE), $(UTILS_INCLUDE)/$(src).o)
 UTILS_HEADER = $(foreach header, $(UTILS_SOURCE), $(UTILS_INCLUDE)/$(header).hpp)
 
