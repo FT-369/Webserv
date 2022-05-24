@@ -40,11 +40,11 @@ void Response::makeRedirectHeader()
 	_header["Location"] = _request->getRoute()->getReturnData();
 }
 
+
 void Response::makeResponse()
 {
 	// resource의 content 가져오기
 	_entity = _resource->getContent();
-
 	std::vector<std::string> temp;
 	temp = _request->getRoute()->getCommonDirective()._limit_except;
 	std::cout << "[Mapping Path] url: " << _request->getRoute()->getUrl() << ", file:" << _request->getFile() << std::endl;
@@ -57,7 +57,7 @@ void Response::makeResponse()
 	}
 	else if (_request->getMethod() == "GET")
 	{
-		std::cout << "GET" << std::endl;
+		std::cout << "getMethod GET" << std::endl;
 		makeGetHeader();
 	}
 	else if (_request->getMethod() == "POST")
@@ -90,6 +90,12 @@ void Response::combineResponse()
 	fflush(_socket_write);
 	fclose(_socket_write);
 }
+
+void Response::addHeader(std::string key, std::string value)
+{
+	_header[key] = value; 
+}
+
 
 // void Response::makeEntity(std::string file)
 // {

@@ -24,22 +24,37 @@ std::string getIp(int fd)
 
 void CgiHandler::cgiInitEnv()
 {
+	std::string extension = _client_socket->getRequest()->getPath().substr(_client_socket->getRequest()->getPath().rfind(".") + 1);
 	_cgi_env["SERVER_PROTOCOL"] = "HTTP/1.1";
 	_cgi_env["GATEWAY_INTERFACE"] = "CGI/1.1";
 	_cgi_env["SERVER_SOFTWARE"] = "nginx server designed by sma";
+	_cgi_env["REQUEST_METHOD"] = _client_socket->getRequest()->getMethod();
+	_cgi_env[std::string("LANG")] = std::string(std::getenv("LANG"));
+	_cgi_env[std::string("REQUEST_SCHEME")] = _client_socket->getRequest()->getMethod();
+
+	
 	_cgi_env["SERVER_PORT"] = _client_socket->getRequest()->getPort();
 	_cgi_env["SERVER_NAME"] = _client_socket->getRequest()->getServerName();
 	_cgi_env["PATH_INFO"] = _client_socket->getRequest()->getPath();
-	_cgi_env["PATH_TRANSLATED"] = _location_info->getCommonDirective()._root + _client_socket->getRequest()->getPath(); // cgi_path가 아닐까?
-	_cgi_env["SCRIPT_NAME"] = _client_socket->getRequest()->getPath();
+	std::cerr << "PATH_INFO : " << _client_socket->getRequest()->getPath() << std::endl;;
+	_cgi_env[std::string("DOCUMENT_ROOT")] = _location_info->getCommonDirective()._cgi_path[extension];
+		std::cerr << "? : " << _client_socket->getRequest()->getQuery() << std::endl;;
+
+	_cgi_env[std::string("REQUEST_URI")] = _client_socket->getRequest()->getPath() + (_client_socket->getRequest()->getQuery().size() > 0 ? ("?" + _client_socket->getRequest()->getQuery()) : ""); // 리퀘스트에 명시된 전체 주소가 들어가야 함
+	 	std::cerr << "PATH_INFO : " << _cgi_env[std::string("REQUEST_URI")] << std::endl;
+
+	_cgi_env[std::string("DOCUMENT_URI")] = _client_socket->getRequest()->getPath() + (_client_socket->getRequest()->getQuery().size() > 0 ? ("?" + _client_socket->getRequest()->getQuery()) : "");; // 리퀘스트에 명시된 전체 주소가 들어가야 함
+	_cgi_env["SCRIPT_NAME"] = _client_socket->getRequest()->getRoute()->getCommonDirective()._root + _client_socket->getRequest()->getPath(); // 실행파일 전체 주소가 들어가야함
+	std::cerr << "SCRIPT_NAME : " << _cgi_env[std::string("SCRIPT_NAME")] << std::endl;
+
+	_cgi_env["SCRIPT_FILENAME"] =  _client_socket->getRequest()->getRoute()->getCommonDirective()._root + _client_socket->getRequest()->getPath();// 실행파일 전체 주소가 들어가야함
 	_cgi_env["QUERY_STRING"] = _client_socket->getRequest()->getQuery();
 	_cgi_env["REMOTE_ADDR"] = getIp(_client_socket->getRequest()->getSocketFD());
 	_cgi_env["REDIRECT_STATUS"] = "200";
 	_cgi_env["PHP_SELF"] = _client_socket->getRequest()->getPath();
 	_cgi_env["CONTENT_LENGTH"] = _client_socket->getRequest()->getRequestHeader()["content_length"];
 	_cgi_env["CONTENT_TYPE"] = _client_socket->getRequest()->getContentType();
-	_cgi_env["REQUEST_METHOD"] = _client_socket->getRequest()->getMethod();
-	_cgi_env["REQUEST_URI"] = _client_socket->getRequest()->getPath() + "?" + _client_socket->getRequest()->getQuery();
+	// _cgi_env["REQUEST_URI"] = _client_socket->getRequest()->getPath() + "?" + _client_socket->getRequest()->getQuery();
 }
 
 char **CgiHandler::convertEnv()
@@ -87,23 +102,39 @@ int CgiHandler::executeCgi()
 		std::string cgi_file = _location_info->getCommonDirective()._cgi_path[extension];
 		char *argv[4];
 		int result = -1;
-		char **envp = convertEnv();
+		char **env;
+
+		if (!(env = (char**)malloc(sizeof(char*) * (_cgi_env.size() + 1))))
+		{
+			return -1;
+		}
+		int i = 0;
+		for (std::map<std::string, std::string>::iterator it = _cgi_env.begin(); it != _cgi_env.end(); it++)
+		{
+			env[i] = strdup((it->first + "=" + it->second).c_str());
+			i++;
+		}
+		env[i] = NULL;
+		// char **envp = convertEnv();
+		cgi_file += "/php-cgi";
+		std::string path_ = "./www/php" + _client_socket->getRequest()->getPath(); 
 		argv[0] = const_cast<char*>(cgi_file.c_str());
-		argv[1] = const_cast<char*>(_client_socket->getRequest()->getPath().c_str());
+		argv[1] = const_cast<char*>(path_.c_str());
 		argv[2] = 0;
 		if (_client_socket->getRequest()->getQuery() != "")
 		{
 			argv[2] = const_cast<char*>(_client_socket->getRequest()->getQuery().c_str());
 		}
 		argv[3] = 0;
-
-		if (envp == NULL)
+		if (env == NULL)
+		{
 			return 500;
+		}
 		dup2(write_fd[0],STDIN_FILENO);
 		dup2(read_fd[1], STDOUT_FILENO);
 		close(write_fd[1]);
 		close(read_fd[0]);
-		if ((result = execve(argv[0], argv, envp)) == -1)
+		if ((result = execve(argv[0], argv, env)) == -1)
 		{
 			exit(result);
 		}
@@ -111,6 +142,7 @@ int CgiHandler::executeCgi()
 	}
 	else
 	{
+		_client_socket->getResource()->setPid(pid);
 		close(write_fd[0]);
 		close(read_fd[1]);
 		_client_socket->getResource()->setReadFd(read_fd[0]);

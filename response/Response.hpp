@@ -30,6 +30,7 @@ public:
 	void makeResponse();
 	void combineResponse();
 	void setStatusCode(std::string const &status_code);
+	void addHeader(std::string key, std::string value);
 	// void makeEntity(std::string file);
 	// void makeAutoIndex(std::string directory, DIR* dir);
 	// void settingRoute();

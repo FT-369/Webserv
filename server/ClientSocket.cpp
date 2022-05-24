@@ -19,11 +19,15 @@ Response *ClientSocket::getResponse() const { return _response; }
 
 int ClientSocket::recieveRequest()
 {
-	if (_request->parseRequest() == SUCCESS) {
-		setStage(END_OF_REQUEST);
-		return SUCCESS;
+	if (_request->parseRequest() == ERROR)
+	{
+		return ERROR;
 	}
-	return ERROR;
+	if (_request->getRequestStage() == READ_END_OF_REQUEST)
+	{
+		setStage(END_OF_REQUEST);
+	}
+	return SUCCESS;
 }
 
 Stage ClientSocket::getStage()
@@ -70,14 +74,17 @@ void ClientSocket::setResourceFd()
 	{
 		CgiHandler cgi(_request->getRoute(), this);
 		cgi.executeCgi(); // <- 여기서 resource read_fd, write_fd 설정
+		setStage(CGI_WRITE);
 		return;
 	}
 	if (_request->getMethod() == "GET")
 	{
+		std::cout << "GET" << std::endl;
 		setGetFd();
 	}
 	else if (_request->getMethod() == "POST")
 	{
+		std::cout << "POST" << std::endl;
 		setPostFd();
 	}
 }
@@ -87,6 +94,7 @@ bool ClientSocket::isCGI(const std::string &path)
 	std::string type;
 	type = getExtension(path);
 	std::map<std::string, std::string> cgi_path = _request->getRoute()->getCommonDirective()._cgi_path;
+	std::cout << "cgi_path = " << type << std::endl;
 	if (cgi_path.find(type) != cgi_path.end())
 	{
 		return 1;
@@ -99,12 +107,13 @@ void ClientSocket::setGetFd()
 	std::string entity_file;
 	std::string root = _request->getRoute()->getCommonDirective()._root;
 	std::vector<std::string> index_page = _request->getRoute()->getCommonDirective()._index;
-
 	if (_request->getFile() == "") // 파일명이 없을때
 	{
 		for (size_t i = 0; i < index_page.size(); i++)
 		{
 			std::string indexfile = root + "/" + index_page[i];
+			
+			std::cout << i  << " " << indexfile << std::endl;
 			if (isFile(indexfile) == 1)
 			{
 				_resource->setReadFd(open(indexfile.c_str(), O_RDONLY));
@@ -123,6 +132,7 @@ void ClientSocket::setGetFd()
 	}
 	if (_request->getRoute()->getCommonDirective()._autoindex)
 	{
+		setStage(MAKE_AUTOINDEX);
 		if (getFileType(entity_file)) // 존재하는 파일 or 디렉토리
 		{
 			// resource content에 autoindex 만들기 (_request->getFile() 기준)
@@ -210,4 +220,23 @@ void ClientSocket::setErrorResource(std::string error)
 		_resource->setContent("Error");
 		_resource->setContentType("text/plain");
 	}
+}
+
+void ClientSocket::parsingCGIResponse()
+{
+	std::string content = getResource()->getContent();
+	int start, end;
+	std::string tem;
+
+	while (1)
+	{
+		tem = content.substr(0, content.find('\n'));
+		start = 0;
+		if ((end = tem.find(": ")) < 0)
+			break;
+		getResponse()->addHeader(tem.substr(start, end - start), tem.substr(end + 2, tem.find('\n') - end + 2));  // cgi 반환값의 header 파싱
+		content = content.substr(tem.size() + 1, content.size());
+	}
+	getResource()->setContent(content);
+
 }

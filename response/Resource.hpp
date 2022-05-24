@@ -25,7 +25,7 @@ public:
 	std::string const &getContent() const;
 	std::string getSrcExtension() const;
 	std::string getSrcContentType() const;
-	void setContent(std::string const &content);
+	void setContent(std::string const content);
 	// void setRequest(Request *req);
 	void setWriteFd(int fd);
 	void setReadFd(int fd);
