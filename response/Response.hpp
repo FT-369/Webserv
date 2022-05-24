@@ -18,26 +18,22 @@ private:
 	Resource *_resource;
 
 public:
-	Response(Request *request);
+	Response(Request *request, Resource *resource);
 	~Response();
 	FILE* getSocketWriteFD() const;
 
 	void makeStartLine();
-	void setRedirect();
+	void makeRedirectHeader();
+	void makeGetHeader();
 	void makeHeader();
-	void makePostHeader();
-	void mappingPath();
-	void makeEntity(std::string file);
+	void setEntity(std::string const &entity);
 	void makeResponse();
 	void combineResponse();
 	void setStatusCode(std::string const &status_code);
-	void makeGetResponse();
-	void makePostResponse();
-	void makeDeleteResponse();
-	void makeErrorResponse(std::string error_num);
-	void makeAutoIndex(std::string directory, DIR* dir);
+	// void makeEntity(std::string file);
+	// void makeAutoIndex(std::string directory, DIR* dir);
 	// void settingRoute();
-	std::string getContentType(std::string file);
+	// std::string getContentType(std::string file);
 	// void mappingPath(std::vector<ConfigLocation> const &locations);
 };
 

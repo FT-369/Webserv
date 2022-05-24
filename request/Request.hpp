@@ -48,7 +48,7 @@ public:
 	std::string getProtocol() const;
 	std::string getRequestBody() const;
 	std::map<std::string, std::string> getRequestHeader() const;
-	RequestStage getStage() const;
+	RequestStage getRequestStage() const;
 	Resource* getResource() const;
 	ConfigLocation *getRoute() const;
 	std::string getFile() const;

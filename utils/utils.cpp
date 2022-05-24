@@ -108,3 +108,25 @@ int	getFileType(const std::string &path)
 		return FILE_TYPE;
 	return 0;
 }
+
+std::string getExtension(std::string file)
+{
+	size_t rpos = file.rfind(".");
+	std::string extension = "";
+
+	if (rpos != std::string::npos)
+	{
+		extension = file.substr(rpos + 1);
+	}
+	return extension;
+}
+
+std::string getContentType(std::string file)
+{
+	std::string content_type = GlobalConfig::getDefaultType();
+	std::string extension = getExtension(file);
+
+	if (GlobalConfig::getMimeTypes().find(extension) != GlobalConfig::getMimeTypes().end())
+		content_type = GlobalConfig::getMimeTypes()[extension];
+	return content_type;
+}

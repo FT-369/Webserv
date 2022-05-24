@@ -6,11 +6,9 @@
 
 enum Stage
 {
-	GET_REQUEST,
-	SET_RESOURCE,
-	MAKE_RESPONSE,
-	CGI_READ,
-	CGI_WRITE,
+	GET_REQUEST, // 리퀘스트 파싱 시작
+	SET_RESOURCE, // 리소스 세팅 시작
+	MAKE_RESPONSE, // 세팅된 리소스로 응답 보내줌
 	FILE_READ,
 	FILE_WRITE,
 	AUTOINDEX_WRITE,
@@ -24,7 +22,6 @@ private:
 	Response *_response;
 	Resource *_resource;
 	Stage _stage;
-	// unsigned long start_time;
 	ConfigServer _server_info;
 
 private:
@@ -39,11 +36,14 @@ public:
 	Response *getResponse() const;
 	int recieveRequest();
 	void sendResponse();
-	RequestStage getRequestStage();
+	Stage getStage();
+	void setStage(Stage stage);
 	std::string getErrorPage(std::string error_num);
-	void setResourceFd();
-	std::string getCgiType(std::string file);
 	bool isCGI(const std::string &path);
+	void setResourceFd();
+	void setGetFd();
+	void setPostFd();
+	void setErrorResource(std::string error);
 };
 
 #endif
