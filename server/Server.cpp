@@ -78,219 +78,180 @@ void Server::keventProcess()
 			}
 			switch (_kq._event_list[i].filter)
 			{
-			case EVFILT_READ:
-			{
-				if (it == _socket.end()) // Server의 socket 리스트에 저장되지 않은 fd면 넘기기
-					continue;
-				switch (_socket[_kq._event_list[i].ident]->getSocketType())
+				case EVFILT_READ:
 				{
-				case SERVER_SOCKET:
-				{
-					ServerSocket *server_socket = dynamic_cast<ServerSocket *>(_socket[_kq._event_list[i].ident]);
-					std::cout << server_socket << std::endl;
-					acceptGetClientFd(server_socket);
-				}
-				case CLIENT_SOCKET:
-				{
-					ClientSocket *client_socket = dynamic_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
-					std::cout << client_socket << std::endl;
-					int error = 0;
-
-					if (client_socket->getRequest() == 0)
-					{
-						std::cerr << "Request() error" << std::endl;
+					if (it == _socket.end()) // Server의 socket 리스트에 저장되지 않은 fd면 넘기기
 						continue;
-					}
-					while (client_socket->getStage() != READ_END_OF_REQUEST)
+					switch (_socket[_kq._event_list[i].ident]->getSocketType())
 					{
-						if (client_socket->recieveRequest() == ERROR)
+						case SERVER_SOCKET:
 						{
-							std::cerr << "parseRequest() error" << std::endl;
-							error = 1;
-							break;
+							ServerSocket *server_socket = dynamic_cast<ServerSocket *>(_socket[_kq._event_list[i].ident]);
+							std::cout << server_socket << std::endl;
+							acceptGetClientFd(server_socket);
 						}
-					}
-					if (error)
-					{
-						continue;
-					}
-					else if(client_socket->getStage() == SET_RESOURCE)
-					{
-						int stat, ret, n;
-						char buffer[BUFFERSIZE];
+						case CLIENT_SOCKET:
+						{
+							ClientSocket *client_socket = dynamic_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
+							std::cout << client_socket << std::endl;
+							int error = 0;
 
-						if (client_socket->getResource()->getPid() > 0)
-						{ // cgi
-							ret = waitpid(client_socket->getResource()->getPid(), &stat, WNOHANG);
-							if (ret < 0)
+							if (client_socket->getStage() == GET_REQUEST)
 							{
-								// process error
-							}
-							else if (ret == 0)
-							{
-								continue ;
-								// process not finished yet
-							}
-							if (WIFSIGNALED(stat) == true)
-							{
-								// cgi error
-							}
-							else if (WIFEXITED(stat) == true)
-							{
-								n = read(client_socket->getResource()->getReadFd(), buffer, BUFFERSIZE - 1);
-								if (n < 0)
+								if (client_socket->getRequest() == 0)
 								{
-									// read error
+									std::cerr << "Request() error" << std::endl;
+									continue;
+								}
+								while (client_socket->getStage() != END_OF_REQUEST)
+								{
+									if (client_socket->recieveRequest() == ERROR)
+									{
+										std::cerr << "parseRequest() error" << std::endl;
+										error = 1;
+										break;
+									}
+								}
+								if (error)
+								{
+									std::cout << "request error" << std::endl;
+									continue;
+								}
+								client_socket->setResourceFd();
+								client_socket->setStage(SET_RESOURCE);
+								int read_fd = client_socket->getResource()->getReadFd();
+								int write_fd = client_socket->getResource()->getWriteFd();
+								if (read_fd != -1)
+								{
+									_kq.addEvent(EVFILT_READ, read_fd, NULL);
+									_socket[read_fd] = client_socket;
+								}
+								if (write_fd != -1)
+								{
+									_kq.addEvent(EVFILT_WRITE, write_fd, NULL);
+									_socket[write_fd] = client_socket;
+								}
+							}
+							else if(client_socket->getStage() == SET_RESOURCE)
+							{
+								int stat, ret, n;
+								char buffer[BUFFERSIZE];
+								memset(buffer, 0, BUFFERSIZE);
+								if (client_socket->getResource()->getPid() > 0)
+								{ // cgi
+									ret = waitpid(client_socket->getResource()->getPid(), &stat, WNOHANG);
+									if (ret < 0)
+									{
+										std::cout << "process error!!!" << std::endl;
+										_kq.removeEvent(EV_DELETE, client_socket->getResource()->getReadFd(), NULL);
+										_socket.erase(client_socket->getResource()->getReadFd());
+										close(client_socket->getResource()->getReadFd());
+										continue ;
+										// process error
+									}
+									else if (ret == 0)
+									{
+										continue ;
+										// process not finished yet
+									}
+									if (WIFSIGNALED(stat) == true)
+									{
+										// cgi error
+										std::cout << "cgi error!!!" << std::endl;
+										_kq.removeEvent(EV_DELETE, client_socket->getResource()->getReadFd(), NULL);
+										_socket.erase(client_socket->getResource()->getReadFd());
+										close(client_socket->getResource()->getReadFd());
+										continue ;
+									}
+									else if (WIFEXITED(stat) == true)
+									{
+										n = read(client_socket->getResource()->getReadFd(), buffer, BUFFERSIZE - 1);
+										if (n < 0)
+										{
+											std::cout << "cgi read errorr !!!!!!!" << std::endl;
+											continue ;
+											// read error
+										}
+										buffer[n] = 0;
+										client_socket->getResource()->setContent(client_socket->getResource()->getContent() + std::string(buffer));
+										if (n < BUFFERSIZE - 1)
+										{
+											client_socket->setStage(MAKE_RESPONSE);
+											client_socket->getResponse()->makeResponse();
+											_kq.removeEvent(EV_DELETE, client_socket->getResource()->getReadFd(), NULL);
+											_socket.erase(client_socket->getResource()->getReadFd());
+											close(client_socket->getResource()->getReadFd());
+										}
+									}
+								}
+								else
+								{ // file 읽기
+									n = read(_kq._event_list[i].ident, buffer, BUFFERSIZE - 1);
+									if (n < 0)
+									{
+										std::cout << "read errorr !!!!!!!" << std::endl;
+										// read error;
+										continue;
+									}
+									buffer[n] = 0;
+									client_socket->getResource()->setContent(client_socket->getResource()->getContent() + std::string(buffer));
+									if (n < BUFFERSIZE - 1)
+									{
+										client_socket->setStage(MAKE_RESPONSE);
+										client_socket->getResponse()->makeResponse();
+										_kq.removeEvent(EV_DELETE, _kq._event_list[i].ident, NULL);
+										_socket.erase(_kq._event_list[i].ident);
+										close(_kq._event_list[i].ident);
+									}
 								}
 							}
 						}
-						else
-						{ // file 읽기
-							n = read(_kq._event_list[i].ident, buffer, BUFFERSIZE - 1);
-							if (n < BUFFERSIZE - 1)
-							{
-								buffer[n] = 0;
-								client_socket->getResource()->setContent(client_socket->getResource()->getContent() + std::string(buffer));
-							}
-							else if (n < 0)
-							{
-								// read error;
-								continue;
-							}
-						}
-					}
-					else // 
-					{
-						client_socket->setResourceFd();
-						client_socket->setStage(SET_RESOURCE);
-						int read_fd = client_socket->getResource()->getReadFd();
-						int write_fd = client_socket->getResource()->getWriteFd();
-						if (read_fd != -1)
-						{
-							_kq.addEvent(EVFILT_READ, read_fd, NULL);
-							_socket[read_fd] = client_socket;
-						}
-						if (write_fd != -1)
-						{
-							_kq.addEvent(EVFILT_WRITE, write_fd, NULL);
-							_socket[write_fd] = client_socket;
-						}
 					}
 				}
-				// case RESOURCE_FD:
-				// {
-				// 	int stat, ret, n;
-				// 	char buffer[BUFFERSIZE];
-				// 	ClientSocket *client_socket = dynamic_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
-
-				// 	if (client_socket->getStage() == CGI_READ)
-				// 	{ // cgi
-				// 		ret = waitpid(client_socket->getResource()->getPid(), &stat, WNOHANG);
-				// 		if (ret < 0)
-				// 		{
-				// 			// process error
-				// 		}
-				// 		else if (ret == 0)
-				// 		{
-				// 			continue ;
-				// 			// process not finished yet
-				// 		}
-				// 		if (WIFSIGNALED(stat) == true)
-				// 		{
-				// 			// cgi error
-				// 		}
-				// 		else if (WIFEXITED(stat) == true)
-				// 		{
-				// 			n = read(client_socket->getResource()->getReadFd(), buffer, BUFFERSIZE - 1);
-				// 			if (n < 0)
-				// 			{
-				// 				// read error
-				// 			}
-				// 		}
-				// 	}
-				// 	else
-				// 	{ // file 읽기
-				// 		n = read(_kq._event_list[i].ident, buffer, BUFFERSIZE - 1);
-				// 		if (n < BUFFERSIZE - 1)
-				// 		{
-				// 			buffer[n] = 0;
-				// 			client_socket->getResource()->setContent(client_socket->getResource()->getContent() + std::string(buffer));
-				// 		}
-				// 		else if (n < 0)
-				// 		{
-				// 			// read error;
-				// 			continue;
-				// 		}
-				// 	}
-				// }
-				}
-			}
-			case EVFILT_WRITE:
-			{
-				switch (_socket[_kq._event_list[i].ident]->getSocketType())
+				case EVFILT_WRITE:
 				{
-				case CLIENT_SOCKET:
-				{
-					ClientSocket *client_socket = dynamic_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
-					//response 보내주는거
-					if (client_socket != 0 && client_socket->getRequest() != 0 && client_socket->getStage() == MAKE_RESPONSE) // + 리소스도 다 읽었으면
+					switch (_socket[_kq._event_list[i].ident]->getSocketType())
 					{
-						std::cout << "EVFILT_WRITE - fd[" << _kq._event_list[i].ident << "]: " << client_socket << std::endl;
-						// client_socket->_respose->sendResponse();
-						_socket.erase(_kq._event_list[i].ident);
-						close(_kq._event_list[i].ident);
-					}
-					else if (client_socket->getStage() == SET_RESOURCE)
-					{
-						// cgi & POST
-						// POST 요청 다 받아오면 파일(resource write_fd)에 request body를 한번에 쓰기
-						int n;
-						n = write(client_socket->getResource()->getWriteFd(), client_socket->getResource()->getContent().c_str(), client_socket->getResource()->getContent().size());
-						if (n < 0)
+						case CLIENT_SOCKET:
 						{
-							//error
-							continue ;
+							ClientSocket *client_socket = dynamic_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
+							//response 보내주는거
+							if (client_socket != 0 && client_socket->getRequest() != 0 && client_socket->getStage() == MAKE_RESPONSE) // + 리소스도 다 읽었으면
+							{
+								std::cout << "EVFILT_WRITE - fd[" << _kq._event_list[i].ident << "]: " << client_socket << std::endl;
+								client_socket->sendResponse();
+								_socket.erase(_kq._event_list[i].ident);
+								close(_kq._event_list[i].ident);
+							}
+							else if (client_socket->getStage() == SET_RESOURCE)
+							{
+								// cgi & POST
+								// POST 요청 다 받아오면 파일(resource write_fd)에 request body를 한번에 쓰기
+								int n;
+								n = write(client_socket->getResource()->getWriteFd(), client_socket->getResource()->getContent().c_str(), client_socket->getResource()->getContent().size());
+								if (n < 0)
+								{
+									//error
+									std::cout << "write error" << std::endl;
+									continue ;
+								}
+								if (n < client_socket->getResource()->getContent().size())
+								{
+									client_socket->getResource()->getContent().erase(0, n);
+								}
+								else
+								{
+									client_socket->setStage(MAKE_RESPONSE);
+									client_socket->getResponse()->makeResponse();
+									_kq.removeEvent(EV_DELETE, client_socket->getResource()->getWriteFd(), NULL);
+									_socket.erase(client_socket->getResource()->getWriteFd());
+									close(client_socket->getResource()->getWriteFd());
+									//makeResponse()
+								}	// resource write_fd (cgi pipe) 에 쓰기 <- 정확히 뭘쓰는지?? // entity를 보내줘야 한다
+							}
 						}
-						if (n < client_socket->getResource()->getContent().size())
-						{
-							client_socket->getResource()->getContent().erase(0, n);
-						}
-						else
-						{
-							//makeResponse()
-						}
-						// resource write_fd (cgi pipe) 에 쓰기 <- 정확히 뭘쓰는지?? // entity를 보내줘야 한다
 					}
 				}
-				// case RESOURCE_FD:
-				// {
-				// 	int ret;
-				// 	// udata로 request 넣어주기
-				// 	if (client_socket->getStage() == FILE_WRITE)
-				// 	{
-				// 		// cgi & POST
-				// 		// POST 요청 다 받아오면 파일(resource write_fd)에 request body를 한번에 쓰기
-				// 		int n;
-				// 		n = write(client_socket->getResource()->getWriteFd(), client_socket->getResource()->getContent().c_str(), client_socket->getResource()->getContent().size());
-				// 		if (n < 0)
-				// 		{
-				// 			//error
-				// 			continue ;
-				// 		}
-				// 		if (n < client_socket->getResource()->getContent().size())
-				// 		{
-				// 			client_socket->getResource()->getContent().erase(0, n);
-				// 		}
-				// 		else
-				// 		{
-								
-				// 		}
-				// 		// resource write_fd (cgi pipe) 에 쓰기 <- 정확히 뭘쓰는지?? // entity를 보내줘야 한다
-				// 	}
-				
-				// }
-				}
-			}
 			}
 		}
 	}

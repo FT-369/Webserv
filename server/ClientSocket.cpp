@@ -2,7 +2,7 @@
 #include "Response.hpp"
 
 ClientSocket::ClientSocket(int fd, ConfigServer server_info)
-	: Socket(CLIENT_SOCKET, fd), _server_info(server_info), _request(new Request(fd)), _response(NULL), _resource(new Resource())
+	: Socket(CLIENT_SOCKET, fd), _server_info(server_info), _request(new Request(fd)), _response(NULL), _resource(new Resource()), _stage(GET_REQUEST)
 {
 	_response = new Response(_request, _resource);
 };
@@ -19,18 +19,22 @@ Response *ClientSocket::getResponse() const { return _response; }
 
 int ClientSocket::recieveRequest()
 {
-	return _request->parseRequest();
+	if (_request->parseRequest() == SUCCESS) {
+		setStage(END_OF_REQUEST);
+		return SUCCESS;
+	}
+	return ERROR;
 }
 
 Stage ClientSocket::getStage()
 {
 	return _stage;
 }
-void ClientSocket::setStage(Stage stage){ _stage = stage };
+void ClientSocket::setStage(Stage stage){ _stage = stage; }
 
 void ClientSocket::sendResponse()
 {
-	// _response->setEntity(_resource->getContent());
+	_response->setEntity(_resource->getContent());
 	return _response->combineResponse();
 }
 
@@ -64,7 +68,7 @@ void ClientSocket::setResourceFd()
 	}
 	if (isCGI(_request->getFile()))
 	{
-		CgiHandler cgi(_request->getRoute(), _request);
+		CgiHandler cgi(_request->getRoute(), this);
 		cgi.executeCgi(); // <- 여기서 resource read_fd, write_fd 설정
 		return;
 	}

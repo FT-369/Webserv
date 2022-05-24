@@ -1,6 +1,6 @@
 #ifndef RESPONSE_HPP
 #define RESPONSE_HPP
-
+class Response;
 #include "Config.hpp"
 #include "Request.hpp"
 #include "CgiHandler.hpp"
