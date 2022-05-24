@@ -25,7 +25,7 @@ public:
 	void makeStartLine();
 	void makeRedirectHeader();
 	void makeGetHeader();
-	void makeHeader();
+	void makePostHeader();
 	void setEntity(std::string const &entity);
 	void makeResponse();
 	void combineResponse();

@@ -36,8 +36,6 @@ void CgiHandler::cgiInitEnv()
 	_cgi_env["REMOTE_ADDR"] = getIp(_client_socket->getRequest()->getSocketFD());
 	_cgi_env["REDIRECT_STATUS"] = "200";
 	_cgi_env["PHP_SELF"] = _client_socket->getRequest()->getPath();
-	// _cgi_env["REMOTE_USER"]
-	// _cgi_env["REMOTE_HOST"]
 	_cgi_env["CONTENT_LENGTH"] = _client_socket->getRequest()->getRequestHeader()["content_length"];
 	_cgi_env["CONTENT_TYPE"] = _client_socket->getRequest()->getContentType();
 	_cgi_env["REQUEST_METHOD"] = _client_socket->getRequest()->getMethod();

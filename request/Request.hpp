@@ -21,7 +21,6 @@ public:
 	const int _socket_fd;
 	FILE *_socket_read;
 	RequestStage _stage;
-
 	std::string _method;
 	std::string _path;
 	std::string _query;

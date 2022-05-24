@@ -20,7 +20,7 @@ void Response::makeStartLine()
 	_start_line = _request->_protocol + " " + _status_code + " " + GlobalConfig::getStatusCode()[_status_code] + "\r\n";
 }
 
-void Response::makeHeader()
+void Response::makePostHeader()
 {
 	_header["Server"] = "Mac Web Server";
 }
@@ -52,7 +52,8 @@ void Response::makeResponse()
 	if (find(temp.begin(), temp.end(), _request->getMethod()) == temp.end())
 	{
 		std::cout << "ERROR Response " << std::endl;
-		makeHeader();
+		setStatusCode("405");
+		makeGetHeader();
 	}
 	else if (_request->getMethod() == "GET")
 	{
@@ -62,12 +63,12 @@ void Response::makeResponse()
 	else if (_request->getMethod() == "POST")
 	{
 		std::cout << "POST" << std::endl;
-		makeHeader();
+		makePostHeader();
 	}
 	else if (_request->getMethod() == "DELETE")
 	{
 		std::cout << "DELETE" << std::endl;
-		makeHeader();
+		makeGetHeader();
 	}
 	makeRedirectHeader();
 	makeStartLine();
@@ -77,8 +78,6 @@ void Response::combineResponse()
 {
 	std::string send_data;
 	std::map<std::string, std::string>::iterator it;
-
-	makeResponse();
 
 	send_data += _start_line;
 	for (it = _header.begin(); it != _header.end(); it++)
