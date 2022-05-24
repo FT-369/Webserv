@@ -87,6 +87,7 @@ bool ClientSocket::isCGI(const std::string &path)
 	std::string type;
 	type = getExtension(path);
 	std::map<std::string, std::string> cgi_path = _request->getRoute()->getCommonDirective()._cgi_path;
+	std::cout << "cgi_path = " << type << std::endl;
 	if (cgi_path.find(type) != cgi_path.end())
 	{
 		return 1;
@@ -123,6 +124,7 @@ void ClientSocket::setGetFd()
 	}
 	if (_request->getRoute()->getCommonDirective()._autoindex)
 	{
+		setStage(MAKE_AUTOINDEX);
 		if (getFileType(entity_file)) // 존재하는 파일 or 디렉토리
 		{
 			// resource content에 autoindex 만들기 (_request->getFile() 기준)

@@ -89,7 +89,21 @@ int CgiHandler::executeCgi()
 		std::string cgi_file = _location_info->getCommonDirective()._cgi_path[extension];
 		char *argv[4];
 		int result = -1;
-		char **envp = convertEnv();
+		char **env;
+
+		if (!(env = (char**)malloc(sizeof(char*) * (_cgi_env.size() + 1))))
+		{
+			return NULL;
+		}
+		int i = 0;
+		for (std::map<std::string, std::string>::iterator it = _cgi_env.begin(); it != _cgi_env.end(); it++)
+		{
+			env[i] = strdup((it->first + "=" + it->second).c_str());
+			i++;
+		}
+		env[i] = NULL;
+		// char **envp = convertEnv();
+		cgi_file += "/php-cgi";
 		argv[0] = const_cast<char*>(cgi_file.c_str());
 		argv[1] = const_cast<char*>(_client_socket->getRequest()->getPath().c_str());
 		argv[2] = 0;
@@ -98,14 +112,15 @@ int CgiHandler::executeCgi()
 			argv[2] = const_cast<char*>(_client_socket->getRequest()->getQuery().c_str());
 		}
 		argv[3] = 0;
-
-		if (envp == NULL)
+		if (env == NULL)
+		{
 			return 500;
+		}
 		dup2(write_fd[0],STDIN_FILENO);
 		dup2(read_fd[1], STDOUT_FILENO);
 		close(write_fd[1]);
 		close(read_fd[0]);
-		if ((result = execve(argv[0], argv, envp)) == -1)
+		if ((result = execve(argv[0], argv, env)) == -1)
 		{
 			exit(result);
 		}

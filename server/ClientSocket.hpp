@@ -11,6 +11,7 @@ enum Stage
 	END_OF_REQUEST, //리퀘스터 파싱 완료
 	SET_RESOURCE, // 리소스 세팅 시작
 	MAKE_RESPONSE, // 세팅된 리소스로 응답 보내줌
+	MAKE_AUTOINDEX,
 	FILE_READ,
 	FILE_WRITE,
 	CLOSE,
