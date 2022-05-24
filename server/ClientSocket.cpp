@@ -26,7 +26,7 @@ Stage ClientSocket::getStage()
 {
 	return _stage;
 }
-void ClientSocket::setStage(Stage stage){ _stage = stage };
+void ClientSocket::setStage(Stage stage){ _stage = stage; }
 
 void ClientSocket::sendResponse()
 {
