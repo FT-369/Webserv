@@ -1,13 +1,16 @@
 #include "Socket.hpp"
 
-Socket::Socket(int socket_type) : socket_type(socket_type) { }
+Socket::Socket() {}
 
+Socket::Socket(int socket_type) : _socket_type(socket_type) {}
+Socket::Socket(int socket_type, int fd) : _socket_type(socket_type), _socket_fd(fd) {}
 Socket::~Socket()
 {
 	// close(socket_fd);
 }
 
-int Socket::getSocketFd() { return socket_fd; }
-int Socket::getSocketPort() { return port; }
-std::string Socket::getSocketHost() { return host; }
-int Socket::getSocketType() { return socket_type; }
+void Socket::setSocketType(int socket_type) {_socket_type = socket_type;}
+int Socket::getSocketFd() const { return _socket_fd; }
+int Socket::getSocketPort() const { return _port; }
+std::string Socket::getSocketHost() const { return _host; }
+int Socket::getSocketType() const { return _socket_type; }

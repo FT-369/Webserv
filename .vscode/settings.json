@@ -70,6 +70,8 @@
 		"variant": "cpp",
 		"algorithm": "cpp",
 		"functional": "cpp",
-		"iterator": "cpp"
+		"iterator": "cpp",
+		"filesystem": "cpp",
+		"memory_resource": "cpp"
 	}
 }

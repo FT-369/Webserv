@@ -70,3 +70,63 @@ std::vector<std::string> ft_split_space(std::string const &line)
 		words.push_back(new_line);
 	return words;
 }
+
+int	isDirectory(const std::string &path)
+{
+	struct stat sb;
+
+	if (stat(path.c_str(), &sb) != 0)
+		return 0;
+	if ((sb.st_mode & S_IFMT) & S_IFDIR)
+		return 1;
+	else 
+		return 0;
+
+}
+
+int	isFile(const std::string &path)
+{
+	struct stat sb;
+	
+	if (stat(path.c_str(), &sb) != 0)
+		return 0;
+	if ((sb.st_mode & S_IFMT) & S_IFREG)
+		return 1;
+	else
+		return 0;
+}
+
+int	getFileType(const std::string &path)
+{
+	struct stat sb;
+	
+	if (stat(path.c_str(), &sb) != 0)
+		return 0;
+	if ((sb.st_mode & S_IFMT) & S_IFDIR)
+		return DIRECTORY;
+	if ((sb.st_mode & S_IFMT) & S_IFREG)
+		return FILE_TYPE;
+	return 0;
+}
+
+std::string getExtension(std::string file)
+{
+	size_t rpos = file.rfind(".");
+	std::string extension = "";
+
+	if (rpos != std::string::npos)
+	{
+		extension = file.substr(rpos + 1);
+	}
+	return extension;
+}
+
+std::string getContentType(std::string file)
+{
+	std::string content_type = GlobalConfig::getDefaultType();
+	std::string extension = getExtension(file);
+
+	if (GlobalConfig::getMimeTypes().find(extension) != GlobalConfig::getMimeTypes().end())
+		content_type = GlobalConfig::getMimeTypes()[extension];
+	return content_type;
+}

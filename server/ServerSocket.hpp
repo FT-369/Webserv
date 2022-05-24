@@ -1,21 +1,23 @@
 #ifndef SERVERSOCKET_HPP
 #define SERVERSOCKET_HPP
 #include "Socket.hpp"
-#include <cstring>
 
 class ServerSocket : public Socket
 {
+public:
+	struct sockaddr_in _addr;
+	ConfigServer _server_info;
+	// std::vector<ConfigLocation> location;
+
 private:
-	struct sockaddr_in addr;
+	ServerSocket();
 
 public:
-	ServerSocket();
 	ServerSocket(ConfigServer server);
 	~ServerSocket();
 	int binding();
 	int clientAccept(int &connectFD);
+	ConfigServer getServerInfo();
 };
-
-
 
 #endif
