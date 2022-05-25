@@ -21,6 +21,8 @@ void ConfigHttp::identifyServerBlock(std::string const &block)
 	{
 		ConfigServer server(_common_directive);
 		server.parsingServer(block_content);
+		if (!_simple_directive.empty())
+			throw config_error("Invalid simple directive");	// 유효하지 않은 지시어가 남아있으면 에러
 		_servers.push_back(server);
 	}
 	else if (!(block_name == "" && block_content == ""))

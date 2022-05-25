@@ -39,7 +39,12 @@ void printCommonDirective(std::string name, CommonDirective common) {
 		std::cout << "error[" << i_s_it->first << "]: " << i_s_it->second << std::endl;
 	}
 	for (s_s_it = common._cgi_path.begin(); s_s_it != common._cgi_path.end(); s_s_it++) {
-		std::cout << "error[" << s_s_it->first << "]: " << s_s_it->second << std::endl;
+		std::cout << "cgi[" << s_s_it->first << "]: " << s_s_it->second << std::endl;
+	}
+	std::cout << "allowed Method: ";
+	for (int i = 0; i < common._limit_except.size(); i++)
+	{
+		std::cout << common._limit_except[i] << (i + 1 == common._limit_except.size() ? "\n" : ", ");
 	}
 	std::cout << C_GREN << "End of [" << name << "]\n\n" << C_NRML;
 }
@@ -54,11 +59,6 @@ void printServerDirective(std::string name, ConfigServer server) {
 	for (size_t i = 0; i < server.getServerName().size(); i++) {
 		std::cout << server.getServerName()[i] << (i + 1 == server.getServerName().size() ? "" : ", ");
 	}
-	for (int i = 0; i < server.getCommonDirective()._limit_except.size(); i++)
-	{
-		std::cout << " Except Method: " << server.getCommonDirective()._limit_except[i] << std::endl;
-	}
-	
 	std::cout << std::endl;
 	std::cout << C_GREN << "End of [" << name << "]\n\n" << C_NRML;
 }
@@ -70,10 +70,6 @@ void printLocationDirective(std::string name, ConfigLocation location) {
 	std::cout << "url : " << location.getUrl() << std::endl;
 	std::cout << "return_code: " << location.getReturnCode() << std::endl;
 	std::cout << "return_data: " << location.getReturnData() << std::endl;
-	std::cout << "allowed_method: ";
-	for (size_t i = 0; i < location.getCommonDirective()._limit_except.size(); i++) {
-		std::cout << location.getCommonDirective()._limit_except[i] << (i + 1 == location.getCommonDirective()._limit_except.size() ? "" : ", ") << std::endl;
-	}
 	std::cout << std::endl;
 	std::cout << C_GREN << "End of [" << name << "]\n\n" << C_NRML;
 }
@@ -82,15 +78,22 @@ int main(void)
 {
 	Config config;
 
-	config.setting();
+	try
+	{
+		config.setting();
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+		return 0;
+	}
+	
 	Server server = Server(config);
 
 	// std::cout << config.getConfigText() << std::endl;
-	// std::map<std::string, std::string> mime_types = config.getMimeTypes();
 	// std::map<std::string, std::string> main = config.getGeneralDirective();
 	// ConfigHttp http = config.getHttpDirective();
 
-	// printMap("mime_types", mime_types);
 	// printMap("general", main);
 	// printMap("http_simple", http.getSimpleDirective());
 

@@ -27,6 +27,8 @@ void ConfigServer::identifyLocationBlock(std::string const &block)
 
 		ConfigLocation location(url, _common_directive, "", "");
 		location.parsingLocation(block_content);
+		if (!_simple_directive.empty())
+			throw config_error("Invalid simple directive");	// 유효하지 않은 지시어가 남아있으면 에러
 		_locations.push_back(location);
 	}
 	else if (!(block_name == "" && block_content == ""))
@@ -48,8 +50,6 @@ void ConfigServer::parseServerDirecive(std::map<std::string, std::string> &simpl
 			std::vector<std::string> host_port = ft_split(listen[0], ":");
 			if (host_port.size() != 2)
 				throw config_parsing_error("Invalid directive value");
-			// if (host_port[0] //) // 만약 호스트의 주소가 형식에 맞지 않으면 에러 처리
-			// 	throw config_parsing_error("Invalid directive value");
 			_listen_host = host_port[0];
 
 			char *endptr = 0;
@@ -116,7 +116,4 @@ void ConfigServer::parsingServer(std::string const &block)
 	{
 		identifyLocationBlock(blocks[i]);
 	}
-
-	// if (!simple_directive.empty())
-	// 	throw config_error("Invalid directive");	// 유효하지 않은 지시어가 남아있으면 에러
 }

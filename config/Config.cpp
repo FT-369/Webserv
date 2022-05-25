@@ -123,7 +123,7 @@ void Config::parsingConfig()
 	readConfigFile();
 
 	pos = _config_text.find(MAIN_SEPARATOR);
-	if (pos == std::string::npos)
+	if (pos == std::string::npos || pos == 0)
 	{
 		blocks = ft_split(_config_text, BLOCK_SEPARATOR);
 	}
@@ -142,7 +142,7 @@ void Config::parsingConfig()
 void Config::setting()
 {
 	_filename = DEFALUT_CONF;
-	if (isFile(_filename))
+	if (!isFile(_filename))
 		throw file_error("Unable to find the file '" + _filename + "'");
 	parsingConfig();
 }
@@ -150,7 +150,7 @@ void Config::setting()
 void Config::setting(std::string const &filename)
 {
 	_filename = filename;
-	if (isFile(_filename))
+	if (!isFile(_filename))
 		throw file_error("Unable to find the file '" + _filename + "'");
 	parsingConfig();
 }

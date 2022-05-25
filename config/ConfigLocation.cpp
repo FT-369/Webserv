@@ -70,7 +70,4 @@ void ConfigLocation::parsingLocation(std::string const &block)
 	{
 		identifyBlock(blocks[i]);
 	}
-
-	// if (!simple_directive.empty())
-	// 	throw config_error("Invalid directive");	// 유효하지 않은 지시어가 남아있으면 에러
 }

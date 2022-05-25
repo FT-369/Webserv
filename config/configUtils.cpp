@@ -58,7 +58,7 @@ void getCommonErrorPage(CommonDirective &directive, std::vector<std::string> con
 void getCommonCgiPath(CommonDirective &directive, std::vector<std::string> const &line)
 {
 	if (line.size() != 3)
-		throw config_parsing_error("Invalid 'cg_ path' directive value"); // 지시어 형식이 맞지 않음
+		throw config_parsing_error("Invalid 'cgi_path' directive value"); // 지시어 형식이 맞지 않음
 	directive._cgi_path[line[1]] = line[2];
 }
 
