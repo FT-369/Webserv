@@ -47,8 +47,9 @@ std::string Request::getQuery() const { return _query; }
 std::string Request::getProtocol() const { return _protocol; }
 std::string Request::getRequestBody() const { return _request_body; }
 std::map<std::string, std::string> Request::getRequestHeader() const { return _request_header; }
-RequestStage Request::getStage() const { return _stage; }
+RequestStage Request::getRequestStage() const { return _stage; }
 ConfigLocation *Request::getRoute() const { return _route; }
+ConfigLocation *Request::getRoute() { return _route; }
 std::string Request::getFile() const { return _file; }
 
 std::string Request::ft_fgets_line(FILE *fp)

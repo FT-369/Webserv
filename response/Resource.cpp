@@ -24,6 +24,7 @@ void Resource::setReadFd(int fd) { _read_fd = fd; }
 void Resource::setPid(pid_t pid) { _pid = pid; }
 void Resource::setExtension(std::string const &extension) { _extension = extension; }
 void Resource::setContentType(std::string const &content_type) { _content_type = content_type; }
+void Resource::setContent(std::string const content){ _content = content;}
 
 void Resource::makeAutoIndex(std::string root, std::string directory)
 {

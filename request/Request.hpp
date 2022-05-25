@@ -3,6 +3,7 @@
 
 #include "utils.hpp"
 #include "Resource.hpp"
+#include "ConfigLocation.hpp"
 
 #define GET_LINE_BUF 1024
 
@@ -20,7 +21,6 @@ public:
 	const int _socket_fd;
 	FILE *_socket_read;
 	RequestStage _stage;
-
 	std::string _method;
 	std::string _path;
 	std::string _query;
@@ -49,8 +49,8 @@ public:
 	std::string getRequestBody() const;
 	std::map<std::string, std::string> getRequestHeader() const;
 	RequestStage getRequestStage() const;
-	Resource* getResource() const;
 	ConfigLocation *getRoute() const;
+	ConfigLocation *getRoute();
 	std::string getFile() const;
 
 private:

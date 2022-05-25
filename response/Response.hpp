@@ -1,6 +1,6 @@
 #ifndef RESPONSE_HPP
 #define RESPONSE_HPP
-
+class Response;
 #include "Config.hpp"
 #include "Request.hpp"
 #include "CgiHandler.hpp"
@@ -25,11 +25,12 @@ public:
 	void makeStartLine();
 	void makeRedirectHeader();
 	void makeGetHeader();
-	void makeHeader();
+	void makePostHeader();
 	void setEntity(std::string const &entity);
 	void makeResponse();
 	void combineResponse();
 	void setStatusCode(std::string const &status_code);
+	void addHeader(std::string key, std::string value);
 	// void makeEntity(std::string file);
 	// void makeAutoIndex(std::string directory, DIR* dir);
 	// void settingRoute();

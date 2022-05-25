@@ -20,7 +20,7 @@ void Response::makeStartLine()
 	_start_line = _request->_protocol + " " + _status_code + " " + GlobalConfig::getStatusCode()[_status_code] + "\r\n";
 }
 
-void Response::makeHeader()
+void Response::makePostHeader()
 {
 	_header["Server"] = "Mac Web Server";
 }
@@ -40,11 +40,11 @@ void Response::makeRedirectHeader()
 	_header["Location"] = _request->getRoute()->getReturnData();
 }
 
+
 void Response::makeResponse()
 {
 	// resource의 content 가져오기
 	_entity = _resource->getContent();
-
 	std::vector<std::string> temp;
 	temp = _request->getRoute()->getCommonDirective()._limit_except;
 	std::cout << "[Mapping Path] url: " << _request->getRoute()->getUrl() << ", file:" << _request->getFile() << std::endl;
@@ -52,22 +52,23 @@ void Response::makeResponse()
 	if (find(temp.begin(), temp.end(), _request->getMethod()) == temp.end())
 	{
 		std::cout << "ERROR Response " << std::endl;
-		makeHeader();
+		setStatusCode("405");
+		makeGetHeader();
 	}
 	else if (_request->getMethod() == "GET")
 	{
-		std::cout << "GET" << std::endl;
+		std::cout << "getMethod GET" << std::endl;
 		makeGetHeader();
 	}
 	else if (_request->getMethod() == "POST")
 	{
 		std::cout << "POST" << std::endl;
-		makeHeader();
+		makePostHeader();
 	}
 	else if (_request->getMethod() == "DELETE")
 	{
 		std::cout << "DELETE" << std::endl;
-		makeHeader();
+		makeGetHeader();
 	}
 	makeRedirectHeader();
 	makeStartLine();
@@ -77,8 +78,6 @@ void Response::combineResponse()
 {
 	std::string send_data;
 	std::map<std::string, std::string>::iterator it;
-
-	makeResponse();
 
 	send_data += _start_line;
 	for (it = _header.begin(); it != _header.end(); it++)
@@ -91,6 +90,12 @@ void Response::combineResponse()
 	fflush(_socket_write);
 	fclose(_socket_write);
 }
+
+void Response::addHeader(std::string key, std::string value)
+{
+	_header[key] = value; 
+}
+
 
 // void Response::makeEntity(std::string file)
 // {
