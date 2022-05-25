@@ -122,15 +122,18 @@ void Server::keventProcess()
 						client_socket->setResourceFd();
 						int read_fd = client_socket->getResource()->getReadFd();
 						int write_fd = client_socket->getResource()->getWriteFd();
-						if (read_fd != -1)
+						if (client_socket->getStage() == SET_RESOURCE || client_socket->getStage() == CGI_WRITE)
 						{
-							_kq.addEvent(EVFILT_READ, read_fd, NULL);
-							_socket[read_fd] = client_socket;
-						}
-						if (write_fd != -1)
-						{
-							_kq.addEvent(EVFILT_WRITE, write_fd, NULL);
-							_socket[write_fd] = client_socket;
+							if (read_fd != -1)
+							{
+								_kq.addEvent(EVFILT_READ, read_fd, NULL);
+								_socket[read_fd] = client_socket;
+							}
+							if (write_fd != -1)
+							{
+								_kq.addEvent(EVFILT_WRITE, write_fd, NULL);
+								_socket[write_fd] = client_socket;
+							}
 						}
 					}
 					else if (client_socket->getStage() == SET_RESOURCE || client_socket->getStage() == CGI_READ)
@@ -141,16 +144,7 @@ void Server::keventProcess()
 						if (client_socket->getResource()->getPid() > 0)
 						{ // cgi
 							ret = waitpid(client_socket->getResource()->getPid(), &stat, WNOHANG);
-							// if (ret < 0)
-							// {
-							// 	std::cout << "process error!!!" << std::endl;
-							// 	_kq.removeEvent(EV_DELETE, client_socket->getResource()->getReadFd(), NULL);
-							// 	// _socket.erase(client_socket->getResource()->getReadFd());
-							// 	close(client_socket->getResource()->getReadFd());
-							// 	continue;
-							// 	// process error
-							// }
-							// else 
+
 							if (ret == 0)
 							{
 								continue;
@@ -178,8 +172,7 @@ void Server::keventProcess()
 								client_socket->getResource()->setContent(client_socket->getResource()->getContent() + std::string(buffer));
 								if (n < BUFFERSIZE - 1)
 								{
-									if (client_socket->getStage() == CGI_READ)
-										client_socket->parsingCGIResponse();
+									client_socket->parsingCGIResponse();
 									client_socket->getResponse()->makeResponse();
 									_kq.removeEvent(EV_DELETE, client_socket->getResource()->getReadFd(), NULL);
 									// _socket.erase(client_socket->getResource()->getReadFd());
@@ -206,8 +199,10 @@ void Server::keventProcess()
 								client_socket->getResponse()->makeResponse();
 								_kq.removeEvent(EV_DELETE, _kq._event_list[i].ident, NULL);
 								// _socket.erase(_kq._event_list[i].ident);
-								close(_kq._event_list[i].ident);
+								// close(_kq._event_list[i].ident);
 								client_socket->setStage(MAKE_RESPONSE);
+								std::cerr << "fin make reaponse" << std::endl;
+								// std::cerr << "fin make reaponse" << std::endl;
 							}
 						}
 					}
@@ -222,21 +217,22 @@ void Server::keventProcess()
 				{
 					ClientSocket *client_socket = reinterpret_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
 					// response 보내주는거
-					if (client_socket != 0 && client_socket->getRequest() != 0 && client_socket->getStage() == MAKE_RESPONSE) // + 리소스도 다 읽었으면
+					if (client_socket != 0 && client_socket->getRequest() != 0 && (client_socket->getStage() == MAKE_RESPONSE || client_socket->getStage() == MAKE_AUTOINDEX)) // + 리소스도 다 읽었으면
 					{
-						std::cout << "EVFILT_WRITE - fd[" << _kq._event_list[i].ident << "]: " << client_socket << std::endl;
 						client_socket->sendResponse();
-						// _socket.erase(_kq._event_list[i].ident);
+						_socket.erase(_kq._event_list[i].ident);
+						_kq.removeEvent(EV_DELETE, _kq._event_list[i].ident, NULL);
 						close(_kq._event_list[i].ident);
+						std::cerr << "fin send reaponse" << std::endl;
+
 					}
 					else if (client_socket->getStage() == CGI_WRITE)
 					{
-						std::cout << " client_socket->getRequest()->getRequestBody() : " <<  client_socket->getRequest()->getRequestBody() << std::endl;
+						// std::cerr << client_socket->getRequest()->getRequestMain().size() << std::endl;
 						int n = write(client_socket->getResource()->getWriteFd(), client_socket->getRequest()->getRequestBody().c_str(), client_socket->getRequest()->getRequestBody().size());
 						if (n < 0)
 						{
 							// error
-							// std::cout << "write error" << std::endl;
 							continue;
 						}
 						if (n < client_socket->getRequest()->getRequestBody().size())

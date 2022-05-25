@@ -117,6 +117,7 @@ void ClientSocket::setGetFd()
 			if (isFile(indexfile) == 1)
 			{
 				_resource->setReadFd(open(indexfile.c_str(), O_RDONLY));
+				_response->setStatusCode("200");
 				return;
 			}
 		}
@@ -127,12 +128,14 @@ void ClientSocket::setGetFd()
 		if (isFile(entity_file) == 1)
 		{
 			_resource->setReadFd(open(entity_file.c_str(), O_RDONLY));
+			_response->setStatusCode("200");
 			return;
 		}
 	}
 	if (_request->getRoute()->getCommonDirective()._autoindex)
 	{
 		setStage(MAKE_AUTOINDEX);
+		_response->setStatusCode("200");
 		if (getFileType(entity_file)) // 존재하는 파일 or 디렉토리
 		{
 			// resource content에 autoindex 만들기 (_request->getFile() 기준)
@@ -174,6 +177,7 @@ void ClientSocket::setPostFd()
 			i++;
 		}
 		filename = temp;
+		_response->setStatusCode("201");
 	}
 	else
 	{
@@ -199,7 +203,7 @@ void ClientSocket::setPostFd()
 
 	else
 	{
-		int fd = open(filename.c_str(), O_WRONLY | O_APPEND, 0777);
+		int fd = open(filename.c_str(), O_WRONLY | O_CREAT, 0777);
 		if (fd < 0)
 		{
 			setErrorResource("500");

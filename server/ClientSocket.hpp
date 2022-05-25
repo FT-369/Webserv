@@ -49,7 +49,6 @@ public:
 	void setPostFd();
 	void setErrorResource(std::string error);
 	void parsingCGIResponse();
-
 };
 
 #endif
