@@ -13,7 +13,7 @@ std::vector<std::string> ConfigServer::getServerName() const { return _server_na
 std::vector<ConfigLocation> ConfigServer::getLocations() const { return _locations; }
 std::map<std::string, std::string> ConfigServer::getSimpleDirective() const { return _simple_directive; }
 
-int ConfigServer::identifyLocationBlock(std::string const &block)
+void ConfigServer::identifyLocationBlock(std::string const &block)
 {
 	std::string block_name = getBlockName(block);
 	std::string block_content = getBlockContent(block);
@@ -31,33 +31,32 @@ int ConfigServer::identifyLocationBlock(std::string const &block)
 	}
 	else if (!(block_name == "" && block_content == ""))
 	{
-		return ERROR; // 유효하지 않은 블럭
+		throw config_error("Invalid block directive");
 	}
-	return SUCCESS;
 }
 
-int ConfigServer::parseServerDirecive(std::map<std::string, std::string> &simple)
+void ConfigServer::parseServerDirecive(std::map<std::string, std::string> &simple)
 {
 
 	if (simple.find(LISTEN) != simple.end())
 	{
 		std::vector<std::string> listen = ft_split_space(simple[LISTEN]);
 		if (listen.size() != 1)
-			return ERROR;
+			throw config_parsing_error("Invalid directive value");
 		if (listen[0].find(":") != std::string::npos)
 		{
 			std::vector<std::string> host_port = ft_split(listen[0], ":");
 			if (host_port.size() != 2)
-				return ERROR;
+				throw config_parsing_error("Invalid directive value");
 			// if (host_port[0] //) // 만약 호스트의 주소가 형식에 맞지 않으면 에러 처리
-			// 	return ERROR;
+			// 	throw config_parsing_error("Invalid directive value");
 			_listen_host = host_port[0];
 
 			char *endptr = 0;
 			double d_port = std::strtod(host_port[1].c_str(), &endptr);
 			int port = static_cast<int>(d_port);
 			if (std::string(endptr) != "" || d_port != port || d_port < 0)
-				return ERROR;
+				throw config_parsing_error("Invalid directive value"); // 지시어 형식이 맞지 않음
 			_listen_port = port;
 		}
 		else
@@ -74,7 +73,7 @@ int ConfigServer::parseServerDirecive(std::map<std::string, std::string> &simple
 				double d_port = std::strtod(listen[0].c_str(), &endptr);
 				int port = static_cast<int>(d_port);
 				if (std::string(endptr) != "" || d_port != port || d_port < 0)
-					return ERROR;
+					throw config_parsing_error("Invalid directive value"); // 지시어 형식이 맞지 않음
 				_listen_port = port;
 			}
 			else
@@ -89,14 +88,13 @@ int ConfigServer::parseServerDirecive(std::map<std::string, std::string> &simple
 	{
 		std::vector<std::string> names = ft_split_space(simple[SERVER_NAME]);
 		if (names.empty())
-			return ERROR; // 지시어 형식이 맞지 않음
+			throw config_parsing_error("value of directive does not exist"); // 지시어 형식이 맞지 않음
 		_server_name = names;
 		simple.erase(SERVER_NAME);
 	}
-	return SUCCESS;
 }
 
-int ConfigServer::parsingServer(std::string const &block)
+void ConfigServer::parsingServer(std::string const &block)
 {
 	size_t pos;
 	std::string modify_block;
@@ -120,6 +118,5 @@ int ConfigServer::parsingServer(std::string const &block)
 	}
 
 	// if (!simple_directive.empty())
-	// 	return ERROR;	// 유효하지 않은 지시어가 남아있으면 에러
-	return SUCCESS;
+	// 	throw config_error("Invalid directive");	// 유효하지 않은 지시어가 남아있으면 에러
 }

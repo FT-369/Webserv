@@ -12,7 +12,7 @@ std::vector<ConfigServer> &ConfigHttp::getServers() { return _servers; }
 const std::vector<ConfigServer> &ConfigHttp::getServers() const { return _servers; }
 std::map<std::string, std::string> ConfigHttp::getSimpleDirective() const { return _simple_directive; }
 
-int ConfigHttp::identifyServerBlock(std::string const &block)
+void ConfigHttp::identifyServerBlock(std::string const &block)
 {
 	std::string block_name = getBlockName(block);
 	std::string block_content = getBlockContent(block);
@@ -25,12 +25,11 @@ int ConfigHttp::identifyServerBlock(std::string const &block)
 	}
 	else if (!(block_name == "" && block_content == ""))
 	{
-		return ERROR; // 유효하지 않은 블럭
+		throw config_error("Invalid block directive");
 	}
-	return SUCCESS;
 }
 
-int ConfigHttp::parsingHttp(std::string const &block)
+void ConfigHttp::parsingHttp(std::string const &block)
 {
 	size_t pos;
 	std::string modify_block;
@@ -51,5 +50,4 @@ int ConfigHttp::parsingHttp(std::string const &block)
 	{
 		identifyServerBlock(blocks[i]);
 	}
-	return SUCCESS;
 }

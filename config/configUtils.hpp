@@ -2,6 +2,7 @@
 #define CONFIGUTILS_HPP
 
 #include "GlobalConfig.hpp"
+#include "exceptionType.hpp"
 #include "webserv.hpp"
 
 #define MAIN_SEPARATOR "\n\n"
@@ -33,19 +34,37 @@ struct CommonDirective
 		_limit_except.push_back("POST");
 		_limit_except.push_back("DELETE");
 	}
+
+	CommonDirective(CommonDirective const &cd)
+		: _root(cd._root), _autoindex(cd._autoindex), _index(cd._index), _error_page(cd._error_page), _cgi_path(cd._cgi_path),
+		_limit_except(cd._limit_except), _client_limit_body_size(cd._client_limit_body_size), _request_limit_header_size(cd._request_limit_header_size) {}
+
+	CommonDirective& operator=(CommonDirective const &cd) {
+		if (this == &cd) {
+			return *this;
+		}
+		_root = cd._root;
+		_autoindex = cd._autoindex;
+		_index = cd._index;
+		_error_page = cd._error_page;
+		_limit_except = cd._limit_except;
+		_client_limit_body_size = cd._client_limit_body_size;
+		_cgi_path = cd._cgi_path;
+		return *this;
+	}
 };
 
 bool isCommonDirective(std::string key);
-int getCommonRoot(CommonDirective &directive, std::vector<std::string> const &line);
-int getCommonAutoIndex(CommonDirective &directive, std::vector<std::string> const &line);
-int getCommonIndex(CommonDirective &directive, std::vector<std::string> const &line);
-int getCommonErrorPage(CommonDirective &directive, std::vector<std::string> const &line);
-int getCommonCgiPath(CommonDirective &directive, std::vector<std::string> const &line);
-int getClientBodySize(CommonDirective &directive, std::vector<std::string> const &line);
-int getClientHeaderSize(CommonDirective &directive, std::vector<std::string> const &line);
-int getAllowedMethod(CommonDirective &directive, std::vector<std::string> const &line);
-int parseCommonDirective(CommonDirective &directive, std::vector<std::string> const &line);
-int parseSimpleDirective(std::map<std::string, std::string> &simple, CommonDirective &common, std::string const &buffer);
+void getCommonRoot(CommonDirective &directive, std::vector<std::string> const &line);
+void getCommonAutoIndex(CommonDirective &directive, std::vector<std::string> const &line);
+void getCommonIndex(CommonDirective &directive, std::vector<std::string> const &line);
+void getCommonErrorPage(CommonDirective &directive, std::vector<std::string> const &line);
+void getCommonCgiPath(CommonDirective &directive, std::vector<std::string> const &line);
+void getClientBodySize(CommonDirective &directive, std::vector<std::string> const &line);
+void getClientHeaderSize(CommonDirective &directive, std::vector<std::string> const &line);
+void getAllowedMethod(CommonDirective &directive, std::vector<std::string> const &line);
+void parseCommonDirective(CommonDirective &directive, std::vector<std::string> const &line);
+void parseSimpleDirective(std::map<std::string, std::string> &simple, CommonDirective &common, std::string const &buffer);
 std::string sperateBrace(std::string const &buffer);
 std::string getBlockName(std::string const &block);
 std::string getBlockContent(std::string const &block);
