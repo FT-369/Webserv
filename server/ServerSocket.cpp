@@ -4,47 +4,44 @@ ServerSocket::ServerSocket(ConfigServer server) : Socket(SERVER_SOCKET), _server
 {
 	if ((_socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
 	{
-		// throw error
+		throw socket_error("socket()");
 	}
-
-	int true_option = 1;
-	setsockopt(_socket_fd, SOL_SOCKET, SO_REUSEADDR, &true_option, sizeof(true_option));
-	setsockopt(_socket_fd, SOL_SOCKET, SO_REUSEPORT, &true_option, sizeof(true_option));
-
 	_port = server.getListenPort();
 	_host = server.getListenHost().c_str();
 	memset(&_addr, 0, sizeof(_addr));
 	_addr.sin_family = AF_INET;
-	// _addr.sin_addr.s_addr = inet_addr(host.c_str());
 	_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	// _addr.sin_addr.s_addr = inet_addr(host.c_str());
 	_addr.sin_port = htons(_port);
 }
 
-int ServerSocket::binding()
+void ServerSocket::binding()
 {
-	// if (setsockopt(serv_sock, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == -1) //바로 주소 재사용가능하도록 설정
-	// 	throw (setsockopt_error());
-	// if (setsockopt(serv_sock, SOL_SOCKET, SO_REUSEPORT, &reuse, sizeof(reuse)) == -1) //바로 포트 재사용가능하도록 설정
-	// 	throw (setsockopt_error());
+	int reuse = 1;
+
+	if (setsockopt(_socket_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == -1)
+	{
+		throw socket_error("setsockopt(SO_REUSEADDR)");
+	}
+	if (setsockopt(_socket_fd, SOL_SOCKET, SO_REUSEPORT, &reuse, sizeof(reuse)) == -1)
+	{
+		throw socket_error("setsockopt(SO_REUSEPORT)");
+	}
 	if (bind(_socket_fd, reinterpret_cast<struct sockaddr *>(&_addr), sizeof(_addr)) == -1)
 	{
-		std::cout << "bind() error" << std::endl;
-		return ERROR;
+		throw socket_error("bind()");
 	}
 	if (listen(_socket_fd, 20) == -1)
 	{
-		std::cout << "listen() error" << std::endl;
-		return ERROR;
+		throw socket_error("listen()");
 	}
 	if (fcntl(_socket_fd, F_SETFL, O_NONBLOCK))
 	{
-		std::cout << "fcntl() error" << std::endl;
-		return ERROR;
+		throw socket_error("server socket fcntl()");
 	}
-	return SUCCESS;
 }
 
-int ServerSocket::clientAccept(int &connectFD)
+void ServerSocket::clientAccept(int &connectFD)
 {
 	struct sockaddr_in client_addr;
 	socklen_t client_addr_size = sizeof(client_addr);
@@ -52,16 +49,21 @@ int ServerSocket::clientAccept(int &connectFD)
 	connectFD = accept(_socket_fd, (struct sockaddr *)&client_addr, &client_addr_size);
 	if (connectFD == -1)
 	{
-		std::cout << "server_socket: accept() error" << std::endl;
-		return ERROR;
+		throw socket_error("accept()");
 	}
-	fcntl(connectFD, F_SETFL, O_NONBLOCK);
+	if (fcntl(connectFD, F_SETFL, O_NONBLOCK))
+	{
+		throw socket_error("client socket fcntl()");
+	}
+
 	struct timeval timeout;
 	timeout.tv_sec = 10;
 	timeout.tv_usec = 0;
-	setsockopt(connectFD, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(struct timeval));
-	setsockopt(connectFD, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(struct timeval));
-	return ERROR;
+
+	if (setsockopt(connectFD, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(struct timeval)) == -1)
+		throw socket_error("setsockopt(TIMEOUT)");
+	if (setsockopt(connectFD, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(struct timeval)) == -1)
+		throw socket_error("setsockopt(TIMEOUT)");
 }
 
 ServerSocket::~ServerSocket()

@@ -33,4 +33,10 @@ struct	socket_error : public ExceptionHandler
 	socket_error(std::string const &description) : ExceptionHandler("Socket Error", description) { }
 };
 
+struct	request_error : public ExceptionHandler
+{
+	request_error() : ExceptionHandler("Request Error") { }
+	request_error(std::string const &description) : ExceptionHandler("Request Error", description) { }
+};
+
 #endif

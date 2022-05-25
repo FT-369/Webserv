@@ -17,17 +17,13 @@ Request *ClientSocket::getRequest() const { return _request; }
 Resource *ClientSocket::getResource() const { return _resource; }
 Response *ClientSocket::getResponse() const { return _response; }
 
-int ClientSocket::recieveRequest()
+void ClientSocket::recieveRequest()
 {
-	if (_request->parseRequest() == ERROR)
-	{
-		return ERROR;
-	}
+	_request->parseRequest();
 	if (_request->getRequestStage() == READ_END_OF_REQUEST)
 	{
 		setStage(END_OF_REQUEST);
 	}
-	return SUCCESS;
 }
 
 Stage ClientSocket::getStage()

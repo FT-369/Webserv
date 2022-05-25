@@ -34,7 +34,7 @@ public:
 public:
 	Request(int socket_fd);
 	~Request();
-	int parseRequest();
+	void parseRequest();
 	void setRoute(std::vector<ConfigLocation> const &locations);
 
 	int getSocketFD() const;
@@ -56,9 +56,9 @@ public:
 	std::string getFile() const;
 
 private:
-	int parseRequestLine();
-	int parseRequestHeader();
-	int parseRequestBody();
+	void parseRequestLine();
+	void parseRequestHeader();
+	void parseRequestBody();
 	std::string ft_fgets_line(FILE *fp);
 };
 

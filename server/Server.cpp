@@ -25,13 +25,19 @@ void Server::serverConnect()
 	std::cout << "server_size = " << server_size << std::endl;
 	for (int i = 0; i < server_size; i++)
 	{
-		int error_flag;
-		ServerSocket *new_socket = new ServerSocket(servers[i]);
-		std::cout << "server host:" << new_socket->getSocketHost() << std::endl;
-		std::cout << "server port:" << new_socket->getSocketPort() << std::endl;
-
-		if (new_socket->binding() == ERROR)
+		ServerSocket *new_socket;
+		try
+		{
+			new_socket = new ServerSocket(servers[i]);
+			std::cout << "server host:" << new_socket->getSocketHost() << std::endl;
+			std::cout << "server port:" << new_socket->getSocketPort() << std::endl;
+			new_socket->binding();
+		}
+		catch(const std::exception& e)
+		{
+			std::cerr << e.what() << '\n';
 			continue;
+		}
 		_socket[new_socket->getSocketFd()] = new_socket;
 		_kq.addEvent(EVFILT_READ, new_socket->getSocketFd(), NULL);
 	}
@@ -89,7 +95,15 @@ void Server::keventProcess()
 				{
 					ServerSocket *server_socket = dynamic_cast<ServerSocket *>(_socket[_kq._event_list[i].ident]);
 					std::cout << server_socket << std::endl;
-					acceptGetClientFd(server_socket);
+					try
+					{
+						acceptGetClientFd(server_socket);
+					}
+					catch(const std::exception& e)
+					{
+						std::cerr << e.what() << '\n';
+						continue;
+					}
 				}
 				case CLIENT_SOCKET:
 				{
@@ -106,9 +120,13 @@ void Server::keventProcess()
 						}
 						while (client_socket->getStage() != END_OF_REQUEST)
 						{
-							if (client_socket->recieveRequest() == ERROR)
+							try
 							{
-								std::cerr << "parseRequest() error" << std::endl;
+								client_socket->recieveRequest();
+							}
+							catch(const std::exception& e)
+							{
+								std::cerr << e.what() << '\n';
 								error = 1;
 								break;
 							}
