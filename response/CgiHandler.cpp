@@ -1,7 +1,7 @@
 #include "CgiHandler.hpp"
 #include "Server.hpp"
 CgiHandler::CgiHandler(){}
-CgiHandler::CgiHandler(ConfigLocation *location_info, ClientSocket *cs) 
+CgiHandler::CgiHandler(ConfigLocation *location_info, ClientSocket *cs)
 : _location_info(location_info), _client_socket(cs)
 {
 	cgiInitEnv();
@@ -25,36 +25,38 @@ std::string getIp(int fd)
 void CgiHandler::cgiInitEnv()
 {
 	std::string extension = _client_socket->getRequest()->getPath().substr(_client_socket->getRequest()->getPath().rfind(".") + 1);
+	if (_client_socket->getRequest()->getRequestHeader().count("Authorization") == 1)
+    {
+		_cgi_env["AUTH_TYPE"] = _client_socket->getRequest()->getRequestHeader()["Authorization"];
+	}
 	_cgi_env["SERVER_PROTOCOL"] = "HTTP/1.1";
 	_cgi_env["GATEWAY_INTERFACE"] = "CGI/1.1";
 	_cgi_env["SERVER_SOFTWARE"] = "nginx server designed by sma";
 	_cgi_env["REQUEST_METHOD"] = _client_socket->getRequest()->getMethod();
-	_cgi_env[std::string("LANG")] = std::string(std::getenv("LANG"));
-	_cgi_env[std::string("REQUEST_SCHEME")] = _client_socket->getRequest()->getMethod();
+	_cgi_env["REQUEST_SCHEME"] = _client_socket->getRequest()->getMethod();
 
-	
 	_cgi_env["SERVER_PORT"] = _client_socket->getRequest()->getPort();
 	_cgi_env["SERVER_NAME"] = _client_socket->getRequest()->getServerName();
 	_cgi_env["PATH_INFO"] = _client_socket->getRequest()->getPath();
-	std::cerr << "PATH_INFO : " << _client_socket->getRequest()->getPath() << std::endl;;
-	_cgi_env[std::string("DOCUMENT_ROOT")] = _location_info->getCommonDirective()._cgi_path[extension];
-		std::cerr << "? : " << _client_socket->getRequest()->getQuery() << std::endl;;
+	_cgi_env["DOCUMENT_ROOT"] = _location_info->getCommonDirective()._cgi_path[extension];
 
-	_cgi_env[std::string("REQUEST_URI")] = _client_socket->getRequest()->getPath() + (_client_socket->getRequest()->getQuery().size() > 0 ? ("?" + _client_socket->getRequest()->getQuery()) : ""); // 리퀘스트에 명시된 전체 주소가 들어가야 함
-	 	std::cerr << "PATH_INFO : " << _cgi_env[std::string("REQUEST_URI")] << std::endl;
-
-	_cgi_env[std::string("DOCUMENT_URI")] = _client_socket->getRequest()->getPath() + (_client_socket->getRequest()->getQuery().size() > 0 ? ("?" + _client_socket->getRequest()->getQuery()) : "");; // 리퀘스트에 명시된 전체 주소가 들어가야 함
+	_cgi_env["DOCUMENT_URI"] = _client_socket->getRequest()->getPath() + (_client_socket->getRequest()->getQuery().size() > 0 ? ("?" + _client_socket->getRequest()->getQuery()) : "");; // 리퀘스트에 명시된 전체 주소가 들어가야 함
+	_cgi_env["REQUEST_URI"] = _client_socket->getRequest()->getPath() + (_client_socket->getRequest()->getQuery().size() > 0 ? ("?" + _client_socket->getRequest()->getQuery()) : ""); // 리퀘스트에 명시된 전체 주소가 들어가야 함
 	_cgi_env["SCRIPT_NAME"] = _client_socket->getRequest()->getRoute()->getCommonDirective()._root + _client_socket->getRequest()->getPath(); // 실행파일 전체 주소가 들어가야함
-	std::cerr << "SCRIPT_NAME : " << _cgi_env[std::string("SCRIPT_NAME")] << std::endl;
-
 	_cgi_env["SCRIPT_FILENAME"] =  _client_socket->getRequest()->getRoute()->getCommonDirective()._root + _client_socket->getRequest()->getPath();// 실행파일 전체 주소가 들어가야함
 	_cgi_env["QUERY_STRING"] = _client_socket->getRequest()->getQuery();
 	_cgi_env["REMOTE_ADDR"] = getIp(_client_socket->getRequest()->getSocketFD());
 	_cgi_env["REDIRECT_STATUS"] = "200";
 	_cgi_env["PHP_SELF"] = _client_socket->getRequest()->getPath();
-	_cgi_env["CONTENT_LENGTH"] = _client_socket->getRequest()->getRequestHeader()["content_length"];
+	if (_client_socket->getRequest()->getRequestBody().size() > 0)
+		_cgi_env["CONTENT_LENGTH"] = std::to_string(_client_socket->getRequest()->getRequestBody().size());
+	// _cgi_env["CONTENT_LENGTH"] = _client_socket->getRequest()->getRequestHeader()["Content-Length"];
+
 	_cgi_env["CONTENT_TYPE"] = _client_socket->getRequest()->getContentType();
-	// _cgi_env["REQUEST_URI"] = _client_socket->getRequest()->getPath() + "?" + _client_socket->getRequest()->getQuery();
+	for (std::map<std::string, std::string>::iterator it = _cgi_env.begin(); it != _cgi_env.end(); it++)
+	{
+		std::cout << it->first << " : " << it->second << std::endl;
+	}
 }
 
 char **CgiHandler::convertEnv()
@@ -147,8 +149,6 @@ int CgiHandler::executeCgi()
 		close(read_fd[1]);
 		_client_socket->getResource()->setReadFd(read_fd[0]);
 		_client_socket->getResource()->setWriteFd(write_fd[1]);
-		std::cerr << "response read_fd: " << read_fd[0] << std::endl;
-		std::cerr << "response write_fd: " << write_fd[1] << std::endl;
 	}
 	return status;
 }

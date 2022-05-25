@@ -35,10 +35,10 @@ std::string Request::getServerName() const {
 
 std::string Request::getContentType() const
 {
-	if (_request_header.find("content-type") == _request_header.end()) {
+	if (_request_header.find("Content-Type") == _request_header.end()) {
 		return "text/plain";
 	}
-	return getRequestHeader()["content-type"];
+	return getRequestHeader()["Content-Type"];
 }
 
 std::string Request::getMethod() const { return _method; }
@@ -178,6 +178,7 @@ int Request::parseRequestLine()
 	size_t pos;
 
 	get_line = ft_fgets_line(getSocketReadFP());
+	_request_main += get_line;
 	if (get_line == "" || get_line == "\r\n")
 		return ERROR;
 
@@ -214,6 +215,8 @@ int Request::parseRequestHeader()
 	std::vector<std::string> key_value;
 
 	get_line = ft_fgets_line(getSocketReadFP());
+		_request_main += get_line;
+
 	if (get_line == "" || get_line == "\r\n")
 	{
 		_stage = READ_REQUEST_BODY;
@@ -245,6 +248,8 @@ int Request::parseRequestBody()
 	else
 	{
 		_request_body += (std::string(line));
+			_request_main += (std::string(line));
+
 	}
 	return SUCCESS;
 }
@@ -304,4 +309,8 @@ void Request::setRoute(std::vector<ConfigLocation> const &locations)
 			}
 		}
 	}
+}
+std::string Request::getRequestMain() const 
+{
+	return _request_main;
 }
