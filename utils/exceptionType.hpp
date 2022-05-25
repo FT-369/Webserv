@@ -21,4 +21,16 @@ struct	config_parsing_error : public ExceptionHandler
 	config_parsing_error(std::string const &description) : ExceptionHandler("Config Parsing Error", description) { }
 };
 
+struct	mimetypes_parsing_error : public ExceptionHandler
+{
+	mimetypes_parsing_error() : ExceptionHandler("MimeTypes Parsing Error") { }
+	mimetypes_parsing_error(std::string const &description) : ExceptionHandler("MimeTypes Parsing Error", description) { }
+};
+
+struct	socket_error : public ExceptionHandler
+{
+	socket_error() : ExceptionHandler("Socket Error") { }
+	socket_error(std::string const &description) : ExceptionHandler("Socket Error", description) { }
+};
+
 #endif
