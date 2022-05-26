@@ -5,18 +5,17 @@ bool isCommonDirective(std::string key)
 	return (key == ROOT || key == AUTOINDEX || key == INDEX || key == ERROR_PAGE || key == CLIENT_BODY_SIZE || key == CLIENT_HEADER_SIZE || key == CGI_PATH || key == ALLOWED_METHOD);
 }
 
-int getCommonRoot(CommonDirective &directive, std::vector<std::string> const &line)
+void getCommonRoot(CommonDirective &directive, std::vector<std::string> const &line)
 {
 	if (line.size() != 2)
-		return ERROR; // 지시어 형식이 맞지 않음
+		throw config_parsing_error("Invalid 'root' directive value"); // 지시어 형식이 맞지 않음
 	directive._root = line[1];
-	return SUCCESS;
 }
 
-int getCommonAutoIndex(CommonDirective &directive, std::vector<std::string> const &line)
+void getCommonAutoIndex(CommonDirective &directive, std::vector<std::string> const &line)
 {
 	if (line.size() != 2)
-		return ERROR; // 지시어 형식이 맞지 않음
+		throw config_parsing_error("Invalid 'autoindex' directive value"); // 지시어 형식이 맞지 않음
 	if (line[1] == "on")
 	{
 		directive._autoindex = true;
@@ -27,24 +26,22 @@ int getCommonAutoIndex(CommonDirective &directive, std::vector<std::string> cons
 	}
 	else
 	{
-		return ERROR; // !!! 올바른 value가 아님
+		throw config_parsing_error("The value of the 'autoindex' directive must be on or off"); // !!! 올바른 value가 아님
 	}
-	return SUCCESS;
 }
 
-int getCommonIndex(CommonDirective &directive, std::vector<std::string> const &line)
+void getCommonIndex(CommonDirective &directive, std::vector<std::string> const &line)
 {
 	directive._index = line;
-	if (directive._index.empty())
-		return ERROR; // 지시어 형식이 맞지 않음
+	if (directive._index.size() < 2)
+		throw config_parsing_error("Invalid 'index' directive value");
 	directive._index.erase(directive._index.begin());
-	return SUCCESS;
 }
 
-int getCommonErrorPage(CommonDirective &directive, std::vector<std::string> const &line)
+void getCommonErrorPage(CommonDirective &directive, std::vector<std::string> const &line)
 {
 	if (line.size() < 3)
-		return ERROR; // 지시어 형식이 맞지 않음
+		throw config_parsing_error("Invalid 'error_page' directive value"); // 지시어 형식이 맞지 않음
 
 	std::string error_page = line[line.size() - 1];
 	for (int i = 1; i < line.size() - 1; i++)
@@ -53,110 +50,103 @@ int getCommonErrorPage(CommonDirective &directive, std::vector<std::string> cons
 		double d = std::strtod(line[i].c_str(), &endptr);
 		int n = static_cast<int>(d);
 		if (strlen(endptr) != 0 || d != n || n < 300 || n > 599)
-			return ERROR; // !!! 올바른 value가 아님
+			throw config_parsing_error("Invalid directive value"); // !!! 올바른 value가 아님
 		directive._error_page[line[i]] = error_page;
 	}
-	return SUCCESS;
 }
 
-int getCommonCgiPath(CommonDirective &directive, std::vector<std::string> const &line)
+void getCommonCgiPath(CommonDirective &directive, std::vector<std::string> const &line)
 {
 	if (line.size() != 3)
-		return ERROR; // 지시어 형식이 맞지 않음
+		throw config_parsing_error("Invalid 'cgi_path' directive value"); // 지시어 형식이 맞지 않음
 	directive._cgi_path[line[1]] = line[2];
-	return SUCCESS;
 }
 
-int getClientBodySize(CommonDirective &directive, std::vector<std::string> const &line)
+void getClientBodySize(CommonDirective &directive, std::vector<std::string> const &line)
 {
 	if (line.size() != 2)
-		return ERROR; // 지시어 형식이 맞지 않음
+		throw config_parsing_error("Invalid 'client_body_size' directive value"); // 지시어 형식이 맞지 않음
 
 	char *endptr = 0;
 	double d_body_size = std::strtod(line[1].c_str(), &endptr);
 	int body_size = static_cast<int>(d_body_size);
 
 	if (strlen(endptr) != 0 || d_body_size != body_size || d_body_size < 0.0)
-		return ERROR; // !!! 올바른 value가 아님
+		throw config_parsing_error("Invalid directive value"); // !!! 올바른 value가 아님
 	directive._client_limit_body_size = body_size;
-	return SUCCESS;
 }
 
-int getClientHeaderSize(CommonDirective &directive, std::vector<std::string> const &line)
+void getClientHeaderSize(CommonDirective &directive, std::vector<std::string> const &line)
 {
 	if (line.size() != 2)
-		return ERROR; // 지시어 형식이 맞지 않음
+		throw config_parsing_error("Invalid 'request_header_size' directive value"); // 지시어 형식이 맞지 않음
 
 	char *endptr = 0;
 	double d_header_size = std::strtod(line[1].c_str(), &endptr);
 	int header_size = static_cast<int>(d_header_size);
 
 	if (strlen(endptr) != 0 || d_header_size != header_size || d_header_size < 0.0) // !!! 올바른 value가 들어오는지 체크
-		return ERROR;																// !!! 올바른 value가 아님
+		throw config_parsing_error("Invalid directive value");	// !!! 올바른 value가 아님
 	directive._request_limit_header_size = header_size;
-	return SUCCESS;
 }
 
-int getAllowedMethod(CommonDirective &directive, std::vector<std::string> const &line)
+void getAllowedMethod(CommonDirective &directive, std::vector<std::string> const &line)
 {
 	if (line.size() < 2)
-		return ERROR;
+		throw config_parsing_error("Invalid 'limit_except' directive value");
 	std::vector<std::string> new_directive;
 	for (int i = 1; i < line.size(); i++)
 	{
 		if (line[i] != "GET" && line[i] != "POST" && line[i] != "DELETE")
-			return ERROR; // 지시어 형식이 맞지 않음
+			throw config_parsing_error("Invalid directive value"); // 지시어 형식이 맞지 않음
 		new_directive.push_back(line[i]);
 	}
 	directive._limit_except = new_directive;
-	return SUCCESS;
 }
 
-int parseCommonDirective(CommonDirective &directive, std::vector<std::string> const &line)
+void parseCommonDirective(CommonDirective &directive, std::vector<std::string> const &line)
 {
-	int ret = SUCCESS;
 	std::string key = line[0];
 
 	if (key == ROOT)
 	{
-		ret = getCommonRoot(directive, line);
+		getCommonRoot(directive, line);
 	}
 	else if (key == AUTOINDEX)
 	{
-		ret = getCommonAutoIndex(directive, line);
+		getCommonAutoIndex(directive, line);
 	}
 	else if (key == INDEX)
 	{
-		ret = getCommonIndex(directive, line);
+		getCommonIndex(directive, line);
 	}
 	else if (key == ERROR_PAGE)
 	{
-		ret = getCommonErrorPage(directive, line);
+		getCommonErrorPage(directive, line);
 	}
 	else if (key == CGI_PATH)
 	{
-		ret = getCommonCgiPath(directive, line);
+		getCommonCgiPath(directive, line);
 	}
 	else if (key == CLIENT_BODY_SIZE)
 	{
-		ret = getClientBodySize(directive, line);
+		getClientBodySize(directive, line);
 	}
 	else if (key == CLIENT_HEADER_SIZE)
 	{
-		ret = getClientHeaderSize(directive, line);
+		getClientHeaderSize(directive, line);
 	}
 	else if (key == ALLOWED_METHOD)
 	{
-		ret = getAllowedMethod(directive, line);
+		getAllowedMethod(directive, line);
 	}
 	else
 	{
-		return ERROR; // common directive에 해당하는 key값이 아님
+		throw config_parsing_error("Invalid directive"); // common directive에 해당하는 key값이 아님
 	}
-	return SUCCESS;
 }
 
-int parseSimpleDirective(std::map<std::string, std::string> &simple, CommonDirective &common, std::string const &buffer)
+void parseSimpleDirective(std::map<std::string, std::string> &simple, CommonDirective &common, std::string const &buffer)
 {
 	std::vector<std::string> main_line;
 	std::vector<std::string> split_line;
@@ -165,7 +155,7 @@ int parseSimpleDirective(std::map<std::string, std::string> &simple, CommonDirec
 	main_line = ft_split(buffer, ";");
 	if (ft_trim(main_line[main_line.size() - 1]) != "")
 	{
-		return ERROR; // buffer가 ;으로 끝나지 않음
+		throw config_error("Invalid directive"); // common directive에 해당하는 key값이 아님
 	}
 	else
 	{
@@ -176,7 +166,7 @@ int parseSimpleDirective(std::map<std::string, std::string> &simple, CommonDirec
 	{
 		split_line = ft_split_space(main_line[i]);
 		if (split_line.size() < 2)
-			return ERROR; // 지시어 형식이 맞지 않음
+			throw config_parsing_error("Invalid directive value"); // 지시어 형식이 맞지 않음
 
 		if (isCommonDirective(split_line[0]))
 		{
@@ -190,7 +180,6 @@ int parseSimpleDirective(std::map<std::string, std::string> &simple, CommonDirec
 			simple[split_line[0]] = value;
 		}
 	}
-	return SUCCESS;
 }
 
 std::string sperateBrace(std::string const &buffer)

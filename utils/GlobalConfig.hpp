@@ -3,6 +3,7 @@
 
 #include "utils.hpp"
 #include "webserv.hpp"
+#include "exceptionType.hpp"
 
 #define MIME_TYPES "./setting/mime.types"
 
@@ -18,7 +19,7 @@ public:
 	static std::map<std::string, std::string> getMimeTypes();
 	static std::map<std::string, std::string> getStatusCode();
 	static std::string getDefaultType();
-	static int initMimeTyeps();
+	static void initMimeTyeps();
 	static void initStatusCode();
 
 private:

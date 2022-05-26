@@ -22,12 +22,12 @@ public:
 	std::string getReturnCode() const;
 	std::string getReturnData() const;
 	std::map<std::string, std::string> getSimpleDirective() const;
-	int parsingLocation(std::string const &block);
+	void parsingLocation(std::string const &block);
 
 private:
 	ConfigLocation();
-	int parseLocationDirecive(std::map<std::string, std::string> &simple);
-	int identifyBlock(std::string const &block);
+	void parseLocationDirecive(std::map<std::string, std::string> &simple);
+	void identifyBlock(std::string const &block);
 };
 
 #endif

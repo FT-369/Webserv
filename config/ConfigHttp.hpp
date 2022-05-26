@@ -17,10 +17,10 @@ public:
 	std::vector<ConfigServer> &getServers();
 	const std::vector<ConfigServer> &getServers() const;
 	std::map<std::string, std::string> getSimpleDirective() const;
-	int parsingHttp(std::string const &block);
+	void parsingHttp(std::string const &block);
 
 private:
-	int identifyServerBlock(std::string const &block);
+	void identifyServerBlock(std::string const &block);
 };
 
 #endif

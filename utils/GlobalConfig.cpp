@@ -13,7 +13,7 @@ std::map<std::string, std::string> GlobalConfig::getMimeTypes() { return GlobalC
 std::map<std::string, std::string> GlobalConfig::getStatusCode() { return GlobalConfig::_status_code; }
 std::string GlobalConfig::getDefaultType() { return GlobalConfig::_default_type; }
 
-int GlobalConfig::initMimeTyeps()
+void GlobalConfig::initMimeTyeps()
 {
 	std::ifstream is(MIME_TYPES);
 	std::string buffer;
@@ -22,8 +22,7 @@ int GlobalConfig::initMimeTyeps()
 
 	if (is.fail())
 	{
-		std::cerr << "Unable to find the file: " << MIME_TYPES << std::endl;
-		return ERROR; // 파일 열기 실패
+		throw file_error("Unable to find the file: " + std::string(MIME_TYPES));
 	}
 	while (std::getline(is, buffer))
 	{
@@ -33,7 +32,7 @@ int GlobalConfig::initMimeTyeps()
 	split_line = ft_split(line, ";");
 	if (ft_trim(split_line[split_line.size() - 1]) != "")
 	{
-		return ERROR; // line이 ;으로 끝나지 않음
+		throw mimetypes_parsing_error("line does not end with ';'");
 	}
 	else
 	{
@@ -45,14 +44,13 @@ int GlobalConfig::initMimeTyeps()
 		std::vector<std::string> key_value = ft_split_space(split_line[i]);
 		if (key_value.size() < 2)
 		{
-			return ERROR; // 지시어 형식이 맞지 않음
+			throw mimetypes_parsing_error("Invalid directive value");
 		}
 		for (size_t i = 1; i < key_value.size(); i++)
 		{
 			GlobalConfig::_mime_types[key_value[i]] = key_value[0];
 		}
 	}
-	return SUCCESS;
 }
 
 void GlobalConfig::initStatusCode()

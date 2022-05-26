@@ -13,33 +13,32 @@ std::string ConfigLocation::getReturnCode() const { return _return_code; }
 std::string ConfigLocation::getReturnData() const { return _return_data; }
 std::map<std::string, std::string> ConfigLocation::getSimpleDirective() const { return _simple_directive; }
 
-int ConfigLocation::identifyBlock(std::string const &block)
+void ConfigLocation::identifyBlock(std::string const &block)
 {
 	std::string block_name = getBlockName(block);
 	std::string block_content = getBlockContent(block);
 
-	if (block_name == "" && block_content == "")
+	if (!(block_name == "" && block_content == ""))
 	{
-		return SUCCESS;
+		throw config_error("There is a block inside the locations block"); // location 블록 안에 또 다른 블록이 들어온 경우
 	}
-	return ERROR; // location 블록 안에 또 다른 블록이 들어온 경우
 }
 
-int ConfigLocation::parseLocationDirecive(std::map<std::string, std::string> &simple)
+void ConfigLocation::parseLocationDirecive(std::map<std::string, std::string> &simple)
 {
 
 	if (simple.find(REDIRECT) != simple.end())
 	{
 		std::vector<std::string> redirect = ft_split_space(simple[REDIRECT]);
 		if (redirect.size() < 1 || redirect.size() > 2)
-			return ERROR; // 지시어 형식이 맞지 않음
+			throw config_parsing_error("directive or value of directive does not exist"); // 지시어 형식이 맞지 않음
 
 		char *endptr = 0;
 		double d_port = std::strtod(redirect[0].c_str(), &endptr);
 		int port = static_cast<int>(d_port);
 
 		if (strlen(endptr) != 0 || d_port != port || d_port > 399 || d_port < 300)
-			return ERROR; // !!! 올바른 value가 아님
+			throw config_parsing_error("Invalid directive value"); // !!!올바른 value가 아님
 		_return_code = redirect[0];
 		if (redirect.size() == 2)
 		{
@@ -47,11 +46,9 @@ int ConfigLocation::parseLocationDirecive(std::map<std::string, std::string> &si
 		}
 		simple.erase(REDIRECT);
 	}
-
-	return SUCCESS;
 }
 
-int ConfigLocation::parsingLocation(std::string const &block)
+void ConfigLocation::parsingLocation(std::string const &block)
 {
 	size_t pos;
 	std::string modify_block;
@@ -73,8 +70,4 @@ int ConfigLocation::parsingLocation(std::string const &block)
 	{
 		identifyBlock(blocks[i]);
 	}
-
-	// if (!simple_directive.empty())
-	// 	return ERROR;	// 유효하지 않은 지시어가 남아있으면 에러
-	return SUCCESS;
 }

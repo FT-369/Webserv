@@ -170,7 +170,7 @@ std::string Request::ft_fgets_line(FILE *fp)
 // 	return SUCCESS;
 // }
 
-int Request::parseRequestLine()
+void Request::parseRequestLine()
 {
 	std::string get_line;
 	std::vector<std::string> request_line;
@@ -180,11 +180,11 @@ int Request::parseRequestLine()
 	get_line = ft_fgets_line(getSocketReadFP());
 	_request_main += get_line;
 	if (get_line == "" || get_line == "\r\n")
-		return ERROR;
+		throw request_error("Invalid Request");
 
 	request_line = ft_split_space(get_line);
 	if (request_line.size() != 3)
-		return ERROR;
+		throw request_error("Invalid request line");
 
 	_method = request_line[0];
 	if ((pos = request_line[1].find("?")) == std::string::npos)
@@ -199,17 +199,16 @@ int Request::parseRequestLine()
 	_protocol = request_line[2];
 
 	if (_method != "GET" && _method != "POST" && _method != "DELETE")
-		return ERROR;
+		throw request_error("Unknown method");
 	if (_path[0] != '/')
-		return ERROR;
+		throw request_error("Invalid path");
 	if ((pos = _protocol.find("HTTP/")) == std::string::npos)
-		return ERROR;
+		throw request_error("not http protocol");
 
 	_stage = READ_REQUEST_HEADER;
-	return SUCCESS;
 }
 
-int Request::parseRequestHeader()
+void Request::parseRequestHeader()
 {
 	std::string get_line, key, value;
 	std::vector<std::string> key_value;
@@ -220,7 +219,7 @@ int Request::parseRequestHeader()
 	if (get_line == "" || get_line == "\r\n")
 	{
 		_stage = READ_REQUEST_BODY;
-		return SUCCESS;
+		return;
 	}
 
 	key_value = ft_split(get_line, ": ");
@@ -228,16 +227,15 @@ int Request::parseRequestHeader()
 	if (key_value.size() != 2)
 	{
 		_request_header.clear();
-		return ERROR;
+		throw request_error("request format");
 	}
 
 	key = key_value[0];
 	value = key_value[1].replace(key_value[1].find("\r\n"), 2, "\0");
 	_request_header[key] = value;
-	return SUCCESS;
 }
 
-int Request::parseRequestBody()
+void Request::parseRequestBody()
 {
 	char line[GET_LINE_BUF];
 
@@ -248,35 +246,29 @@ int Request::parseRequestBody()
 	else
 	{
 		_request_body += (std::string(line));
-			_request_main += (std::string(line));
-
+		_request_main += (std::string(line));
 	}
-	return SUCCESS;
 }
 
-int Request::parseRequest()
+void Request::parseRequest()
 {
 	switch (_stage)
 	{
 	case READ_REQUEST_LINE:
-		if (parseRequestLine() == ERROR)
-			return ERROR;
+		parseRequestLine();
 		break;
 
 	case READ_REQUEST_HEADER:
-		if (parseRequestHeader() == ERROR)
-			return ERROR;
+		parseRequestHeader();
 		break;
 
 	case READ_REQUEST_BODY:
-		if (parseRequestBody() == ERROR)
-			return ERROR;
+		parseRequestBody();
 		break;
 
 	default:
 		break;
 	}
-	return SUCCESS;
 }
 
 void Request::setRoute(std::vector<ConfigLocation> const &locations)

@@ -24,12 +24,12 @@ public:
 	void setting(std::string const &filename);
 
 private: // func
-	int identifyHttpBlock(std::string const &block);
-	int parseGeneralDirective(std::map<std::string, std::string> &directive, std::string const &buffer);
-	int checkBrace(std::stack<bool> &check_brace, std::string &buffer);
+	void identifyHttpBlock(std::string const &block);
+	void parseGeneralDirective(std::map<std::string, std::string> &directive, std::string const &buffer);
+	void checkBrace(std::stack<bool> &check_brace, std::string &buffer);
 	void cutComment(std::string &buffer);
-	int readConfigFile();
-	int parsingConfig();
+	void readConfigFile();
+	void parsingConfig();
 };
 
 #endif

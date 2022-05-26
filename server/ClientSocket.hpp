@@ -38,7 +38,7 @@ public:
 	Request *getRequest() const;
 	Resource *getResource() const;
 	Response *getResponse() const;
-	int recieveRequest();
+	void recieveRequest();
 	void sendResponse();
 	Stage getStage();
 	void setStage(Stage stage);

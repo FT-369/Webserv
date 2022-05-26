@@ -25,12 +25,12 @@ public:
 	std::vector<std::string> getServerName() const;
 	std::vector<ConfigLocation> getLocations() const;
 	std::map<std::string, std::string> getSimpleDirective() const;
-	int parsingServer(std::string const &block);
+	void parsingServer(std::string const &block);
 
 private:
 	ConfigServer();
-	int parseServerDirecive(std::map<std::string, std::string> &simple);
-	int identifyLocationBlock(std::string const &block);
+	void parseServerDirecive(std::map<std::string, std::string> &simple);
+	void identifyLocationBlock(std::string const &block);
 };
 
 #endif
