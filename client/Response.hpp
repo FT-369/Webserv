@@ -21,6 +21,8 @@ public:
 	Response(Request *request, Resource *resource);
 	~Response();
 	FILE* getSocketWriteFD() const;
+	std::string getStatusCode() const;
+	std::string getEntity() const;
 
 	void makeStartLine();
 	void makeRedirectHeader();

@@ -32,7 +32,7 @@ public:
 	void setPid(pid_t pid);
 	void setExtension(std::string const &extension);
 	void setContentType(std::string const &content_type);
-	void makeAutoIndex(std::string root, std::string directory);
+	void makeAutoIndex(std::string root, std::string directory, std::string host_port);
 
 };
 

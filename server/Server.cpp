@@ -134,6 +134,7 @@ void Server::keventProcess()
 						if (error)
 						{
 							std::cout << "request error" << std::endl;
+							// _kq.disableEvent(EVFILT_READ, _kq._event_list[i].ident, 0);
 							continue;
 						}
 						client_socket->setStage(SET_RESOURCE);
@@ -202,7 +203,6 @@ void Server::keventProcess()
 						}
 						else
 						{ // file 읽기
-							std::cout << "read !!!!!!!" << std::endl;
 							n = read(_kq._event_list[i].ident, buffer, BUFFERSIZE - 1);
 							if (n < 0)
 							{
@@ -235,7 +235,7 @@ void Server::keventProcess()
 				{
 					ClientSocket *client_socket = reinterpret_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
 					// response 보내주는거
-					if (client_socket != 0 && client_socket->getRequest() != 0 && (client_socket->getStage() == MAKE_RESPONSE || client_socket->getStage() == MAKE_AUTOINDEX)) // + 리소스도 다 읽었으면
+					if (client_socket != 0 && client_socket->getRequest() != 0 && client_socket->getStage() == MAKE_RESPONSE) // + 리소스도 다 읽었으면
 					{
 						client_socket->sendResponse();
 						_socket.erase(_kq._event_list[i].ident);

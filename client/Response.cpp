@@ -11,6 +11,8 @@ Response::~Response()
 }
 
 FILE* Response::getSocketWriteFD() const { return _socket_write; }
+std::string Response::getStatusCode() const { return _status_code; }
+std::string Response::getEntity() const { return _entity; }
 
 void Response::setStatusCode(std::string const &status_code) { _status_code = status_code; }
 void Response::setEntity(std::string const &entity) { _entity = entity; }
@@ -29,8 +31,8 @@ void Response::makeGetHeader()
 {
 	if (_header["Content-Type"] == "")
 		_header["Content-Type"] = _resource->getSrcContentType();
-	if (_header["Content-length"] == "")
-		_header["Content-length"] = std::to_string(_entity.length());
+	if (_header["Content-Length"] == "")
+		_header["Content-Length"] = std::to_string(_entity.length());
 	_header["Server"] = "Mac Web Server";
 }
 

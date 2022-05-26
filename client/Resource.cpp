@@ -26,9 +26,9 @@ void Resource::setExtension(std::string const &extension) { _extension = extensi
 void Resource::setContentType(std::string const &content_type) { _content_type = content_type; }
 void Resource::setContent(std::string const content){ _content = content;}
 
-void Resource::makeAutoIndex(std::string root, std::string directory)
+void Resource::makeAutoIndex(std::string root, std::string directory, std::string host_port)
 {
-	std::string host = "http://" + getSocketHost() + ":" + std::to_string(getSocketPort());
+	std::string host = "http://" + host_port;
 	std::string pos = (directory == "" || directory[directory.size() - 1] != '/') ? directory + "/" : directory;
 	DIR *dir = NULL;
 

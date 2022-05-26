@@ -30,17 +30,16 @@ Stage ClientSocket::getStage()
 {
 	return _stage;
 }
-void ClientSocket::setStage(Stage stage){ _stage = stage; }
+void ClientSocket::setStage(Stage stage) { _stage = stage; }
 
 void ClientSocket::sendResponse()
 {
-	_response->setEntity(_resource->getContent());
 	return _response->combineResponse();
 }
 
 std::string ClientSocket::getErrorPage(std::string error_num)
 {
-	std::string root = "./static_file/defaultErrorPage.html";
+	std::string root = "./www/static_file/defaultErrorPage.html";
 	std::map<std::string, std::string> temp = _request->getRoute()->getCommonDirective()._error_page;
 	std::string _status_code;
 
@@ -108,8 +107,8 @@ void ClientSocket::setGetFd()
 		for (size_t i = 0; i < index_page.size(); i++)
 		{
 			std::string indexfile = root + "/" + index_page[i];
-			
-			std::cout << i  << " " << indexfile << std::endl;
+
+			std::cout << i << " " << indexfile << std::endl;
 			if (isFile(indexfile) == 1)
 			{
 				_resource->setReadFd(open(indexfile.c_str(), O_RDONLY));
@@ -130,22 +129,28 @@ void ClientSocket::setGetFd()
 	}
 	if (_request->getRoute()->getCommonDirective()._autoindex)
 	{
-		setStage(MAKE_AUTOINDEX);
-		_response->setStatusCode("200");
 		if (getFileType(entity_file)) // 존재하는 파일 or 디렉토리
 		{
 			// resource content에 autoindex 만들기 (_request->getFile() 기준)
-			_resource->makeAutoIndex(root, _request->getFile());
+			_resource->makeAutoIndex(root, _request->getFile(), _request->getRequestHeader()["Host"]);
+		}
+		else if (getFileType(root))
+		{
+			// resource content에 autoindex 만들기 (/) // root
+			_resource->makeAutoIndex(root, "/", _request->getRequestHeader()["Host"]);
+		}
+		else
+		{
+			setErrorResource("404");
 			return;
 		}
-		// resource content에 autoindex 만들기 (/) // root
-		_resource->makeAutoIndex(root, "/");
-		return;
+		setStage(MAKE_RESPONSE);
+		_response->setStatusCode("200");
+		_response->makeResponse();
 	}
 	else
 	{
 		setErrorResource("404");
-		return;
 	}
 }
 
@@ -213,7 +218,10 @@ void ClientSocket::setPostFd()
 
 void ClientSocket::setErrorResource(std::string error)
 {
-	int fd = open(getErrorPage(error).c_str(), O_RDONLY);
+	int fd;
+
+	_response->setStatusCode(error);
+	fd = open(getErrorPage(error).c_str(), O_RDONLY);
 	_resource->setReadFd(fd);
 	if (fd < 0)
 	{
@@ -234,9 +242,8 @@ void ClientSocket::parsingCGIResponse()
 		start = 0;
 		if ((end = tem.find(": ")) < 0)
 			break;
-		getResponse()->addHeader(tem.substr(start, end - start), tem.substr(end + 2, tem.find('\n') - end + 2));  // cgi 반환값의 header 파싱
+		getResponse()->addHeader(tem.substr(start, end - start), tem.substr(end + 2, tem.find('\n') - end + 2)); // cgi 반환값의 header 파싱
 		content = content.substr(tem.size() + 1, content.size());
 	}
 	getResource()->setContent(content);
-
 }
