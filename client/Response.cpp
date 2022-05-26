@@ -24,6 +24,10 @@ void Response::makeStartLine()
 
 void Response::makePostHeader()
 {
+	if (_header["Content-Type"] == "")
+		_header["Content-Type"] = _resource->getSrcContentType();
+	if (_header["Content-Length"] == "")
+		_header["Content-Length"] = std::to_string(_entity.length());
 	_header["Server"] = "Mac Web Server";
 }
 
@@ -32,7 +36,7 @@ void Response::makeGetHeader()
 	if (_header["Content-Type"] == "")
 		_header["Content-Type"] = _resource->getSrcContentType();
 	if (_header["Content-Length"] == "")
-		_header["Content-Length"] = std::to_string(_entity.length());
+		_header["Content-Length"] = std::to_string(_resource->getN());
 	_header["Server"] = "Mac Web Server";
 }
 
@@ -74,6 +78,9 @@ void Response::makeResponse()
 		std::cout << "DELETE" << std::endl;
 		makeGetHeader();
 	}
+	std::cout << "Response entity: " << _entity << std::endl;
+	std::cout << "Entity Length: " << _entity.length() << std::endl;
+	std::cout << "Response Header: " << _header["Content-Length"] << std::endl;
 	makeRedirectHeader();
 	makeStartLine();
 }
@@ -89,7 +96,7 @@ void Response::combineResponse()
 		send_data += it->first + ": " + it->second + "\r\n";
 	}
 	send_data += "\r\n" + _entity + "\r\n";
-
+	std::cerr << "send_data : " << send_data << std::endl;
 	fputs(send_data.c_str(), _socket_write);
 	fflush(_socket_write);
 	fclose(_socket_write);

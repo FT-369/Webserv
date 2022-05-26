@@ -1,7 +1,7 @@
 #include "Resource.hpp"
 
 
-Resource::Resource() : _write_fd(-1), _read_fd(-1), _pid(-1)
+Resource::Resource() : _write_fd(-1), _read_fd(-1), _pid(-1), _n(0)
 {
 
 }
@@ -22,9 +22,11 @@ std::string Resource::getSrcContentType() const { return _content_type; }
 void Resource::setWriteFd(int fd) { _write_fd = fd; }
 void Resource::setReadFd(int fd) { _read_fd = fd; }
 void Resource::setPid(pid_t pid) { _pid = pid; }
-void Resource::setExtension(std::string const &extension) { _extension = extension; }
+void Resource::setExtension(std::string const &extension) { _extension = extension; _content_type = GlobalConfig::getMimeTypes()[_extension]; }
 void Resource::setContentType(std::string const &content_type) { _content_type = content_type; }
 void Resource::setContent(std::string const content){ _content = content;}
+unsigned int Resource::getN() { return _n; }
+void Resource::setN(unsigned int n) { _n = n; }
 
 void Resource::makeAutoIndex(std::string root, std::string directory, std::string host_port)
 {

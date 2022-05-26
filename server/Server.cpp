@@ -159,7 +159,8 @@ void Server::keventProcess()
 					}
 					else if (client_socket->getStage() == SET_RESOURCE || client_socket->getStage() == CGI_READ)
 					{
-						int stat, ret, n;
+						int stat, ret;
+						size_t n;
 						char buffer[BUFFERSIZE];
 						memset(buffer, 0, BUFFERSIZE);
 						if (client_socket->getResource()->getPid() > 0)
@@ -205,6 +206,7 @@ void Server::keventProcess()
 						}
 						else
 						{ // file 읽기
+
 							n = read(_kq._event_list[i].ident, buffer, BUFFERSIZE - 1);
 							if (n < 0)
 							{
@@ -213,7 +215,10 @@ void Server::keventProcess()
 								continue;
 							}
 							buffer[n] = 0;
+							client_socket->getResource()->setN(client_socket->getResource()->getN() + n);
+							std::cout << "client_socket->getResource()->getN() = " << n << std::endl;
 							client_socket->getResource()->setContent(client_socket->getResource()->getContent() + std::string(buffer));
+							std::cout << "content = = == = = " << client_socket->getResource()->getContent().length() << std::endl;
 							if (n < BUFFERSIZE - 1)
 							{
 								client_socket->getResponse()->makeResponse();
@@ -248,7 +253,7 @@ void Server::keventProcess()
 					}
 					else if (client_socket->getStage() == CGI_WRITE)
 					{
-						// std::cerr << client_socket->getRequest()->getRequestMain().size() << std::endl;
+						std::cerr << client_socket->getRequest()->getRequestMain().size() << std::endl;
 						int n = write(client_socket->getResource()->getWriteFd(), client_socket->getRequest()->getRequestBody().c_str(), client_socket->getRequest()->getRequestBody().size());
 						if (n < 0)
 						{

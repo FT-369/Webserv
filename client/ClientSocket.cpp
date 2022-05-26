@@ -55,7 +55,7 @@ void ClientSocket::setResourceFd()
 {
 	_request->setRoute(_server_info.getLocations());
 	_resource->setExtension(getExtension(_request->getFile()));
-	_resource->setContentType(getContentType(_resource->getSrcContentType()));
+	_resource->setContentType(getContentType(_request->getFile()));
 
 	std::vector<std::string> allowed_method = _request->getRoute()->getCommonDirective()._limit_except;
 

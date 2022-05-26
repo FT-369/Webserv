@@ -14,6 +14,7 @@ private:       // read_fd[1]로 cgi가 데이터를 보내주면 read_fd[0]에�
 	std::string _content;
 	std::string _extension;
 	std::string _content_type;
+	unsigned int _n;
 
 public:
 	Resource();
@@ -26,6 +27,8 @@ public:
 	std::string getSrcExtension() const;
 	std::string getSrcContentType() const;
 	void setContent(std::string const content);
+	unsigned int getN();
+	void setN(unsigned int content);
 	// void setRequest(Request *req);
 	void setWriteFd(int fd);
 	void setReadFd(int fd);

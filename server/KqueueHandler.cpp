@@ -8,7 +8,10 @@ int KqueueHandler::initKevent()
 {
     int new_event;
 
-    new_event = kevent(_kq_fd, &_change_list[0], _change_list.size(), _event_list, _n_event, 0);
+	struct timespec timeout;
+	timeout.tv_sec = 10; // 초 (seconds)
+	timeout.tv_nsec = 0;  // 나노초 (nanoseconds)
+    new_event = kevent(_kq_fd, &_change_list[0], _change_list.size(), _event_list, _n_event, &timeout);
     _change_list.clear();
     return new_event;
 }
