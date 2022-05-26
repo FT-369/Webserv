@@ -145,11 +145,13 @@ void Server::keventProcess()
 						{
 							if (read_fd != -1)
 							{
+								fcntl(read_fd, F_SETFL, O_NONBLOCK);
 								_kq.addEvent(EVFILT_READ, read_fd, NULL);
 								_socket[read_fd] = client_socket;
 							}
 							if (write_fd != -1)
 							{
+								fcntl(write_fd, F_SETFL, O_NONBLOCK);
 								_kq.addEvent(EVFILT_WRITE, write_fd, NULL);
 								_socket[write_fd] = client_socket;
 							}

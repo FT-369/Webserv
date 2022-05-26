@@ -144,9 +144,9 @@ int CgiHandler::executeCgi()
 	}
 	else
 	{
-		_client_socket->getResource()->setPid(pid);
 		close(write_fd[0]);
 		close(read_fd[1]);
+		_client_socket->getResource()->setPid(pid);
 		_client_socket->getResource()->setReadFd(read_fd[0]);
 		_client_socket->getResource()->setWriteFd(write_fd[1]);
 	}
