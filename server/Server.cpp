@@ -1,4 +1,5 @@
 #include "Server.hpp"
+#include <iosfwd>
 
 #define BUFFERSIZE 1024
 
@@ -191,6 +192,7 @@ void Server::keventProcess()
 									// read error
 								}
 								buffer[n] = 0;
+								//client_socket->getResource()->getContent().append(buffer, n);
 								client_socket->getResource()->setContent(client_socket->getResource()->getContent() + std::string(buffer));
 								if (n < BUFFERSIZE - 1)
 								{
@@ -206,6 +208,13 @@ void Server::keventProcess()
 						}
 						else
 						{ // file 읽기
+							char buf[1000000];
+							std::ifstream input("./www/image/greenMap.png", std::ios::in | std::ios::binary);
+							std::ofstream output("plz.png", std::ios::out | std::ios::binary);
+							input.read(buf, sizeof(char) * (1000000));
+							output.write(buf, sizeof(char) * (1000000));
+							// std::cerr << "\n\n===== buffer =====\n";
+							// std::cerr << "\n==================\n\n";
 
 							n = read(_kq._event_list[i].ident, buffer, BUFFERSIZE - 1);
 							if (n < 0)
@@ -217,6 +226,7 @@ void Server::keventProcess()
 							buffer[n] = 0;
 							client_socket->getResource()->setN(client_socket->getResource()->getN() + n);
 							std::cout << "client_socket->getResource()->getN() = " << n << std::endl;
+							// client_socket->getResource()->getContent().append(buffer, n);
 							client_socket->getResource()->setContent(client_socket->getResource()->getContent() + std::string(buffer));
 							std::cout << "content = = == = = " << client_socket->getResource()->getContent().length() << std::endl;
 							if (n < BUFFERSIZE - 1)
