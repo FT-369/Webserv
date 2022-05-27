@@ -135,7 +135,8 @@ void Server::keventProcess()
 						if (error)
 						{
 							std::cout << "request error" << std::endl;
-							// _kq.disableEvent(EVFILT_READ, _kq._event_list[i].ident, 0);
+							_kq.disableEvent(EVFILT_READ, _kq._event_list[i].ident, 0);
+							_socket.erase(_kq._event_list[i].ident);
 							continue;
 						}
 						client_socket->setStage(SET_RESOURCE);
@@ -208,13 +209,28 @@ void Server::keventProcess()
 						}
 						else
 						{ // file 읽기
-							char buf[1000000];
+							/*
 							std::ifstream input("./www/image/greenMap.png", std::ios::in | std::ios::binary);
 							std::ofstream output("plz.png", std::ios::out | std::ios::binary);
 							input.read(buf, sizeof(char) * (1000000));
 							output.write(buf, sizeof(char) * (1000000));
-							// std::cerr << "\n\n===== buffer =====\n";
-							// std::cerr << "\n==================\n\n";
+							*/
+
+							/*
+							FILE* pFile = fopen("./www/image/greenMap.png", "r");
+
+							// 파일의 크기를 ISize 에 저장한다.
+							fseek(pFile, 0, SEEK_END);
+							long lSize = ftell(pFile);
+							rewind(pFile);
+
+							char buf[lSize];
+							FILE* myFile = fopen("greenMap.png", "w+");
+							long fread_n = fread(buf, 1, lSize, pFile);
+
+							fwrite(buf, 1, fread_n, myFile);
+							fclose(myFile);
+							*/
 
 							n = read(_kq._event_list[i].ident, buffer, BUFFERSIZE - 1);
 							if (n < 0)
