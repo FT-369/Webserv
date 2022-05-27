@@ -54,8 +54,8 @@ std::string ClientSocket::getErrorPage(std::string error_num)
 void ClientSocket::setResourceFd()
 {
 	_request->setRoute(_server_info.getLocations());
-	_resource->setExtension(getExtension(_request->getFile()));
-	_resource->setContentType(getContentType(_request->getFile()));
+	// _resource->setExtension(getExtension(_request->getFile()));
+	_resource->setResourceType(getContentType(_request->getFile()));
 
 	std::vector<std::string> allowed_method = _request->getRoute()->getCommonDirective()._limit_except;
 
@@ -225,14 +225,15 @@ void ClientSocket::setErrorResource(std::string error)
 	_resource->setReadFd(fd);
 	if (fd < 0)
 	{
-		_resource->setContent("Error");
-		_resource->setContentType("text/plain");
+		// _resource->getResourceContent().append(buf, resource_size);
+		_resource->setResourceContent("Error");
+		_resource->setResourceType("text/plain");
 	}
 }
 
 void ClientSocket::parsingCGIResponse()
 {
-	std::string content = getResource()->getContent();
+	std::string content = getResource()->getResourceContent();
 	int start, end;
 	std::string tem;
 
@@ -245,5 +246,5 @@ void ClientSocket::parsingCGIResponse()
 		getResponse()->addHeader(tem.substr(start, end - start), tem.substr(end + 2, tem.find('\n') - end + 2)); // cgi 반환값의 header 파싱
 		content = content.substr(tem.size() + 1, content.size());
 	}
-	getResource()->setContent(content);
+	getResource()->setResourceContent(content);
 }

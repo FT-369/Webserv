@@ -77,7 +77,7 @@ void Server::keventProcess()
 			std::map<uintptr_t, Socket *>::iterator it = _socket.find(_kq._event_list[i].ident);
 			if (it == _socket.end()) // Server의 socket 리스트에 저장되지 않은 fd면 넘기기
 				continue;
-			if (_kq._event_list[i].flags == EV_ERROR)
+			if (_kq._event_list[i].flags & EV_ERROR)
 			{
 				std::cout << "errorororor" << std::endl;
 				_kq.disableEvent(_kq._event_list[i].filter, EVFILT_WRITE, NULL); //에러가 발생한 fd 삭제
@@ -194,7 +194,7 @@ void Server::keventProcess()
 								}
 								buffer[n] = 0;
 								//client_socket->getResource()->getContent().append(buffer, n);
-								client_socket->getResource()->setContent(client_socket->getResource()->getContent() + std::string(buffer));
+								client_socket->getResource()->setResourceContent(client_socket->getResource()->getResourceContent() + std::string(buffer));
 								if (n < BUFFERSIZE - 1)
 								{
 									client_socket->parsingCGIResponse();
@@ -209,52 +209,21 @@ void Server::keventProcess()
 						}
 						else
 						{ // file 읽기
-							/*
-							std::ifstream input("./www/image/greenMap.png", std::ios::in | std::ios::binary);
-							std::ofstream output("plz.png", std::ios::out | std::ios::binary);
-							input.read(buf, sizeof(char) * (1000000));
-							output.write(buf, sizeof(char) * (1000000));
-							*/
+							FILE* resource_ptr = fdopen(_kq._event_list[i].ident, "r");
+							fseek(resource_ptr, 0, SEEK_END);
+							long resource_size = ftell(resource_ptr);
+							rewind(resource_ptr);
 
-							/*
-							FILE* pFile = fopen("./www/image/greenMap.png", "r");
-
-							// 파일의 크기를 ISize 에 저장한다.
-							fseek(pFile, 0, SEEK_END);
-							long lSize = ftell(pFile);
-							rewind(pFile);
-
-							char buf[lSize];
-							FILE* myFile = fopen("greenMap.png", "w+");
-							long fread_n = fread(buf, 1, lSize, pFile);
-
-							fwrite(buf, 1, fread_n, myFile);
-							fclose(myFile);
-							*/
-
-							n = read(_kq._event_list[i].ident, buffer, BUFFERSIZE - 1);
-							if (n < 0)
-							{
+							char buf[resource_size];
+							long fread_size = fread(buf, sizeof(char), resource_size, resource_ptr);
+							if (fread_size != resource_size) {
 								std::cout << "read errorr !!!!!!!" << std::endl;
-								// read error;
 								continue;
 							}
-							buffer[n] = 0;
-							client_socket->getResource()->setN(client_socket->getResource()->getN() + n);
-							std::cout << "client_socket->getResource()->getN() = " << n << std::endl;
-							// client_socket->getResource()->getContent().append(buffer, n);
-							client_socket->getResource()->setContent(client_socket->getResource()->getContent() + std::string(buffer));
-							std::cout << "content = = == = = " << client_socket->getResource()->getContent().length() << std::endl;
-							if (n < BUFFERSIZE - 1)
-							{
-								client_socket->getResponse()->makeResponse();
-								_kq.removeEvent(EV_DELETE, _kq._event_list[i].ident, NULL);
-								// _socket.erase(_kq._event_list[i].ident);
-								// close(_kq._event_list[i].ident);
-								client_socket->setStage(MAKE_RESPONSE);
-								std::cerr << "fin make reaponse" << std::endl;
-								// std::cerr << "fin make reaponse" << std::endl;
-							}
+							client_socket->getResource()->setResourceLength(resource_size);
+							client_socket->getResource()->getResourceContent().append(buf, resource_size);
+							client_socket->setStage(MAKE_RESPONSE);
+							std::cerr << "fin make reaponse" << std::endl;
 						}
 					}
 				}
@@ -270,6 +239,7 @@ void Server::keventProcess()
 					// response 보내주는거
 					if (client_socket != 0 && client_socket->getRequest() != 0 && client_socket->getStage() == MAKE_RESPONSE) // + 리소스도 다 읽었으면
 					{
+						client_socket->getResponse()->makeResponse();
 						client_socket->sendResponse();
 						_socket.erase(_kq._event_list[i].ident);
 						_kq.removeEvent(EV_DELETE, _kq._event_list[i].ident, NULL);

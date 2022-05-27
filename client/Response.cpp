@@ -25,7 +25,7 @@ void Response::makeStartLine()
 void Response::makePostHeader()
 {
 	if (_header["Content-Type"] == "")
-		_header["Content-Type"] = _resource->getSrcContentType();
+		_header["Content-Type"] = _resource->getResourceType();
 	if (_header["Content-Length"] == "")
 		_header["Content-Length"] = std::to_string(_entity.length());
 	_header["Server"] = "Mac Web Server";
@@ -34,9 +34,9 @@ void Response::makePostHeader()
 void Response::makeGetHeader()
 {
 	if (_header["Content-Type"] == "")
-		_header["Content-Type"] = _resource->getSrcContentType();
+		_header["Content-Type"] = _resource->getResourceType();
 	if (_header["Content-Length"] == "")
-		_header["Content-Length"] = std::to_string(_entity.length());
+		_header["Content-Length"] = std::to_string(_resource->getResourceLength() > 0 ? _resource->getResourceLength() : _resource->getResourceContent().length());
 	_header["Server"] = "Mac Web Server";
 }
 
@@ -52,7 +52,7 @@ void Response::makeRedirectHeader()
 void Response::makeResponse()
 {
 	// resource의 content 가져오기
-	_entity = _resource->getContent();
+	_entity = _resource->getResourceContent();
 	std::vector<std::string> temp;
 	temp = _request->getRoute()->getCommonDirective()._limit_except;
 	std::cout << "[Mapping Path] url: " << _request->getRoute()->getUrl() << ", file:" << _request->getFile() << std::endl;
@@ -95,10 +95,13 @@ void Response::combineResponse()
 	{
 		send_data += it->first + ": " + it->second + "\r\n";
 	}
-	send_data += "\r\n" + _entity + "\r\n";
+	send_data += "\r\n";
+	// send_data += "\r\n" + _entity + "\r\n";
 	std::cerr << "send_data : " << send_data << std::endl;
 	fputs(send_data.c_str(), _socket_write);
 	fflush(_socket_write);
+
+	fwrite(_resource->getResourceContent().c_str(), sizeof(char), (_resource->getResourceLength() > 0 ? _resource->getResourceLength() : _resource->getResourceContent().length()), _socket_write);
 	fclose(_socket_write);
 }
 
