@@ -36,7 +36,7 @@ void Response::makeGetHeader()
 	if (_header["Content-Type"] == "")
 		_header["Content-Type"] = _resource->getSrcContentType();
 	if (_header["Content-Length"] == "")
-		_header["Content-Length"] = std::to_string(_resource->getN());
+		_header["Content-Length"] = std::to_string(_entity.length());
 	_header["Server"] = "Mac Web Server";
 }
 
