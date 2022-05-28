@@ -1,7 +1,7 @@
 #include "Request.hpp"
 
 Request::Request(int socket_fd)
-	: _socket_fd(socket_fd), _socket_read(fdopen(socket_fd, "r")), _stage(READ_REQUEST_LINE)
+	: _socket_read(fdopen(socket_fd, "r")), _stage(READ_REQUEST_LINE)
 {
 }
 
@@ -12,7 +12,7 @@ Request::~Request()
 	// close(_socket_fd);
 }
 
-int Request::getSocketFD() const { return _socket_fd; }
+// int Request::getSocketFD() const { return _socket_fd; }
 FILE *Request::getSocketReadFP() const { return _socket_read; }
 
 std::string Request::getPort() const {
@@ -48,9 +48,9 @@ std::string Request::getProtocol() const { return _protocol; }
 std::string Request::getRequestBody() const { return _request_body; }
 std::map<std::string, std::string> Request::getRequestHeader() const { return _request_header; }
 RequestStage Request::getRequestStage() const { return _stage; }
-ConfigLocation *Request::getRoute() const { return _route; }
-ConfigLocation *Request::getRoute() { return _route; }
-std::string Request::getFile() const { return _file; }
+// ConfigLocation *Request::getRoute() const { return _route; }
+// ConfigLocation *Request::getRoute() { return _route; }
+// std::string Request::getFile() const { return _file; }
 
 std::string Request::ft_fgets_line(FILE *fp)
 {
@@ -202,7 +202,7 @@ void Request::parseRequestLine()
 		throw request_error("Unknown method");
 	if (_path[0] != '/')
 		throw request_error("Invalid path");
-	if ((pos = _protocol.find("HTTP/")) == std::string::npos)
+	if ((pos = _protocol.find("HTTP/1.1")) == std::string::npos)
 		throw request_error("not http protocol");
 
 	_stage = READ_REQUEST_HEADER;
@@ -238,15 +238,16 @@ void Request::parseRequestHeader()
 void Request::parseRequestBody()
 {
 	char line[GET_LINE_BUF];
+	long fread_ret;
 
-	if (fgets(line, GET_LINE_BUF, getSocketReadFP()) == NULL)
+	if ((fread_ret = fread(line, sizeof(char), GET_LINE_BUF, getSocketReadFP())) < GET_LINE_BUF)
 	{
 		_stage = READ_END_OF_REQUEST;
 	}
 	else
 	{
-		_request_body += (std::string(line));
-		_request_main += (std::string(line));
+		_request_body.append(line, fread_ret);
+		_request_main.append(line, fread_ret);
 	}
 }
 
@@ -271,37 +272,37 @@ void Request::parseRequest()
 	}
 }
 
-void Request::setRoute(std::vector<ConfigLocation> const &locations)
-{
-	int path_len = _path.size();
-	std::cout << "setRoute path: " << _path << std::endl;
-	_file = "";
+// void Request::setRoute(std::vector<ConfigLocation> const &locations)
+// {
+// 	int path_len = _path.size();
+// 	std::cout << "setRoute path: " << _path << std::endl;
+// 	_file = "";
 
-	for (int i = path_len - 1; i >= -1; i--)
-	{
-		if (i == path_len - 1 || _path[i + 1] == '/')
-		{
-			for (int j = 0; j < locations.size(); j++)
-			{
-				if (_path.substr(0, i + 1) == locations[j].getUrl() || _path.substr(0, i + 1) == locations[j].getUrl() + "/")
-				{
-					_route = new ConfigLocation(locations[j].getUrl(), locations[j].getCommonDirective(), locations[j].getReturnCode(),
-					locations[j].getReturnData());
-					if (i != path_len - 1)
-						_file = _path.substr(i + 1);
-					return;
-				}
-				else if (i == -1 && locations[j].getUrl() == "/")
-				{
-					_route = new ConfigLocation("/", locations[j].getCommonDirective(), locations[j].getReturnCode(),
-					locations[j].getReturnData());
-					_file = _path;
-					return;
-				}
-			}
-		}
-	}
-}
+// 	for (int i = path_len - 1; i >= -1; i--)
+// 	{
+// 		if (i == path_len - 1 || _path[i + 1] == '/')
+// 		{
+// 			for (int j = 0; j < locations.size(); j++)
+// 			{
+// 				if (_path.substr(0, i + 1) == locations[j].getUrl() || _path.substr(0, i + 1) == locations[j].getUrl() + "/")
+// 				{
+// 					_route = new ConfigLocation(locations[j].getUrl(), locations[j].getCommonDirective(), locations[j].getReturnCode(),
+// 					locations[j].getReturnData());
+// 					if (i != path_len - 1)
+// 						_file = _path.substr(i + 1);
+// 					return;
+// 				}
+// 				else if (i == -1 && locations[j].getUrl() == "/")
+// 				{
+// 					_route = new ConfigLocation("/", locations[j].getCommonDirective(), locations[j].getReturnCode(),
+// 					locations[j].getReturnData());
+// 					_file = _path;
+// 					return;
+// 				}
+// 			}
+// 		}
+// 	}
+// }
 std::string Request::getRequestMain() const 
 {
 	return _request_main;

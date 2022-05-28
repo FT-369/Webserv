@@ -13,31 +13,30 @@ private:
 	std::string _start_line;
 	std::map<std::string, std::string> _header;
 	std::string _entity;
+	unsigned long _entity_length;
 	std::string _status_code;
-	Request *_request;
-	Resource *_resource;
+	// Request *_request;
+	// Resource *_resource;
 
 public:
-	Response(Request *request, Resource *resource);
+	Response(int socket_fd, Resource *resource);
 	~Response();
 	FILE* getSocketWriteFD() const;
 	std::string getStatusCode() const;
-	std::string getEntity() const;
+	std::string &getEntity();
+	const std::string &getEntity() const;
+	unsigned long  getEntityLength() const;
+	void setEntityLength(unsigned long length);
 
 	void makeStartLine();
-	void makeRedirectHeader();
-	void makeGetHeader();
-	void makePostHeader();
+	void makeRedirectHeader(ConfigLocation *route);
+	void makeGetHeader(Resource *resource);
+	void makePostHeader(Resource *resource);
 	void setEntity(std::string const &entity);
-	void makeResponse();
-	void combineResponse();
+	void makeResponse(Request *request, Resource *resource, ConfigLocation *route);
+	std::string combineResponse();
 	void setStatusCode(std::string const &status_code);
 	void addHeader(std::string key, std::string value);
-	// void makeEntity(std::string file);
-	// void makeAutoIndex(std::string directory, DIR* dir);
-	// void settingRoute();
-	// std::string getContentType(std::string file);
-	// void mappingPath(std::vector<ConfigLocation> const &locations);
 };
 
 #endif

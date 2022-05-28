@@ -27,21 +27,28 @@ private:
 	Resource *_resource;
 	Stage _stage;
 	ConfigServer _server_info;
+	ConfigLocation *_route;
+	std::string _file; // 라우팅 경로를 제외한 파일  // _route->getUrl() + _file = _path;
 
 private:
 	ClientSocket();
 
 public:
 	ClientSocket(int fd, ConfigServer server_info);
-	ConfigServer getConnectServerInfo();
 	~ClientSocket();
+	ConfigServer getConnectServerInfo();
 	Request *getRequest() const;
 	Resource *getResource() const;
 	Response *getResponse() const;
+	ConfigLocation *getRoute() const;
+	std::string getFile() const;
+
 	void recieveRequest();
+	void makeResponse();
 	void sendResponse();
 	Stage getStage();
 	void setStage(Stage stage);
+
 	std::string getErrorPage(std::string error_num);
 	bool isCGI(const std::string &path);
 	void setResourceFd();
@@ -49,6 +56,7 @@ public:
 	void setPostFd();
 	void setErrorResource(std::string error);
 	void parsingCGIResponse();
+	void setRoute();
 };
 
 #endif

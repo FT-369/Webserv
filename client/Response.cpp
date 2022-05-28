@@ -1,9 +1,9 @@
 #include "Response.hpp"
 
-Response::Response(Request *request, Resource *resource)
-	: _request(request), _resource(resource), _socket_write(NULL)
+Response::Response(int socket_fd, Resource *resource)
+	: _socket_write(fdopen(dup(socket_fd), "w"))
 {
-	_socket_write = fdopen(dup(_request->getSocketFD()), "w");
+
 }
 
 Response::~Response()
@@ -12,80 +12,82 @@ Response::~Response()
 
 FILE* Response::getSocketWriteFD() const { return _socket_write; }
 std::string Response::getStatusCode() const { return _status_code; }
-std::string Response::getEntity() const { return _entity; }
+std::string &Response::getEntity() { return _entity; }
+const std::string &Response::getEntity() const { return _entity; }
 
 void Response::setStatusCode(std::string const &status_code) { _status_code = status_code; }
 void Response::setEntity(std::string const &entity) { _entity = entity; }
+unsigned long Response::getEntityLength() const { return _entity_length; }
+void Response::setEntityLength(unsigned long length) { _entity_length = length; }
 
 void Response::makeStartLine()
 {
-	_start_line = _request->_protocol + " " + _status_code + " " + GlobalConfig::getStatusCode()[_status_code] + "\r\n";
+	_start_line = "HTTP/1.1 " + _status_code + " " + GlobalConfig::getStatusCode()[_status_code] + "\r\n";
 }
 
-void Response::makePostHeader()
+void Response::makePostHeader(Resource *resource)
 {
 	if (_header["Content-Type"] == "")
-		_header["Content-Type"] = _resource->getResourceType();
+		_header["Content-Type"] = resource->getResourceType();
 	if (_header["Content-Length"] == "")
 		_header["Content-Length"] = std::to_string(_entity.length());
 	_header["Server"] = "Mac Web Server";
 }
 
-void Response::makeGetHeader()
+void Response::makeGetHeader(Resource *resource)
 {
 	if (_header["Content-Type"] == "")
-		_header["Content-Type"] = _resource->getResourceType();
+		_header["Content-Type"] = resource->getResourceType();
 	if (_header["Content-Length"] == "")
-		_header["Content-Length"] = std::to_string(_resource->getResourceLength() > 0 ? _resource->getResourceLength() : _resource->getResourceContent().length());
+		_header["Content-Length"] = std::to_string(_entity.length());
 	_header["Server"] = "Mac Web Server";
 }
 
-void Response::makeRedirectHeader()
+void Response::makeRedirectHeader(ConfigLocation *route)
 {
-	if (_request->getRoute()->getReturnCode() == "")
+	if (route->getReturnCode() == "")
 		return;
-	_status_code = _request->getRoute()->getReturnCode();
-	_header["Location"] = _request->getRoute()->getReturnData();
+	_status_code = route->getReturnCode();
+	_header["Location"] = route->getReturnData();
 }
 
 
-void Response::makeResponse()
+void Response::makeResponse(Request *request, Resource *resource, ConfigLocation *route)
 {
 	// resource의 content 가져오기
-	_entity = _resource->getResourceContent();
+	// _entity = _resource->getResourceContent();
 	std::vector<std::string> temp;
-	temp = _request->getRoute()->getCommonDirective()._limit_except;
-	std::cout << "[Mapping Path] url: " << _request->getRoute()->getUrl() << ", file:" << _request->getFile() << std::endl;
+	temp = route->getCommonDirective()._limit_except;
 
-	if (find(temp.begin(), temp.end(), _request->getMethod()) == temp.end())
+	if (find(temp.begin(), temp.end(), request->getMethod()) == temp.end())
 	{
 		std::cout << "ERROR Response " << std::endl;
 		setStatusCode("405");
-		makeGetHeader();
+		makeGetHeader(resource);
 	}
-	else if (_request->getMethod() == "GET")
+	else if (request->getMethod() == "GET")
 	{
 		std::cout << "getMethod GET" << std::endl;
-		makeGetHeader();
+		makeGetHeader(resource);
 	}
-	else if (_request->getMethod() == "POST")
+	else if (request->getMethod() == "POST")
 	{
 		std::cout << "POST" << std::endl;
-		makePostHeader();
+		makePostHeader(resource);
 	}
-	else if (_request->getMethod() == "DELETE")
+	else if (request->getMethod() == "DELETE")
 	{
 		std::cout << "DELETE" << std::endl;
-		makeGetHeader();
+		makeGetHeader(resource);
 	}
-	std::cout << "Response entity: " << _entity << std::endl;
-	std::cout << "Entity Length: " << _entity.length() << std::endl;
-	std::cout << "Response Header: " << _header["Content-Length"] << std::endl;
-	makeRedirectHeader();
+	// std::cout << "Response entity: " << _entity << std::endl;
+	// std::cout << "Entity Length: " << _entity.length() << std::endl;
+	// std::cout << "Response Header: " << _header["Content-Length"] << std::endl;
+	makeRedirectHeader(route);
 	makeStartLine();
 }
 
-void Response::combineResponse()
+std::string Response::combineResponse()
 {
 	std::string send_data;
 	std::map<std::string, std::string>::iterator it;
@@ -98,11 +100,12 @@ void Response::combineResponse()
 	send_data += "\r\n";
 	// send_data += "\r\n" + _entity + "\r\n";
 	std::cerr << "send_data : " << send_data << std::endl;
-	fputs(send_data.c_str(), _socket_write);
-	fflush(_socket_write);
+	return send_data;
+	// fputs(send_data.c_str(), _socket_write);
+	// fflush(_socket_write);
 
-	fwrite(_resource->getResourceContent().c_str(), sizeof(char), (_resource->getResourceLength() > 0 ? _resource->getResourceLength() : _resource->getResourceContent().length()), _socket_write);
-	fclose(_socket_write);
+	// fwrite(_resource->getResourceContent().c_str(), sizeof(char), (_resource->getResourceLength() > 0 ? _resource->getResourceLength() : _resource->getResourceContent().length()), _socket_write);
+	// fclose(_socket_write);
 }
 
 void Response::addHeader(std::string key, std::string value)
