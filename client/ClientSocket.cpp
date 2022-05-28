@@ -54,7 +54,7 @@ void ClientSocket::sendResponse()
 
 std::string ClientSocket::getErrorPage(std::string error_num)
 {
-	std::string root = "./www/static_file/defaultErrorPage.html";
+	std::string root = "./setting/defaultErrorPage.html";
 	std::map<std::string, std::string> temp = _route->getCommonDirective()._error_page;
 	std::string _status_code;
 
@@ -62,6 +62,10 @@ std::string ClientSocket::getErrorPage(std::string error_num)
 	if (temp.find(_status_code) != temp.end())
 	{
 		root = _route->getCommonDirective()._root + "/" + _route->getCommonDirective()._error_page[_status_code];
+		if (getFileType(root) == 0)
+		{
+			return "./setting/defaultErrorPage.html";
+		}
 	}
 	return root;
 }
@@ -73,7 +77,12 @@ void ClientSocket::setResourceFd()
 	_resource->setResourceType(getContentType(_file));
 
 	std::vector<std::string> allowed_method = _route->getCommonDirective()._limit_except;
-
+	if (isDirectory(_route->getCommonDirective()._root) == 0)
+	{
+		std::cout << "ERROR Response " << std::endl;
+		setErrorResource("404");
+		return ;
+	}
 	if (find(allowed_method.begin(), allowed_method.end(), _request->getMethod()) == allowed_method.end())
 	{
 		std::cout << "ERROR Response " << std::endl;
@@ -117,13 +126,20 @@ void ClientSocket::setGetFd()
 	std::string entity_file;
 	std::string root = _route->getCommonDirective()._root;
 	std::vector<std::string> index_page = _route->getCommonDirective()._index;
-	if (_file == "") // 파일명이 없을때
+	entity_file = root + _file;
+	if (_route->getCommonDirective()._autoindex && isDirectory(entity_file)) // 오토인덱스 on & 존재하는 파일 or 디렉토리
+	{
+		// resource content에 autoindex 만들기 
+		_resource->makeAutoIndex(root, _file, _request->getRequestHeader()["Host"]);
+		setStage(MAKE_RESPONSE); // auto index 바로 response 보내기
+		_response->setStatusCode("200");
+		return ;
+	}
+	else if (_file == "") // 파일명이 없을때
 	{
 		for (size_t i = 0; i < index_page.size(); i++)
 		{
 			std::string indexfile = root + "/" + index_page[i];
-
-			std::cout << i << " " << indexfile << std::endl;
 			if (isFile(indexfile) == 1)
 			{
 				_resource->setReadFd(open(indexfile.c_str(), O_RDONLY));
@@ -132,41 +148,23 @@ void ClientSocket::setGetFd()
 			}
 		}
 	}
-	else
+	else // 
 	{
-		entity_file = root + _file;
-		if (isFile(entity_file) == 1)
+		if (getFileType(entity_file) > 0)
 		{
-			_resource->setReadFd(open(entity_file.c_str(), O_RDONLY));
 			_response->setStatusCode("200");
-			return;
+			if (isDirectory(entity_file))
+			{
+				_resource->setReadFd(open("./setting/defaultDirectoryPage.html", O_RDONLY));
+			}
+			else
+			{
+				_resource->setReadFd(open(entity_file.c_str(), O_RDONLY));
+			}
+			return ;
 		}
 	}
-	if (_route->getCommonDirective()._autoindex)
-	{
-		if (getFileType(entity_file)) // 존재하는 파일 or 디렉토리
-		{
-			// resource content에 autoindex 만들기 (_file 기준)
-			_resource->makeAutoIndex(root, _file, _request->getRequestHeader()["Host"]);
-		}
-		else if (getFileType(root))
-		{
-			// resource content에 autoindex 만들기 (/) // root
-			_resource->makeAutoIndex(root, "/", _request->getRequestHeader()["Host"]);
-		}
-		else
-		{
-			setErrorResource("404");
-			return;
-		}
-		setStage(MAKE_RESPONSE);
-		_response->setStatusCode("200");
-		makeResponse();
-	}
-	else
-	{
-		setErrorResource("404");
-	}
+	setErrorResource("404");
 }
 
 void ClientSocket::setPostFd()
