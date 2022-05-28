@@ -205,7 +205,6 @@ void Server::keventProcess()
 								// }
 								// std::cerr << "remove fd" << std::endl;
 								// _socket.erase(client_socket->getResource()->getReadFd());
-								// _kq.removeEvent(EV_DELETE, client_socket->getResource()->getReadFd(), NULL);
 								// client_socket->getResource()->setResourceLength(resource_size);
 								// client_socket->getResource()->getResourceContent().append(buf, resource_size);
 								// std::cerr << "close fd" << std::endl;
@@ -226,6 +225,7 @@ void Server::keventProcess()
 								{
 									client_socket->parsingCGIResponse();
 									std::cerr << "parsingCGIResponse" << std::endl;
+									_kq.removeEvent(EVFILT_READ, _kq._event_list[i].ident, NULL);
 									close(client_socket->getResource()->getReadFd());
 									close(client_socket->getResource()->getWriteFd());
 									client_socket->setStage(MAKE_RESPONSE);
@@ -250,6 +250,7 @@ void Server::keventProcess()
 							client_socket->getResource()->getResourceContent().append(buf2, resource_size);
 							client_socket->setStage(MAKE_RESPONSE);
 							fclose(resource_ptr);
+							_kq.removeEvent(EVFILT_READ, _kq._event_list[i].ident, NULL);
 							std::cerr << "fin make reaponse" << std::endl;
 						}
 					}
