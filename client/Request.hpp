@@ -4,6 +4,7 @@
 #include "utils.hpp"
 #include "Resource.hpp"
 #include "ConfigLocation.hpp"
+#include "webserv.hpp"
 
 #define GET_LINE_BUF 1024
 
@@ -18,7 +19,6 @@ enum RequestStage
 class Request
 {
 public:
-	const int _socket_fd;
 	FILE *_socket_read;
 	RequestStage _stage;
 	std::string _method;
@@ -27,19 +27,20 @@ public:
 	std::string _protocol;
 	std::string _request_body;
 	std::string _request_main;
+	std::string _multipart;
 	std::map<std::string, std::string> _request_header;
-	ConfigLocation *_route;
-	std::string _file; // 라우팅 경로를 제외한 파일  // _route->getUrl() + _file = _path;
+	// ConfigLocation *_route;
+	// std::string _file; // 라우팅 경로를 제외한 파일  // _route->getUrl() + _file = _path;
 
 public:
 	Request(int socket_fd);
 	~Request();
 	void parseRequest();
-	void setRoute(std::vector<ConfigLocation> const &locations);
+	// void setRoute(std::vector<ConfigLocation> const &locations);
 
-	int getSocketFD() const;
+	// int getSocketFD() const;
 	FILE *getSocketReadFP() const;
-	FILE *getSocketWriteFP() const;
+	// FILE *getSocketWriteFP() const;
 	std::string getMethod() const;
 	std::string getPath() const;
 	std::string getQuery() const;
@@ -51,9 +52,9 @@ public:
 	std::string getRequestMain() const;
 	std::map<std::string, std::string> getRequestHeader() const;
 	RequestStage getRequestStage() const;
-	ConfigLocation *getRoute() const;
-	ConfigLocation *getRoute();
-	std::string getFile() const;
+	// ConfigLocation *getRoute() const;
+	// ConfigLocation *getRoute();
+	// std::string getFile() const;
 
 private:
 	void parseRequestLine();

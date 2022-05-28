@@ -4,7 +4,7 @@
 ClientSocket::ClientSocket(int fd, ConfigServer server_info)
 	: Socket(CLIENT_SOCKET, fd), _server_info(server_info), _request(new Request(fd)), _response(NULL), _resource(new Resource()), _stage(GET_REQUEST)
 {
-	_response = new Response(_request, _resource);
+	_response = new Response(fd, _resource);
 };
 
 ClientSocket::~ClientSocket(){
@@ -16,6 +16,8 @@ ConfigServer ClientSocket::getConnectServerInfo() { return _server_info; }
 Request *ClientSocket::getRequest() const { return _request; }
 Resource *ClientSocket::getResource() const { return _resource; }
 Response *ClientSocket::getResponse() const { return _response; }
+ConfigLocation *ClientSocket::getRoute() const { return _route; }
+std::string ClientSocket::getFile() const { return _file; }
 
 void ClientSocket::recieveRequest()
 {
@@ -32,32 +34,45 @@ Stage ClientSocket::getStage()
 }
 void ClientSocket::setStage(Stage stage) { _stage = stage; }
 
+void ClientSocket::makeResponse()
+{
+	_response->setEntity(_resource->getResourceContent());
+	return _response->makeResponse(_request, _resource, _route);
+}
+
 void ClientSocket::sendResponse()
 {
-	return _response->combineResponse();
+	_response->combineResponse();
+
+	FILE *socket_write = _response->getSocketWriteFD();
+	fputs(_response->combineResponse().c_str(), socket_write);
+	fflush(socket_write);
+
+	fwrite(_response->getEntity().c_str(), sizeof(char), _response->getEntity().length(), socket_write);
+	fclose(socket_write);
 }
 
 std::string ClientSocket::getErrorPage(std::string error_num)
 {
 	std::string root = "./www/static_file/defaultErrorPage.html";
-	std::map<std::string, std::string> temp = _request->getRoute()->getCommonDirective()._error_page;
+	std::map<std::string, std::string> temp = _route->getCommonDirective()._error_page;
 	std::string _status_code;
 
 	_status_code = error_num;
 	if (temp.find(_status_code) != temp.end())
 	{
-		root = _request->getRoute()->getCommonDirective()._root + "/" + _request->getRoute()->getCommonDirective()._error_page[_status_code];
+		root = _route->getCommonDirective()._root + "/" + _route->getCommonDirective()._error_page[_status_code];
 	}
 	return root;
 }
 
 void ClientSocket::setResourceFd()
 {
-	_request->setRoute(_server_info.getLocations());
-	// _resource->setExtension(getExtension(_request->getFile()));
-	_resource->setResourceType(getContentType(_request->getFile()));
+	setRoute();
+	// _resource->setExtension(getExtension(_file));
+	_resource->setResourceType(getContentType(_file));
 
-	std::vector<std::string> allowed_method = _request->getRoute()->getCommonDirective()._limit_except;
+	std::vector<std::string> allowed_method = _route->getCommonDirective()._limit_except;
 
 	if (find(allowed_method.begin(), allowed_method.end(), _request->getMethod()) == allowed_method.end())
 	{
@@ -65,9 +80,9 @@ void ClientSocket::setResourceFd()
 		setErrorResource("403");
 		return;
 	}
-	if (isCGI(_request->getFile()))
+	if (isCGI(_file))
 	{
-		CgiHandler cgi(_request->getRoute(), this);
+		CgiHandler cgi(_route, this);
 		cgi.executeCgi(); // <- 여기서 resource read_fd, write_fd 설정
 		setStage(CGI_WRITE);
 		return;
@@ -88,7 +103,7 @@ bool ClientSocket::isCGI(const std::string &path)
 {
 	std::string type;
 	type = getExtension(path);
-	std::map<std::string, std::string> cgi_path = _request->getRoute()->getCommonDirective()._cgi_path;
+	std::map<std::string, std::string> cgi_path = _route->getCommonDirective()._cgi_path;
 	std::cout << "cgi_path = " << type << std::endl;
 	if (cgi_path.find(type) != cgi_path.end())
 	{
@@ -100,9 +115,9 @@ bool ClientSocket::isCGI(const std::string &path)
 void ClientSocket::setGetFd()
 {
 	std::string entity_file;
-	std::string root = _request->getRoute()->getCommonDirective()._root;
-	std::vector<std::string> index_page = _request->getRoute()->getCommonDirective()._index;
-	if (_request->getFile() == "") // 파일명이 없을때
+	std::string root = _route->getCommonDirective()._root;
+	std::vector<std::string> index_page = _route->getCommonDirective()._index;
+	if (_file == "") // 파일명이 없을때
 	{
 		for (size_t i = 0; i < index_page.size(); i++)
 		{
@@ -119,7 +134,7 @@ void ClientSocket::setGetFd()
 	}
 	else
 	{
-		entity_file = root + _request->getFile();
+		entity_file = root + _file;
 		if (isFile(entity_file) == 1)
 		{
 			_resource->setReadFd(open(entity_file.c_str(), O_RDONLY));
@@ -127,12 +142,12 @@ void ClientSocket::setGetFd()
 			return;
 		}
 	}
-	if (_request->getRoute()->getCommonDirective()._autoindex)
+	if (_route->getCommonDirective()._autoindex)
 	{
 		if (getFileType(entity_file)) // 존재하는 파일 or 디렉토리
 		{
-			// resource content에 autoindex 만들기 (_request->getFile() 기준)
-			_resource->makeAutoIndex(root, _request->getFile(), _request->getRequestHeader()["Host"]);
+			// resource content에 autoindex 만들기 (_file 기준)
+			_resource->makeAutoIndex(root, _file, _request->getRequestHeader()["Host"]);
 		}
 		else if (getFileType(root))
 		{
@@ -146,7 +161,7 @@ void ClientSocket::setGetFd()
 		}
 		setStage(MAKE_RESPONSE);
 		_response->setStatusCode("200");
-		_response->makeResponse();
+		makeResponse();
 	}
 	else
 	{
@@ -157,16 +172,16 @@ void ClientSocket::setGetFd()
 void ClientSocket::setPostFd()
 {
 	std::string entity_file;
-	std::string root = _request->getRoute()->getCommonDirective()._root;
-	std::vector<std::string> index_page = _request->getRoute()->getCommonDirective()._index;
-	std::string path = _request->getRoute()->getCommonDirective()._root;
+	std::string root = _route->getCommonDirective()._root;
+	std::vector<std::string> index_page = _route->getCommonDirective()._index;
+	std::string path = _route->getCommonDirective()._root;
 	std::string dir, dirpath, filename;
-	size_t rpos = _request->getFile().rfind("/");
+	size_t rpos = _file.rfind("/");
 
 	if (rpos != std::string::npos)
-		dir = _request->getFile().substr(0, rpos);
+		dir = _file.substr(0, rpos);
 	dir == "" ? dirpath = path : dirpath = dir;
-	if (_request->getFile() == "")
+	if (_file == "")
 	{
 		filename = dirpath + "/NewFile";
 		std::string temp = filename;
@@ -182,7 +197,7 @@ void ClientSocket::setPostFd()
 	}
 	else
 	{
-		filename = dirpath + _request->getFile();
+		filename = dirpath + _file;
 	}
 	if (isDirectory(filename))
 	{
@@ -247,4 +262,38 @@ void ClientSocket::parsingCGIResponse()
 		content = content.substr(tem.size() + 1, content.size());
 	}
 	getResource()->setResourceContent(content);
+}
+
+void ClientSocket::setRoute()
+{
+	std::string path = _request->getPath();
+	int path_len = path.size();
+	std::vector<ConfigLocation> locations = _server_info.getLocations();
+	std::cout << "setRoute path: " << _request->getPath() << std::endl;
+	_file = "";
+
+	for (int i = path_len - 1; i >= -1; i--)
+	{
+		if (i == path_len - 1 || path[i + 1] == '/')
+		{
+			for (int j = 0; j < locations.size(); j++)
+			{
+				if (path.substr(0, i + 1) == locations[j].getUrl() || path.substr(0, i + 1) == locations[j].getUrl() + "/")
+				{
+					_route = new ConfigLocation(locations[j].getUrl(), locations[j].getCommonDirective(), locations[j].getReturnCode(),
+					locations[j].getReturnData());
+					if (i != path_len - 1)
+						_file = path.substr(i + 1);
+					return;
+				}
+				else if (i == -1 && locations[j].getUrl() == "/")
+				{
+					_route = new ConfigLocation("/", locations[j].getCommonDirective(), locations[j].getReturnCode(),
+					locations[j].getReturnData());
+					_file = path;
+					return;
+				}
+			}
+		}
+	}
 }
