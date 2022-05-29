@@ -27,7 +27,8 @@ public:
 	std::string _protocol;
 	std::string _request_body;
 	std::string _request_main;
-	int _request_header_size;
+	unsigned int _request_header_size;
+	unsigned long _request_body_size;
 	std::map<std::string, std::string> _request_header;
 	// ConfigLocation *_route;
 	// std::string _file; // 라우팅 경로를 제외한 파일  // _route->getUrl() + _file = _path;
@@ -52,7 +53,9 @@ public:
 	std::string getRequestMain() const;
 	std::map<std::string, std::string> getRequestHeader() const;
 	RequestStage getRequestStage() const;
-	int getRequestHeaderSize() const; 
+	unsigned int getRequestHeaderSize() const;
+	unsigned long getRequestBodySize() const;
+
 	// ConfigLocation *getRoute() const;
 	// ConfigLocation *getRoute();
 	// std::string getFile() const;

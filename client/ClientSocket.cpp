@@ -77,9 +77,11 @@ void ClientSocket::setResourceFd()
 	_resource->setResourceType(getContentType(_file));
 	std::vector<std::string> allowed_method = _route->getCommonDirective()._limit_except;
 	if (_request->getRequestHeaderSize() > _route->getCommonDirective()._request_limit_header_size || 
-	_request->getRequestBody().size() > _route->getCommonDirective()._client_limit_body_size)
+	_request->getRequestBodySize() > _route->getCommonDirective()._client_limit_body_size) // request body & header size 체크
 	{
 		std::cerr << "ERROR Resquest Limit Size" << std::endl;
+		std::cerr << "_request->getRequestHeaderSize() : " << _request->getRequestHeaderSize() << std::endl;
+		std::cerr << "_request->getRequestBody().size() : " <<_request->getRequestBody().size() << std::endl;
 		setErrorResource("413");
 		return ;
 	}

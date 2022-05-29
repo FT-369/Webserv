@@ -1,7 +1,7 @@
 #include "Request.hpp"
 
 Request::Request(int socket_fd)
-	: _socket_read(fdopen(socket_fd, "r")), _stage(READ_REQUEST_LINE)
+	: _socket_read(fdopen(socket_fd, "r")), _stage(READ_REQUEST_LINE), _request_header_size(0), _request_body_size(0)
 {
 }
 
@@ -141,7 +141,7 @@ void Request::parseRequestBody()
 
 	fread_ret = fread(line, sizeof(char), GET_LINE_BUF - 1, getSocketReadFP());
 	line[fread_ret] = 0;
-
+	_request_body_size += fread_ret;
 	if (fread_ret <= 0)
 	{
 		_stage = READ_END_OF_REQUEST;
@@ -179,7 +179,12 @@ std::string Request::getRequestMain() const
 	return _request_main;
 }
 
-int Request::getRequestHeaderSize() const
+unsigned int Request::getRequestHeaderSize() const
 {
 	return _request_header_size;
+}
+
+unsigned long Request::getRequestBodySize() const
+{
+	return _request_body_size;
 }
