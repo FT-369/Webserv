@@ -126,17 +126,10 @@ void Server::keventProcess()
 							}
 							catch (const std::exception &e)
 							{
+								client_socket->setRequestParseError(true);
 								std::cerr << e.what() << '\n';
-								error = 1;
 								break;
 							}
-						}
-						if (error)
-						{
-							std::cout << "request error" << std::endl;
-							_kq.removeEvent(EVFILT_READ, _kq._event_list[i].ident, 0);
-							_socket.erase(_kq._event_list[i].ident);
-							continue;
 						}
 						client_socket->setStage(SET_RESOURCE);
 						client_socket->setResourceFd();

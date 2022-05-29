@@ -120,7 +120,6 @@ int CgiHandler::executeCgi()
 			i++;
 		}
 		env[i] = NULL;
-		// char **envp = convertEnv();
 		cgi_file += "/php-cgi";
 		std::string path_ = _client_socket->getRequest()->getPath(); 
 		argv[0] = const_cast<char*>(cgi_file.c_str());

@@ -2,7 +2,7 @@
 #include "Response.hpp"
 
 ClientSocket::ClientSocket(int fd, ConfigServer server_info)
-	: Socket(CLIENT_SOCKET, fd), _server_info(server_info), _request(new Request(fd)), _response(NULL), _resource(new Resource()), _stage(GET_REQUEST)
+	: Socket(CLIENT_SOCKET, fd), _server_info(server_info), _request(new Request(fd)), _response(NULL), _resource(new Resource()), _stage(GET_REQUEST), _request_parse_error(false)
 {
 	_response = new Response(fd, _resource);
 };
@@ -70,41 +70,54 @@ std::string ClientSocket::getErrorPage(std::string error_num)
 	return root;
 }
 
-void ClientSocket::setResourceFd()
+int ClientSocket::isErrorRequest()
 {
-	setRoute();
-	// _resource->setExtension(getExtension(_file));
-	_resource->setResourceType(getContentType(_file));
 	std::vector<std::string> allowed_method = _route->getCommonDirective()._limit_except;
-	if (_request->getRequestHeaderSize() > _route->getCommonDirective()._request_limit_header_size || 
+
+	if (_request_parse_error)
+	{
+		setErrorResource("400");
+	}
+	else if (find(allowed_method.begin(), allowed_method.end(), _request->getMethod()) == allowed_method.end())
+	{
+		std::cout << "ERROR Response " << std::endl;
+		setErrorResource("403");
+	}
+	else if (_request->getRequestHeaderSize() > _route->getCommonDirective()._request_limit_header_size || 
 	_request->getRequestBodySize() > _route->getCommonDirective()._client_limit_body_size) // request body & header size 체크
 	{
 		std::cerr << "ERROR Resquest Limit Size" << std::endl;
 		std::cerr << "_request->getRequestHeaderSize() : " << _request->getRequestHeaderSize() << std::endl;
 		std::cerr << "_request->getRequestBody().size() : " <<_request->getRequestBody().size() << std::endl;
 		setErrorResource("413");
-		return ;
 	}
-	if (isDirectory(_route->getCommonDirective()._root) == 0)
+	else if (isDirectory(_route->getCommonDirective()._root) == 0)
 	{
 		std::cout << "ERROR Response " << std::endl;
 		setErrorResource("404");
-		return ;
 	}
-	if (find(allowed_method.begin(), allowed_method.end(), _request->getMethod()) == allowed_method.end())
+	else
 	{
-		std::cout << "ERROR Response " << std::endl;
-		setErrorResource("403");
-		return;
+		return 0;
+	}
+	return 1;
+}
+
+void ClientSocket::setResourceFd()
+{
+	setRoute();
+	_resource->setResourceType(getContentType(_file));
+	if (isErrorRequest())
+	{
+		return ;
 	}
 	if (isCGI(_file))
 	{
 		CgiHandler cgi(_route, this);
 		cgi.executeCgi(); // <- 여기서 resource read_fd, write_fd 설정
 		setStage(CGI_WRITE);
-		return;
 	}
-	if (_request->getMethod() == "GET")
+	else if (_request->getMethod() == "GET")
 	{
 		std::cout << "GET" << std::endl;
 		setGetFd();
@@ -199,7 +212,6 @@ void ClientSocket::setPostFd()
 			i++;
 		}
 		filename = temp;
-		_response->setStatusCode("201");
 	}
 	else
 	{
@@ -223,30 +235,15 @@ void ClientSocket::setPostFd()
 		setErrorResource("400");
 		return;
 	}
-	// if (isFile(filename))
-	// {
-	// 	int fd = open(filename.c_str(), O_WRONLY | O_APPEND);
-
-	// 	if (fd > 0)
-	// 	{
-	// 		setErrorResource("403");
-	// 		return;
-	// 	}
-	// 	_response->setStatusCode("200");
-	// 	_resource->setWriteFd(fd);
-	// }
-	// else
-	// {
-		int fd = open(filename.c_str(), O_WRONLY | O_CREAT, 0777);
-		if (fd < 0)
-		{
-			setErrorResource("500");
-			return;
-		}
-		else
-			_response->setStatusCode("201");
-		_resource->setWriteFd(fd);
-	// }
+	int fd = open(filename.c_str(), O_WRONLY | O_CREAT, 0777);
+	if (fd < 0)
+	{
+		setErrorResource("500");
+		return;
+	}
+	else
+		_response->setStatusCode("201");
+	_resource->setWriteFd(fd);
 }
 
 void ClientSocket::setErrorResource(std::string error)
@@ -314,4 +311,14 @@ void ClientSocket::setRoute()
 			}
 		}
 	}
+}
+
+bool ClientSocket::getRequestParseError() const
+{
+	return _request_parse_error;
+}
+
+void ClientSocket::setRequestParseError(bool a)
+{
+	_request_parse_error = a;
 }
