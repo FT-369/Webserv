@@ -75,8 +75,14 @@ void ClientSocket::setResourceFd()
 	setRoute();
 	// _resource->setExtension(getExtension(_file));
 	_resource->setResourceType(getContentType(_file));
-
 	std::vector<std::string> allowed_method = _route->getCommonDirective()._limit_except;
+	if (_request->getRequestHeaderSize() > _route->getCommonDirective()._request_limit_header_size || 
+	_request->getRequestBody().size() > _route->getCommonDirective()._client_limit_body_size)
+	{
+		std::cerr << "ERROR Resquest Limit Size" << std::endl;
+		setErrorResource("413");
+		return ;
+	}
 	if (isDirectory(_route->getCommonDirective()._root) == 0)
 	{
 		std::cout << "ERROR Response " << std::endl;
@@ -175,6 +181,7 @@ void ClientSocket::setPostFd()
 	std::string path = _route->getCommonDirective()._root;
 	std::string dir, dirpath, filename;
 	size_t rpos = _file.rfind("/");
+	int i = 0;
 
 	if (rpos != std::string::npos)
 		dir = _file.substr(0, rpos);
@@ -183,7 +190,6 @@ void ClientSocket::setPostFd()
 	{
 		filename = dirpath + "/NewFile";
 		std::string temp = filename;
-		int i = 0;
 		temp = filename;
 		while (getFileType(temp))
 		{
@@ -195,28 +201,40 @@ void ClientSocket::setPostFd()
 	}
 	else
 	{
-		filename = dirpath + _file;
+		std::string extenstion = getExtension(_file);
+		size_t rpos = _file.rfind(".");
+		std::string file_name = _file.substr(0, rpos);
+		if (rpos < _file.size())
+			extenstion = "." + extenstion;
+		dirpath = dirpath + file_name;
+		std::string temp = dirpath + extenstion;
+		while (getFileType(temp))
+		{
+			temp = dirpath + '(' + std::to_string(i) + ')' + extenstion;
+			i++;
+		}
+		filename = temp;
+		std::cout << filename << " : filename = dirpath + _file; " << std::endl;
 	}
 	if (isDirectory(filename))
 	{
 		setErrorResource("400");
 		return;
 	}
-	if (isFile(filename))
-	{
-		int fd = open(filename.c_str(), O_WRONLY | O_APPEND);
+	// if (isFile(filename))
+	// {
+	// 	int fd = open(filename.c_str(), O_WRONLY | O_APPEND);
 
-		if (fd > 0)
-		{
-			setErrorResource("403");
-			return;
-		}
-		_response->setStatusCode("200");
-		_resource->setWriteFd(fd);
-	}
-
-	else
-	{
+	// 	if (fd > 0)
+	// 	{
+	// 		setErrorResource("403");
+	// 		return;
+	// 	}
+	// 	_response->setStatusCode("200");
+	// 	_resource->setWriteFd(fd);
+	// }
+	// else
+	// {
 		int fd = open(filename.c_str(), O_WRONLY | O_CREAT, 0777);
 		if (fd < 0)
 		{
@@ -226,7 +244,7 @@ void ClientSocket::setPostFd()
 		else
 			_response->setStatusCode("201");
 		_resource->setWriteFd(fd);
-	}
+	// }
 }
 
 void ClientSocket::setErrorResource(std::string error)

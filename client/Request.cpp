@@ -48,9 +48,6 @@ std::string Request::getProtocol() const { return _protocol; }
 std::string Request::getRequestBody() const { return _request_body; }
 std::map<std::string, std::string> Request::getRequestHeader() const { return _request_header; }
 RequestStage Request::getRequestStage() const { return _stage; }
-// ConfigLocation *Request::getRoute() const { return _route; }
-// ConfigLocation *Request::getRoute() { return _route; }
-// std::string Request::getFile() const { return _file; }
 
 std::string Request::ft_fgets_line(FILE *fp)
 {
@@ -72,103 +69,6 @@ std::string Request::ft_fgets_line(FILE *fp)
 	}
 	return getline;
 }
-
-// int Request::parseRequest()
-// {
-// 	if (parseRequestLine() == ERROR)
-// 		return ERROR;
-// 	if (parseRequestHeader() == ERROR)
-// 		return ERROR;
-// 	if (this->method == "POST")
-// 		parseRequestBody();
-// 	std::cout << "!!! path of requtest !!! : " << this->getPath() << std::endl;
-// 	printReq("REQUEST Query", this->getQuery());
-// 	printReq("REQUEST Header", this->getRequestHeader());
-// 	return SUCCESS;
-// }
-
-// int Request::parseRequestLine()
-// {
-// 	std::string get_line;
-// 	std::string get_line;
-// 	std::vector<std::string> request_line;
-// 	std::vector<std::string> query_list;
-// 	size_t pos;
-
-// 	get_line = ft_fgets_line(getSocketReadFP());
-// 	if (get_line == "" || get_line == "\r\n")
-// 		return ERROR;
-
-// 	request_line = ft_split_space(get_line);
-// 	if (request_line.size() != 3)
-// 		return ERROR;
-
-// 	method = request_line[0];
-// 	if ((pos = request_line[1].find("?") ) == std::string::npos) {
-// 		path = request_line[1];
-// 	} else {
-// 		path = request_line[1].substr(0, pos);
-// 		query_list = ft_split(request_line[1].substr(pos + 1), "&");
-// 		for (size_t i = 0; i < query_list.size(); i++)
-// 		{
-// 			if ((pos = query_list[i].find("=")) == std::string::npos) {
-// 				query[query_list[i]] = "";
-// 				// return ERROR;
-// 			} else {
-// 				query[query_list[i].substr(0, pos)] = query_list[i].substr(pos + 1);
-// 			}
-// 		}
-// 	}
-// 	protocol = request_line[2];
-
-// 	if (method != "GET" && method != "POST" && method != "DELETE")
-// 		return ERROR;
-// 	if (path[0] != '/')
-// 		return ERROR;
-// 	if ((pos = protocol.find("HTTP/")) == std::string::npos)
-// 		return ERROR;
-
-// 	return SUCCESS;
-// }
-
-// int Request::parseRequestHeader()
-// {
-// 	char line[GET_LINE_BUF];
-// 	std::string get_line, key, value;
-// 	std::vector<std::string> key_value;
-
-// 	get_line = ft_fgets_line(getSocketReadFP());
-// 	while (get_line != "" && get_line != "\r\n")
-// 	{
-// 		key_value = ft_split(get_line, ": ");
-
-// 		if (key_value.size() != 2) {
-// 			request_header.clear();
-// 			return ERROR;
-// 		}
-
-// 		key = key_value[0];
-// 		value = key_value[1].replace(key_value[1].find("\r\n"), 2, "\0");
-// 		request_header[key] = value;
-
-// 		get_line = ft_fgets_line(getSocketReadFP());
-// 	}
-// 	if (request_header.find("Host") == request_header.end())
-// 		return ERROR; // 더
-
-// 	return SUCCESS;
-// }
-
-// int Request::parseRequestBody()
-// {
-// 	char line[GET_LINE_BUF];
-
-// 	while (fgets(line, GET_LINE_BUF, getSocketReadFP()) != NULL)
-// 	{
-// 		request_body += (std::string(line));
-// 	}
-// 	return SUCCESS;
-// }
 
 void Request::parseRequestLine()
 {
@@ -214,22 +114,19 @@ void Request::parseRequestHeader()
 	std::vector<std::string> key_value;
 
 	get_line = ft_fgets_line(getSocketReadFP());
-		_request_main += get_line;
-
+	_request_main += get_line;
+	_request_header_size += get_line.size();
 	if (get_line == "" || get_line == "\r\n")
 	{
 		_stage = READ_REQUEST_BODY;
 		return;
 	}
-
 	key_value = ft_split(get_line, ": ");
-
 	if (key_value.size() != 2)
 	{
 		_request_header.clear();
 		throw request_error("request format");
 	}
-
 	key = key_value[0];
 	value = key_value[1].replace(key_value[1].find("\r\n"), 2, "\0");
 	_request_header[key] = value;
@@ -242,11 +139,7 @@ void Request::parseRequestBody()
 	long fread_ret;
 	std::string fgets_ret;
 
-	// fgets_ret = ft_fgets_line(getSocketReadFP());
-	// std::cerr << "fgets_ret: " << fgets_ret << ", fgets_ret.length(): " << fgets_ret.length() << std::endl;
-	// if (fgets_ret == "")
 	fread_ret = fread(line, sizeof(char), GET_LINE_BUF - 1, getSocketReadFP());
-	std::cerr << "fread_ret: " << fread_ret << ", line: " << line << std::endl;
 	line[fread_ret] = 0;
 
 	if (fread_ret <= 0)
@@ -257,8 +150,6 @@ void Request::parseRequestBody()
 	{
 		_request_body.append(line, fread_ret);
 		_request_main.append(line, fread_ret);
-		// _request_body.append(fgets_ret.c_str(), fgets_ret.length());
-		// _request_main.append(fgets_ret.c_str(), fgets_ret.length());
 	}
 }
 
@@ -283,38 +174,12 @@ void Request::parseRequest()
 	}
 }
 
-// void Request::setRoute(std::vector<ConfigLocation> const &locations)
-// {
-// 	int path_len = _path.size();
-// 	std::cout << "setRoute path: " << _path << std::endl;
-// 	_file = "";
-
-// 	for (int i = path_len - 1; i >= -1; i--)
-// 	{
-// 		if (i == path_len - 1 || _path[i + 1] == '/')
-// 		{
-// 			for (int j = 0; j < locations.size(); j++)
-// 			{
-// 				if (_path.substr(0, i + 1) == locations[j].getUrl() || _path.substr(0, i + 1) == locations[j].getUrl() + "/")
-// 				{
-// 					_route = new ConfigLocation(locations[j].getUrl(), locations[j].getCommonDirective(), locations[j].getReturnCode(),
-// 					locations[j].getReturnData());
-// 					if (i != path_len - 1)
-// 						_file = _path.substr(i + 1);
-// 					return;
-// 				}
-// 				else if (i == -1 && locations[j].getUrl() == "/")
-// 				{
-// 					_route = new ConfigLocation("/", locations[j].getCommonDirective(), locations[j].getReturnCode(),
-// 					locations[j].getReturnData());
-// 					_file = _path;
-// 					return;
-// 				}
-// 			}
-// 		}
-// 	}
-// }
 std::string Request::getRequestMain() const 
 {
 	return _request_main;
+}
+
+int Request::getRequestHeaderSize() const
+{
+	return _request_header_size;
 }
