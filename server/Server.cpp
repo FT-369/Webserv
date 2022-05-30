@@ -152,7 +152,6 @@ void Server::keventProcess()
 							{
 								fcntl(write_fd, F_SETFL, O_NONBLOCK);
 								_kq.addEvent(EVFILT_WRITE, write_fd, NULL);
-								// _kq.disableEvent(EVFILT_WRITE, _kq._event_list[i].ident, NULL);
 								_socket[write_fd] = client_socket;
 							}
 						}

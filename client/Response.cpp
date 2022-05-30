@@ -77,12 +77,9 @@ void Response::makeResponse(Request *request, Resource *resource, ConfigLocation
 	}
 	else if (request->getMethod() == "DELETE")
 	{
-		std::cout << "DELETE" << std::endl;
+		std::cout << "makeGetHeader" << std::endl;
 		makeGetHeader(resource);
 	}
-	// std::cout << "Response entity: " << _entity << std::endl;
-	// std::cout << "Entity Length: " << _entity.length() << std::endl;
-	// std::cout << "Response Header: " << _header["Content-Length"] << std::endl;
 	makeRedirectHeader(route);
 	makeStartLine();
 }
