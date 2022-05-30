@@ -56,10 +56,10 @@ void CgiHandler::cgiInitEnv()
 	// _cgi_env["CONTENT_LENGTH"] = _client_socket->getRequest()->getRequestHeader()["Content-Length"];
 
 	_cgi_env["CONTENT_TYPE"] = _client_socket->getRequest()->getContentType();
-	for (std::map<std::string, std::string>::iterator it = _cgi_env.begin(); it != _cgi_env.end(); it++)
-	{
-		std::cout << it->first << " : " << it->second << std::endl;
-	}
+	// for (std::map<std::string, std::string>::iterator it = _cgi_env.begin(); it != _cgi_env.end(); it++)
+	// {
+	// 	std::cout << it->first << " : " << it->second << std::endl;
+	// }
 }
 
 char **CgiHandler::convertEnv()
