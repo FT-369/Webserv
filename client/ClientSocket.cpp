@@ -127,6 +127,11 @@ void ClientSocket::setResourceFd()
 		std::cout << "POST" << std::endl;
 		setPostFd();
 	}
+	else if (_request->getMethod() == "DELETE")
+	{
+		std::cout << "setDeleteFd" << std::endl;
+		setDeleteFd();
+	}
 }
 
 bool ClientSocket::isCGI(const std::string &path)
@@ -251,6 +256,38 @@ void ClientSocket::setPostFd()
 	else
 		_response->setStatusCode("201");
 	_resource->setWriteFd(fd);
+}
+
+
+void ClientSocket::setDeleteFd()
+{
+	std::string entity_file;
+	std::string root = _route->getCommonDirective()._root;
+	std::vector<std::string> index_page = _route->getCommonDirective()._index;
+	entity_file = root + _file;
+	if (_file == "") // 파일명이 없을때
+	{
+		for (size_t i = 0; i < index_page.size(); i++)
+		{
+			std::string indexfile = root + "/" + index_page[i];
+			if (isFile(indexfile) == 1)
+			{
+				_response->setStatusCode("200");
+				setStage(MAKE_RESPONSE);
+				return;
+			}
+		}
+	}
+	else
+	{
+		if (getFileType(entity_file) > 0)
+		{
+			setStage(MAKE_RESPONSE);
+			_response->setStatusCode("200");
+			return ;
+		}
+	}
+	setErrorResource("404");
 }
 
 void ClientSocket::setErrorResource(std::string error)

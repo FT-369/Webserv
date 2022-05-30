@@ -56,6 +56,10 @@ void Server::acceptGetClientFd(ServerSocket *server_socket)
 	std::cout << "new_socket = " << new_socket->getSocketFd() << std::endl;
 	_kq.addEvent(EVFILT_READ, connect_fd, NULL);
 	_kq.addEvent(EVFILT_WRITE, connect_fd, NULL);
+	// _kq.enableEvent(EVFILT_WRITE, connect_fd, NULL);
+	// _kq.disableEvent(EVFILT_WRITE, connect_fd, NULL);
+	// _kq.removeEvent(EVFILT_WRITE, connect_fd, NULL);
+
 }
 
 void Server::keventProcess()
@@ -141,14 +145,14 @@ void Server::keventProcess()
 							{
 								fcntl(read_fd, F_SETFL, O_NONBLOCK);
 								_kq.addEvent(EVFILT_READ, read_fd, NULL);
+								std::cerr << "read_fd : " << read_fd << std::endl;
 								_socket[read_fd] = client_socket;
 							}
 							if (write_fd != -1)
 							{
 								fcntl(write_fd, F_SETFL, O_NONBLOCK);
-								// _kq.addEvent(EVFILT_WRITE, write_fd, NULL);
+								_kq.addEvent(EVFILT_WRITE, write_fd, NULL);
 								_socket[write_fd] = client_socket;
-
 							}
 						}
 					}
@@ -178,6 +182,7 @@ void Server::keventProcess()
 							}
 							else if (WIFEXITED(stat) == true)
 							{
+								std::cerr << "1 client socket : " << _kq._event_list[i].ident <<  " " << client_socket->getResource()->getWriteFd() << std::endl;
 								int n = read(_kq._event_list[i].ident, buffer, BUFFERSIZE - 1);
 								if (n < 0)
 								{
@@ -191,15 +196,17 @@ void Server::keventProcess()
 								{
 									client_socket->parsingCGIResponse();
 									std::cerr << "parsingCGIResponse" << std::endl;
-									_kq.disableEvent(EVFILT_READ, _kq._event_list[i].ident, NULL);
-									close(client_socket->getResource()->getReadFd());
-									close(client_socket->getResource()->getWriteFd());
+									// _kq.disableEvent(EVFILT_READ, _kq._event_list[i].ident, NULL);
+									// _kq.enableEvent(EVFILT_WRITE, _kq._event_list[i].ident, NULL);
+									// close(client_socket->getResource()->getReadFd());
+									// close(client_socket->getResource()->getWriteFd());
 									client_socket->setStage(MAKE_RESPONSE);
 								}
 							}
 						}
 						else
 						{ // file 읽기
+							std::cerr << "2 client socket : " << _kq._event_list[i].ident <<  " " << client_socket->getResource()->getWriteFd() << std::endl;
 							FILE *resource_ptr = fdopen(_kq._event_list[i].ident, "r");
 							fseek(resource_ptr, 0, SEEK_END);
 							long resource_size = ftell(resource_ptr);
@@ -216,7 +223,8 @@ void Server::keventProcess()
 							client_socket->getResource()->getResourceContent().append(buf2, resource_size);
 							client_socket->setStage(MAKE_RESPONSE);
 							fclose(resource_ptr);
-							_kq.disableEvent(EVFILT_READ, _kq._event_list[i].ident, NULL);
+							// _kq.removeEvent(EVFILT_WRITE, _kq._event_list[i].ident, NULL);
+							// close(client_socket->getResource()->getReadFd());
 							std::cerr << "fin make reaponse" << std::endl;
 						}
 					}
@@ -236,32 +244,39 @@ void Server::keventProcess()
 						client_socket->makeResponse();
 						client_socket->sendResponse();
 						_socket.erase(_kq._event_list[i].ident);
-						_kq.removeEvent(EVFILT_WRITE | EVFILT_READ, _kq._event_list[i].ident, NULL);
+						_kq.removeEvent(EVFILT_READ | EVFILT_WRITE, _kq._event_list[i].ident, NULL);
 						close(_kq._event_list[i].ident);
 						std::cerr << "fin send reaponse" << std::endl;
 					}
-					else if (client_socket->getStage() == CGI_WRITE)
+					else if (client_socket->getStage() == CGI_WRITE && client_socket->getResource()->getWriteFd() == _kq._event_list[i].ident)
 					{
+						std::cerr << "3 client socket : " << _kq._event_list[i].ident <<  " " << client_socket->getResource()->getWriteFd() << std::endl;
 						FILE *resource_ptr = fdopen(client_socket->getResource()->getWriteFd(), "wb");
 						fwrite(client_socket->getRequest()->getRequestBody().c_str(), 1, client_socket->getRequest()->getRequestBody().size(), resource_ptr);
 						fclose(resource_ptr);
-						// _socket.erase(client_socket->getResource()->getWriteFd());
+						_socket.erase(client_socket->getResource()->getWriteFd());
 						_kq.disableEvent(EVFILT_WRITE, _kq._event_list[i].ident, NULL);
-						// _kq.removeEvent(EVFILT_WRITE, _kq._event_list[i].ident, NULL);
+						_kq.removeEvent(EVFILT_WRITE, _kq._event_list[i].ident, NULL);
+						close(client_socket->getResource()->getWriteFd());
 						client_socket->setStage(CGI_READ);
 	
 					}
-					else if (client_socket->getResource()->getWriteFd() != -1 && client_socket->getStage() == SET_RESOURCE)
+					else if (client_socket->getResource()->getWriteFd() == _kq._event_list[i].ident && client_socket->getStage() == SET_RESOURCE)
 					{
 						// POST
 						// POST 요청 다 받아오면 파일(resource write_fd)에 request body를 한번에 쓰기
+						std::cerr << "4 client socket : " << _kq._event_list[i].ident <<  " " << client_socket->getResource()->getWriteFd() << std::endl;
 						FILE *resource_ptr = fdopen(client_socket->getResource()->getWriteFd(), "wb");
 						fwrite(client_socket->getRequest()->getRequestBody().c_str(), 1, client_socket->getRequest()->getRequestBody().size(), resource_ptr);
 						fclose(resource_ptr);
-						_kq.disableEvent(EVFILT_WRITE, _kq._event_list[i].ident, NULL);
-						// _kq.removeEvent(EVFILT_WRITE, _kq._event_list[i].ident, NULL);
+						// close(client_socket->getResource()->getWriteFd());
+						// _kq.disableEvent(EVFILT_WRITE, _kq._event_list[i].ident, NULL);
+						// _kq.enableEvent(EVFILT_WRITE,  _kq._event_list[i].ident, NULL);
 						// close(client_socket->getResource()->getWriteFd());
 						// _socket.erase(client_socket->getResource()->getWriteFd());
+						_kq.removeEvent(EVFILT_WRITE, _kq._event_list[i].ident, NULL);
+						// _kq.enableEvent(EVFILT_WRITE, _kq._event_list[i].ident, NULL);
+						// _kq.enableEvent(EVFILT_WRITE, client_socket->getSocketFd(), NULL);
 						client_socket->setStage(MAKE_RESPONSE);
 						std::cerr << "MAKE_RESPONSE FD = " <<  _kq._event_list[i].ident << std::endl;
 					}

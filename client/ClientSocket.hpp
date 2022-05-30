@@ -57,6 +57,7 @@ public:
 	void setResourceFd();
 	void setGetFd();
 	void setPostFd();
+	void setDeleteFd();
 	void setErrorResource(std::string error);
 	void parsingCGIResponse();
 	void setRoute();
