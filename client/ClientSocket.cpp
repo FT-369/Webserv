@@ -190,18 +190,19 @@ void ClientSocket::setGetFd()
 
 void ClientSocket::setPostFd()
 {
-	std::string entity_file;
 	std::string root = _route->getCommonDirective()._root;
-	std::vector<std::string> index_page = _route->getCommonDirective()._index;
-	std::string path = _route->getCommonDirective()._root;
-	std::string dir, dirpath, filename;
-	size_t rpos = _file.rfind("/");
-	int i = 0;
+	std::string entire_file = root + _file;
+	std::string dirpath, filepath, filename;
+	int i = 1;
 
-	if (rpos != std::string::npos)
-		dir = _file.substr(0, rpos);
-	dir == "" ? dirpath = path : dirpath = dir;
-	if (_file == "")
+	dirpath = root;
+	filepath = _file;
+	if (isDirectory(entire_file))
+	{
+		dirpath = entire_file;
+		filepath = "";
+	}
+	if (filepath == "")
 	{
 		filename = dirpath + "/NewFile";
 		std::string temp = filename;
@@ -218,7 +219,7 @@ void ClientSocket::setPostFd()
 		std::string extenstion = getExtension(_file);
 		size_t rpos = _file.rfind(".");
 		std::string file_name = _file.substr(0, rpos);
-		if (rpos < _file.size())
+		if (rpos < _file.size()) // 확장자가 있음
 			extenstion = "." + extenstion;
 		dirpath = dirpath + file_name;
 		std::string temp = dirpath + extenstion;
@@ -230,7 +231,13 @@ void ClientSocket::setPostFd()
 		filename = temp;
 		std::cout << filename << " : filename = dirpath + _file; " << std::endl;
 	}
-	if (isDirectory(filename))
+	size_t rrpos = filename.rfind("/");
+	std::string temp_file;
+	if (rrpos == std::string::npos)
+		std::string temp_file = filename;
+	else
+		temp_file = filename.substr(0, rrpos);
+	if (isDirectory(filename) || !isDirectory(temp_file))
 	{
 		setErrorResource("400");
 		return;
