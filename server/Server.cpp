@@ -37,6 +37,7 @@ void Server::serverConnect()
 		catch (const std::exception &e)
 		{
 			delete new_socket;
+			new_socket = NULL;
 			std::cerr << e.what() << '\n';
 			continue;
 		}
@@ -53,6 +54,11 @@ void Server::acceptGetClientFd(ServerSocket *server_socket)
 	server_socket->clientAccept(connect_fd);
 	fcntl(connect_fd, F_SETFL, O_NONBLOCK);
 	ClientSocket *new_socket = new ClientSocket(connect_fd, server_socket->getServerInfo());
+	// if (_socket.find(new_socket->getSocketFd()) != _socket.end() && _socket[new_socket->getSocketFd()] != NULL)
+	// {
+	// 	delete _socket[new_socket->getSocketFd()];
+	// 	_socket[new_socket->getSocketFd()] = NULL;
+	// }
 	_socket[new_socket->getSocketFd()] = new_socket;
 	std::cout << "new_socket = " << new_socket->getSocketFd() << std::endl;
 	_kq.addEvent(EVFILT_READ, connect_fd, NULL);
@@ -85,31 +91,68 @@ void Server::keventProcess()
 			if (_kq._event_list[i].flags & EV_ERROR)
 			{
 				std::cout << "EV_ERROR  ==================== " << _kq._event_list[i].ident << std::endl;
-				_kq.removeEvent(_kq._event_list[i].filter, _kq._event_list[i].ident, NULL); //에러가 발생한 fd 삭제
-				ServerSocket *ss = dynamic_cast<ServerSocket *>(_socket[_kq._event_list[i].ident]);
-				ClientSocket *cs = dynamic_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
-				std::cout << "ss ptr  ==================== " << ss << std::endl;
-				std::cout << "cs ptr  ==================== " << cs << std::endl;
-				if ((ss != NULL) || (cs != NULL
-					&& _kq._event_list[i].ident != cs->getResource()->getReadFd()
-					&& _kq._event_list[i].ident != cs->getResource()->getWriteFd()))
+				if (_socket.find(_kq._event_list[i].ident) != _socket.end() && _socket[_kq._event_list[i].ident] != NULL)
 				{
-					std::cout << "getReadFd  ==================== " << (cs == NULL ? -42 : cs->getResource()->getReadFd()) << std::endl;
-					std::cout << "getWriteFd  ==================== " << (cs == NULL ? -42 : cs->getResource()->getWriteFd()) << std::endl;
-					std::cout << "_socket[_kq._event_list[i].ident] :" << _socket[_kq._event_list[i].ident] << std::endl;
-					// delete _socket[_kq._event_list[i].ident];
+					std::cerr << "_socket[_kq._event_list[i].ident]: " << _socket[_kq._event_list[i].ident] << "\n";
+					/*
+					[EACCES] 프로세스가 filter를 등록하기 위한 권한이 없습니다.
+					[EFAULT] kevent 또는 kevent64_s를 읽거나 쓰는데 오류가 발생했습니다.
+					[EBADF] 디스크립터가 유효하지 않습니다.
+					[EINTR] 타임아웃 만료 또는 이벤트가 배치되기 전 시그널이 전달되었습니다.
+					[EINVAL] filte가 유효하지 않습니다.
+					[ENOENT] 이벤트를 수정하거나 삭제할 수 없습니다.
+					[ENOMEM] 이벤트를 등록하기 위한 메모리가 부족합니다.
+					[ESRCH] 지정된 프로세스가 존재하지 않습니다.
+					*/
+					if (_kq._event_list[i].data == EACCES)
+					{
+						std::cerr << "[EACCES] 프로세스가 filter를 등록하기 위한 권한이 없습니다.\n";
+					}
+					if (_kq._event_list[i].data == EFAULT)
+					{
+						std::cerr << "[EFAULT] kevent 또는 kevent64_s를 읽거나 쓰는데 오류가 발생했습니다.\n";
+					}
+					if (_kq._event_list[i].data == EBADF)
+					{
+						std::cerr << "[EBADF] 디스크립터가 유효하지 않습니다.\n";
+					}
+					if (_kq._event_list[i].data == EINTR)
+					{
+						std::cerr << "[EINTR] 타임아웃 만료 또는 이벤트가 배치되기 전 시그널이 전달되었습니다.\n";
+					}
+					if (_kq._event_list[i].data == EINVAL)
+					{
+						std::cerr << "[EINVAL] filte가 유효하지 않습니다.\n";
+					}
+					if (_kq._event_list[i].data == ENOENT)
+					{
+						std::cerr << "[ENOENT] 이벤트를 수정하거나 삭제할 수 없습니다.\n";
+					}
+					if (_kq._event_list[i].data == ENOMEM)
+					{
+						std::cerr << "[ENOMEM] 이벤트를 등록하기 위한 메모리가 부족합니다.\n";
+					}
+					if (_kq._event_list[i].data == ESRCH)
+					{
+						std::cerr << "[ESRCH] 지정된 프로세스가 존재하지 않습니다.\n";
+					}
+					close(_kq._event_list[i].ident);
+					if (_kq._event_list[i].data != ENOENT)
+					{
+						delete _socket[_kq._event_list[i].ident];
+						_kq.removeEvent(_kq._event_list[i].filter, _kq._event_list[i].ident, NULL); //에러가 발생한 fd 삭제
+					}
+					_socket[_kq._event_list[i].ident] = NULL;
+					_socket.erase(_kq._event_list[i].ident);
 				}
-				std::cout << "EV_ERROR  ==================== fault"<< std::endl;
-				_socket.erase(_kq._event_list[i].ident);
-				std::cout << "EV_ERROR  ==================== haha"<< std::endl;
 				continue;
 			}
 			switch (_kq._event_list[i].filter)
 			{
 			case EVFILT_READ:
 			{
-				if (it == _socket.end()) // Server의 socket 리스트에 저장되지 않은 fd면 넘기기
-					continue;
+				// if (it == _socket.end()) // Server의 socket 리스트에 저장되지 않은 fd면 넘기기
+				// 	continue;
 				switch (_socket[_kq._event_list[i].ident]->getSocketType())
 				{
 				case SERVER_SOCKET:
@@ -125,11 +168,11 @@ void Server::keventProcess()
 						std::cerr << e.what() << '\n';
 						continue;
 					}
+				break;
 				}
 				case CLIENT_SOCKET:
 				{
 					ClientSocket *client_socket = reinterpret_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
-					int error = 0;
 
 					if (client_socket->getStage() == GET_REQUEST)
 					{
@@ -172,7 +215,8 @@ void Server::keventProcess()
 							}
 						}
 					}
-					else if (client_socket->getStage() == SET_RESOURCE || client_socket->getStage() == CGI_READ)
+					else if (client_socket != 0 && client_socket->getResource() != 0 && client_socket->getResource()->getWriteFd() != _kq._event_list[i].ident
+						&& (client_socket->getStage() == SET_RESOURCE || client_socket->getStage() == CGI_READ))
 					{
 						int stat, ret;
 						size_t n;
@@ -220,7 +264,7 @@ void Server::keventProcess()
 								}
 							}
 						}
-						else
+						else // if (client_socket != 0 && client_socket->getResource() != 0 && client_socket->getResource()->getReadFd() == _kq._event_list[i].ident)
 						{ // file 읽기
 							std::cerr << "2 client socket : " << _kq._event_list[i].ident <<  " " << client_socket->getResource()->getWriteFd() << std::endl;
 							FILE *resource_ptr = fdopen(_kq._event_list[i].ident, "r");
@@ -244,8 +288,10 @@ void Server::keventProcess()
 							std::cerr << "fin make reaponse" << std::endl;
 						}
 					}
+				break;
 				}
 				}
+			break;
 			}
 			case EVFILT_WRITE:
 			{
@@ -255,18 +301,22 @@ void Server::keventProcess()
 				{
 					ClientSocket *client_socket = reinterpret_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
 					// response 보내주는거
-					if (client_socket->getResource()->getWriteFd() != _kq._event_list[i].ident && client_socket != 0 && client_socket->getRequest() != 0 && client_socket->getStage() == MAKE_RESPONSE) // + 리소스도 다 읽었으면
+					if (client_socket != 0 && client_socket->getSocketFd() == _kq._event_list[i].ident && client_socket->getRequest() != 0 && client_socket->getStage() == MAKE_RESPONSE) // + 리소스도 다 읽었으면
 					{
 						client_socket->makeResponse();
 						client_socket->sendResponse();
-						delete _socket[_kq._event_list[i].ident];
+						close(client_socket->getResource()->getReadFd());
+						close(client_socket->getResource()->getWriteFd());
+						delete client_socket;
+						client_socket = NULL;
+						_socket[_kq._event_list[i].ident] = NULL;
 						_socket.erase(_kq._event_list[i].ident);
 						_kq.disableEvent(EVFILT_READ | EVFILT_WRITE, _kq._event_list[i].ident, NULL);
 						_kq.removeEvent(EVFILT_READ | EVFILT_WRITE, _kq._event_list[i].ident, NULL);
 						close(_kq._event_list[i].ident);
 						std::cerr << "fin send reaponse" << std::endl;
 					}
-					else if (client_socket->getStage() == CGI_WRITE && client_socket->getResource()->getWriteFd() == _kq._event_list[i].ident)
+					else if (client_socket != 0 && client_socket->getStage() == CGI_WRITE && client_socket->getResource()->getWriteFd() == _kq._event_list[i].ident)
 					{
 						std::cerr << "3 client socket : " << _kq._event_list[i].ident <<  " " << client_socket->getResource()->getWriteFd() << std::endl;
 						FILE *resource_ptr = fdopen(client_socket->getResource()->getWriteFd(), "wb");
@@ -275,11 +325,10 @@ void Server::keventProcess()
 						_socket.erase(client_socket->getResource()->getWriteFd());
 						_kq.disableEvent(EVFILT_WRITE, _kq._event_list[i].ident, NULL);
 						_kq.removeEvent(EVFILT_WRITE, _kq._event_list[i].ident, NULL);
-						close(client_socket->getResource()->getWriteFd());
+						// close(client_socket->getResource()->getWriteFd());
 						client_socket->setStage(CGI_READ);
-	
 					}
-					else if (client_socket->getResource()->getWriteFd() == _kq._event_list[i].ident && client_socket->getStage() == SET_RESOURCE)
+					else if (client_socket != 0 && client_socket->getResource() != 0 && client_socket->getResource()->getWriteFd() == _kq._event_list[i].ident && client_socket->getStage() == SET_RESOURCE)
 					{
 						// POST
 						// POST 요청 다 받아오면 파일(resource write_fd)에 request body를 한번에 쓰기
@@ -299,7 +348,9 @@ void Server::keventProcess()
 						std::cerr << "MAKE_RESPONSE FD = " <<  _kq._event_list[i].ident << std::endl;
 					}
 				}
+				break;
 				}
+				break;
 			}
 			}
 		}
