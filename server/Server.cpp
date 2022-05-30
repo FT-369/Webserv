@@ -36,6 +36,7 @@ void Server::serverConnect()
 		}
 		catch (const std::exception &e)
 		{
+			delete new_socket;
 			std::cerr << e.what() << '\n';
 			continue;
 		}
@@ -85,7 +86,22 @@ void Server::keventProcess()
 			{
 				std::cout << "EV_ERROR  ==================== " << _kq._event_list[i].ident << std::endl;
 				_kq.removeEvent(_kq._event_list[i].filter, _kq._event_list[i].ident, NULL); //에러가 발생한 fd 삭제
+				ServerSocket *ss = dynamic_cast<ServerSocket *>(_socket[_kq._event_list[i].ident]);
+				ClientSocket *cs = dynamic_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
+				std::cout << "ss ptr  ==================== " << ss << std::endl;
+				std::cout << "cs ptr  ==================== " << cs << std::endl;
+				if ((ss != NULL) || (cs != NULL
+					&& _kq._event_list[i].ident != cs->getResource()->getReadFd()
+					&& _kq._event_list[i].ident != cs->getResource()->getWriteFd()))
+				{
+					std::cout << "getReadFd  ==================== " << (cs == NULL ? -42 : cs->getResource()->getReadFd()) << std::endl;
+					std::cout << "getWriteFd  ==================== " << (cs == NULL ? -42 : cs->getResource()->getWriteFd()) << std::endl;
+					std::cout << "_socket[_kq._event_list[i].ident] :" << _socket[_kq._event_list[i].ident] << std::endl;
+					// delete _socket[_kq._event_list[i].ident];
+				}
+				std::cout << "EV_ERROR  ==================== fault"<< std::endl;
 				_socket.erase(_kq._event_list[i].ident);
+				std::cout << "EV_ERROR  ==================== haha"<< std::endl;
 				continue;
 			}
 			switch (_kq._event_list[i].filter)
@@ -239,11 +255,13 @@ void Server::keventProcess()
 				{
 					ClientSocket *client_socket = reinterpret_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
 					// response 보내주는거
-					if (client_socket != 0 && client_socket->getRequest() != 0 && client_socket->getStage() == MAKE_RESPONSE) // + 리소스도 다 읽었으면
+					if (client_socket->getResource()->getWriteFd() != _kq._event_list[i].ident && client_socket != 0 && client_socket->getRequest() != 0 && client_socket->getStage() == MAKE_RESPONSE) // + 리소스도 다 읽었으면
 					{
 						client_socket->makeResponse();
 						client_socket->sendResponse();
+						delete _socket[_kq._event_list[i].ident];
 						_socket.erase(_kq._event_list[i].ident);
+						_kq.disableEvent(EVFILT_READ | EVFILT_WRITE, _kq._event_list[i].ident, NULL);
 						_kq.removeEvent(EVFILT_READ | EVFILT_WRITE, _kq._event_list[i].ident, NULL);
 						close(_kq._event_list[i].ident);
 						std::cerr << "fin send reaponse" << std::endl;

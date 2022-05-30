@@ -8,7 +8,10 @@ ClientSocket::ClientSocket(int fd, ConfigServer server_info)
 };
 
 ClientSocket::~ClientSocket(){
-
+	delete _request;
+	delete _response;
+	delete _resource;
+	delete _route;
 };
 
 ConfigServer ClientSocket::getConnectServerInfo() { return _server_info; }

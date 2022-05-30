@@ -69,7 +69,6 @@ char **CgiHandler::convertEnv()
 	{
 		return NULL;
 	}
-
 	int i = 0;
 	for (std::map<std::string, std::string>::iterator it = _cgi_env.begin(); it != _cgi_env.end(); it++)
 	{
@@ -139,8 +138,22 @@ int CgiHandler::executeCgi()
 		close(read_fd[0]);
 		if ((result = execve(argv[0], argv, env)) == -1)
 		{
+			for (size_t idx = 0; idx < i; idx++)
+			{
+				free(env[idx]);
+				env[idx] = 0;
+			}
+			free(env);
+			env = 0;
 			exit(result);
 		}
+		for (size_t idx = 0; idx < i; idx++)
+		{
+			free(env[idx]);
+			env[idx] = 0;
+		}
+		free(env);
+		env = 0;
 		exit(result);
 	}
 	else
