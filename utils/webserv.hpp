@@ -22,5 +22,6 @@
 #include <cctype>
 #include <fstream>
 #include <exception>
+#include <sstream>
 
 #endif

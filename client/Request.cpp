@@ -134,22 +134,55 @@ void Request::parseRequestHeader()
 
 void Request::parseRequestBody()
 {
-	char line[GET_LINE_BUF];
-	memset(line, 0, GET_LINE_BUF);
 	long fread_ret;
-	std::string fgets_ret;
 
-	fread_ret = fread(line, sizeof(char), GET_LINE_BUF - 1, getSocketReadFP());
-	line[fread_ret] = 0;
-	_request_body_size += fread_ret;
-	if (fread_ret <= 0)
+	if ((_request_header.find("Transfer-Encoding") != _request_header.end()
+		&& _request_header["Transfer-Encoding"] == "chunked") || 
+		(_request_header.find("transfer-encoding") != _request_header.end()
+		&& _request_header["transfer-encoding"] == "chunked"))
 	{
-		_stage = READ_END_OF_REQUEST;
+		std::cerr << "_request_header[Transfer-Encoding] == chunked\n";
+		unsigned int chunk_size;
+		std::string chunk_size_hexa = ft_fgets_line(getSocketReadFP());
+		chunk_size_hexa.replace(chunk_size_hexa.find("\r\n"), 2, "\0");
+
+		// String to Hex
+		std::stringstream convert(chunk_size_hexa);
+		convert >> std::hex >> chunk_size;
+		std::cout << std::hex << chunk_size << std::endl;
+
+		char line[chunk_size + 3];
+		fread_ret = fread(line, sizeof(char), chunk_size + 2, getSocketReadFP());
+		line[chunk_size] = 0;
+		if (chunk_size == 0)
+		{
+			_stage = READ_END_OF_REQUEST;
+
+		}
+		else
+		{
+			_request_body_size += chunk_size;
+			_request_body.append(line, chunk_size);
+			_request_main.append(line, chunk_size);
+		}
 	}
 	else
 	{
-		_request_body.append(line, fread_ret);
-		_request_main.append(line, fread_ret);
+		char line[GET_LINE_BUF];
+		
+		memset(line, 0, GET_LINE_BUF);
+		fread_ret = fread(line, sizeof(char), GET_LINE_BUF - 1, getSocketReadFP());
+		line[fread_ret] = 0;
+		_request_body_size += fread_ret;
+		if (fread_ret <= 0)
+		{
+			_stage = READ_END_OF_REQUEST;
+		}
+		else
+		{
+			_request_body.append(line, fread_ret);
+			_request_main.append(line, fread_ret);
+		}
 	}
 }
 

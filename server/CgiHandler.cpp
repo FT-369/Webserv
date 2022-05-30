@@ -37,8 +37,7 @@ void CgiHandler::cgiInitEnv()
 
 	_cgi_env["SERVER_PORT"] = _client_socket->getRequest()->getPort();
 	_cgi_env["SERVER_NAME"] = _client_socket->getRequest()->getServerName();
-	// _cgi_env["PATH_INFO"] = _client_socket->getRoute()->getUrl();
-
+	_cgi_env["PATH_INFO"] = _client_socket->getRequest()->getPath();
 	_cgi_env["DOCUMENT_ROOT"] = _location_info->getCommonDirective()._cgi_path[extension];
 
 	// _cgi_env["PHP_SELF"] = _client_socket->getRequest()->getPath();
@@ -120,7 +119,7 @@ int CgiHandler::executeCgi()
 			i++;
 		}
 		env[i] = NULL;
-		cgi_file += "/php-cgi";
+		// cgi_file += "/php-cgi";
 		std::string path_ = _client_socket->getRequest()->getPath(); 
 		argv[0] = const_cast<char*>(cgi_file.c_str());
 		argv[1] = const_cast<char*>(path_.c_str());
