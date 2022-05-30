@@ -168,13 +168,13 @@ void Server::keventProcess()
 						std::cerr << e.what() << '\n';
 						continue;
 					}
-				break;
+					break;
 				}
 				case CLIENT_SOCKET:
 				{
 					ClientSocket *client_socket = reinterpret_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
 
-					if (client_socket->getStage() == GET_REQUEST)
+					if (client_socket != 0 && client_socket->getSocketFd() == _kq._event_list[i].ident && client_socket->getStage() == GET_REQUEST)
 					{
 						if (client_socket->getRequest() == 0)
 						{
@@ -238,7 +238,7 @@ void Server::keventProcess()
 								_kq.removeEvent(EVFILT_READ, _kq._event_list[i].ident, NULL);
 								_socket.erase(_kq._event_list[i].ident);
 								close(_kq._event_list[i].ident);
-								continue;
+								break;;
 							}
 							else if (WIFEXITED(stat) == true)
 							{
@@ -256,7 +256,7 @@ void Server::keventProcess()
 								{
 									client_socket->parsingCGIResponse();
 									std::cerr << "parsingCGIResponse" << std::endl;
-									// _kq.disableEvent(EVFILT_READ, _kq._event_list[i].ident, NULL);
+									_kq.removeEvent(EVFILT_READ, _kq._event_list[i].ident, NULL);
 									// _kq.enableEvent(EVFILT_WRITE, _kq._event_list[i].ident, NULL);
 									// close(client_socket->getResource()->getReadFd());
 									// close(client_socket->getResource()->getWriteFd());
@@ -264,7 +264,7 @@ void Server::keventProcess()
 								}
 							}
 						}
-						else // if (client_socket != 0 && client_socket->getResource() != 0 && client_socket->getResource()->getReadFd() == _kq._event_list[i].ident)
+						else if (client_socket != 0 && client_socket->getResource() != 0 && client_socket->getResource()->getReadFd() == _kq._event_list[i].ident)
 						{ // file 읽기
 							std::cerr << "2 client socket : " << _kq._event_list[i].ident <<  " " << client_socket->getResource()->getWriteFd() << std::endl;
 							FILE *resource_ptr = fdopen(_kq._event_list[i].ident, "r");
@@ -283,15 +283,16 @@ void Server::keventProcess()
 							client_socket->getResource()->getResourceContent().append(buf2, resource_size);
 							client_socket->setStage(MAKE_RESPONSE);
 							fclose(resource_ptr);
-							// _kq.removeEvent(EVFILT_WRITE, _kq._event_list[i].ident, NULL);
+							// _kq.removeEvent(EVFILT_READ, _kq._event_list[i].ident, NULL);
+							_kq.disableEvent(EVFILT_READ, _kq._event_list[i].ident, NULL);
 							// close(client_socket->getResource()->getReadFd());
 							std::cerr << "fin make reaponse" << std::endl;
 						}
 					}
+					break;
+				}
+				}
 				break;
-				}
-				}
-			break;
 			}
 			case EVFILT_WRITE:
 			{
@@ -348,7 +349,6 @@ void Server::keventProcess()
 						std::cerr << "MAKE_RESPONSE FD = " <<  _kq._event_list[i].ident << std::endl;
 					}
 				}
-				break;
 				}
 				break;
 			}
