@@ -3,6 +3,7 @@
 
 #define BUFFERSIZE 1024
 
+int num = 0;
 Server::Server() {}
 
 Server::Server(Config &con) : _config(con) {}
@@ -54,13 +55,8 @@ void Server::acceptGetClientFd(ServerSocket *server_socket)
 	server_socket->clientAccept(connect_fd);
 	fcntl(connect_fd, F_SETFL, O_NONBLOCK);
 	ClientSocket *new_socket = new ClientSocket(connect_fd, server_socket->getServerInfo());
-	// if (_socket.find(new_socket->getSocketFd()) != _socket.end() && _socket[new_socket->getSocketFd()] != NULL)
-	// {
-	// 	delete _socket[new_socket->getSocketFd()];
-	// 	_socket[new_socket->getSocketFd()] = NULL;
-	// }
 	_socket[new_socket->getSocketFd()] = new_socket;
-	std::cout << "new_socket = " << new_socket->getSocketFd() << std::endl;
+	// std::cout << "new_socket = " << new_socket->getSocketFd() << std::endl;
 	_kq.addEvent(EVFILT_READ, connect_fd, NULL);
 	_kq.addEvent(EVFILT_WRITE, connect_fd, NULL);
 	// _kq.enableEvent(EVFILT_WRITE, connect_fd, NULL);
@@ -151,6 +147,8 @@ void Server::keventProcess()
 			{
 			case EVFILT_READ:
 			{
+				// if (_socket[_kq._event_list[i].ident] == NULL)
+				// 	break;
 				// if (it == _socket.end()) // Server의 socket 리스트에 저장되지 않은 fd면 넘기기
 				// 	continue;
 				switch (_socket[_kq._event_list[i].ident]->getSocketType())
@@ -166,13 +164,12 @@ void Server::keventProcess()
 					catch (const std::exception &e)
 					{
 						std::cerr << e.what() << '\n';
-						continue;
 					}
 					break;
 				}
 				case CLIENT_SOCKET:
 				{
-					ClientSocket *client_socket = reinterpret_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
+					ClientSocket *client_socket = dynamic_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
 
 					if (client_socket != 0 && client_socket->getSocketFd() == _kq._event_list[i].ident && client_socket->getStage() == GET_REQUEST)
 					{
@@ -191,6 +188,7 @@ void Server::keventProcess()
 							{
 								client_socket->setRequestParseError(true);
 								std::cerr << e.what() << '\n';
+								// num++;
 								break;
 							}
 						}
@@ -283,9 +281,10 @@ void Server::keventProcess()
 							client_socket->getResource()->getResourceContent().append(buf2, resource_size);
 							client_socket->setStage(MAKE_RESPONSE);
 							fclose(resource_ptr);
-							// _kq.removeEvent(EVFILT_READ, _kq._event_list[i].ident, NULL);
-							_kq.disableEvent(EVFILT_READ, _kq._event_list[i].ident, NULL);
-							// close(client_socket->getResource()->getReadFd());
+							// delete _socket[_kq._event_list[i].ident];
+							// _socket[_kq._event_list[i].ident] = NULL;
+							// _kq.disableEvent(EVFILT_READ, _kq._event_list[i].ident, NULL);
+							close(client_socket->getResource()->getReadFd());
 							std::cerr << "fin make reaponse" << std::endl;
 						}
 					}
@@ -300,20 +299,26 @@ void Server::keventProcess()
 				{
 				case CLIENT_SOCKET:
 				{
-					ClientSocket *client_socket = reinterpret_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
+					// if (_socket[_kq._event_list[i].ident] == NULL)
+					// 	break;
+					ClientSocket *client_socket = dynamic_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
 					// response 보내주는거
 					if (client_socket != 0 && client_socket->getSocketFd() == _kq._event_list[i].ident && client_socket->getRequest() != 0 && client_socket->getStage() == MAKE_RESPONSE) // + 리소스도 다 읽었으면
 					{
 						client_socket->makeResponse();
 						client_socket->sendResponse();
-						close(client_socket->getResource()->getReadFd());
-						close(client_socket->getResource()->getWriteFd());
+						// if (client_socket->getResource()->getReadFd() != -1)
+						// 	close(client_socket->getResource()->getReadFd());
+						// if (client_socket->getResource()->getWriteFd() != -1)
+						// 	close(client_socket->getResource()->getWriteFd());
+						_socket[_kq._event_list[i].ident] = NULL;
 						delete client_socket;
 						client_socket = NULL;
-						_socket[_kq._event_list[i].ident] = NULL;
 						_socket.erase(_kq._event_list[i].ident);
-						_kq.disableEvent(EVFILT_READ | EVFILT_WRITE, _kq._event_list[i].ident, NULL);
-						_kq.removeEvent(EVFILT_READ | EVFILT_WRITE, _kq._event_list[i].ident, NULL);
+						// _kq.disableEvent(EVFILT_READ | EVFILT_WRITE, _kq._event_list[i].ident, NULL);
+						// _kq.removeEvent(EVFILT_WRITE, _kq._event_list[i].ident, NULL);
+						// _kq.removeEvent(EVFILT_READ, _kq._event_list[i].ident, NULL);
+						// _kq.removeEvent(EVFILT_WRITE, _kq._event_list[i].ident, NULL);
 						close(_kq._event_list[i].ident);
 						std::cerr << "fin send reaponse" << std::endl;
 					}
