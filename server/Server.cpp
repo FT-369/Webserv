@@ -97,7 +97,7 @@ void Server::keventProcess()
 					std::cout << "getReadFd  ==================== " << (cs == NULL ? -42 : cs->getResource()->getReadFd()) << std::endl;
 					std::cout << "getWriteFd  ==================== " << (cs == NULL ? -42 : cs->getResource()->getWriteFd()) << std::endl;
 					std::cout << "_socket[_kq._event_list[i].ident] :" << _socket[_kq._event_list[i].ident] << std::endl;
-					// delete _socket[_kq._event_list[i].ident];
+					// delete _socket[_kq._event_list[i].ident]
 				}
 				std::cout << "EV_ERROR  ==================== fault"<< std::endl;
 				_socket.erase(_kq._event_list[i].ident);
@@ -212,6 +212,8 @@ void Server::keventProcess()
 								{
 									client_socket->parsingCGIResponse();
 									std::cerr << "parsingCGIResponse" << std::endl;
+									_kq.removeEvent(EVFILT_READ, _kq._event_list[i].ident, NULL);
+
 									// _kq.disableEvent(EVFILT_READ, _kq._event_list[i].ident, NULL);
 									// _kq.enableEvent(EVFILT_WRITE, _kq._event_list[i].ident, NULL);
 									// close(client_socket->getResource()->getReadFd());
@@ -222,7 +224,7 @@ void Server::keventProcess()
 						}
 						else
 						{ // file 읽기
-							std::cerr << "2 client socket : " << _kq._event_list[i].ident <<  " " << client_socket->getResource()->getWriteFd() << std::endl;
+							std::cerr << "2 client socket : " << _kq._event_list[i].ident <<  " " << client_socket->getResource()->getReadFd() << std::endl;
 							FILE *resource_ptr = fdopen(_kq._event_list[i].ident, "r");
 							fseek(resource_ptr, 0, SEEK_END);
 							long resource_size = ftell(resource_ptr);
@@ -239,7 +241,7 @@ void Server::keventProcess()
 							client_socket->getResource()->getResourceContent().append(buf2, resource_size);
 							client_socket->setStage(MAKE_RESPONSE);
 							fclose(resource_ptr);
-							// _kq.removeEvent(EVFILT_WRITE, _kq._event_list[i].ident, NULL);
+							_kq.removeEvent(EVFILT_READ, _kq._event_list[i].ident, NULL);
 							// close(client_socket->getResource()->getReadFd());
 							std::cerr << "fin make reaponse" << std::endl;
 						}
