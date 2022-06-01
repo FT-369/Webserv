@@ -17,9 +17,12 @@ std::string ft_ltrim(std::string const &str)
 
 std::string ft_rtrim(std::string const &str)
 {
-	size_t idx = str.length() - 1;
+	size_t idx;
 
-	while (isspace(str[idx]))
+	if (str.length() == 0)
+		return str;
+	idx = str.length() - 1;
+	while (idx >= 0 && isspace(str[idx]))
 		idx--;
 	return str.substr(0, idx + 1);
 }

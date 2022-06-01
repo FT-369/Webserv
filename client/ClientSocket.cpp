@@ -7,11 +7,16 @@ ClientSocket::ClientSocket(int fd, ConfigServer server_info)
 	_response = new Response(fd, _resource);
 };
 
-ClientSocket::~ClientSocket(){
+ClientSocket::~ClientSocket()
+{
 	delete _request;
 	delete _response;
 	delete _resource;
 	delete _route;
+	_request = NULL;
+	_response = NULL;
+	_resource = NULL;
+	_route = NULL;
 };
 
 ConfigServer ClientSocket::getConnectServerInfo() { return _server_info; }
