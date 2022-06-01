@@ -45,7 +45,7 @@ void CgiHandler::cgiInitEnv()
 	std::cerr << "_client_socket->getRequest()->getPath(): " << _client_socket->getRequest()->getPath() << std::endl;
 	_cgi_env["DOCUMENT_URI"] = _client_socket->getRequest()->getPath() + (_client_socket->getRequest()->getQuery().size() > 0 ? ("?" + _client_socket->getRequest()->getQuery()) : ""); // 리퀘스트에 명시된 전체 주소가 들어가야 함
 	_cgi_env["REQUEST_URI"] = _client_socket->getRequest()->getPath() + (_client_socket->getRequest()->getQuery().size() > 0 ? ("?" + _client_socket->getRequest()->getQuery()) : ""); // 리퀘스트에 명시된 전체 주소가 들어가야 함
-	_cgi_env["SCRIPT_NAME"] = _client_socket->getRoute()->getCommonDirective()._root + _client_socket->getFile();// 실행파일 전체 주소가 들어가야함
+	_cgi_env["SCRIPT_NAME"] = _client_socket->getFile(); // 실행파일 전체 주소가 들어가야함
 	_cgi_env["SCRIPT_FILENAME"] = _client_socket->getRoute()->getCommonDirective()._root + _client_socket->getFile();// 실행파일 전체 주소가 들어가야함
 	_cgi_env["QUERY_STRING"] = _client_socket->getRequest()->getQuery();
 	_cgi_env["REMOTE_ADDR"] = getIp(_client_socket->getSocketFd());

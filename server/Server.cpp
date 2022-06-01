@@ -90,48 +90,7 @@ void Server::keventProcess()
 				if (_socket.find(_kq._event_list[i].ident) != _socket.end() && _socket[_kq._event_list[i].ident] != NULL)
 				{
 					std::cerr << "_socket[_kq._event_list[i].ident]: " << _socket[_kq._event_list[i].ident] << "\n";
-					/*
-					[EACCES] 프로세스가 filter를 등록하기 위한 권한이 없습니다.
-					[EFAULT] kevent 또는 kevent64_s를 읽거나 쓰는데 오류가 발생했습니다.
-					[EBADF] 디스크립터가 유효하지 않습니다.
-					[EINTR] 타임아웃 만료 또는 이벤트가 배치되기 전 시그널이 전달되었습니다.
-					[EINVAL] filte가 유효하지 않습니다.
-					[ENOENT] 이벤트를 수정하거나 삭제할 수 없습니다.
-					[ENOMEM] 이벤트를 등록하기 위한 메모리가 부족합니다.
-					[ESRCH] 지정된 프로세스가 존재하지 않습니다.
-					*/
-					if (_kq._event_list[i].data == EACCES)
-					{
-						std::cerr << "[EACCES] 프로세스가 filter를 등록하기 위한 권한이 없습니다.\n";
-					}
-					if (_kq._event_list[i].data == EFAULT)
-					{
-						std::cerr << "[EFAULT] kevent 또는 kevent64_s를 읽거나 쓰는데 오류가 발생했습니다.\n";
-					}
-					if (_kq._event_list[i].data == EBADF)
-					{
-						std::cerr << "[EBADF] 디스크립터가 유효하지 않습니다.\n";
-					}
-					if (_kq._event_list[i].data == EINTR)
-					{
-						std::cerr << "[EINTR] 타임아웃 만료 또는 이벤트가 배치되기 전 시그널이 전달되었습니다.\n";
-					}
-					if (_kq._event_list[i].data == EINVAL)
-					{
-						std::cerr << "[EINVAL] filte가 유효하지 않습니다.\n";
-					}
-					if (_kq._event_list[i].data == ENOENT)
-					{
-						std::cerr << "[ENOENT] 이벤트를 수정하거나 삭제할 수 없습니다.\n";
-					}
-					if (_kq._event_list[i].data == ENOMEM)
-					{
-						std::cerr << "[ENOMEM] 이벤트를 등록하기 위한 메모리가 부족합니다.\n";
-					}
-					if (_kq._event_list[i].data == ESRCH)
-					{
-						std::cerr << "[ESRCH] 지정된 프로세스가 존재하지 않습니다.\n";
-					}
+
 					close(_kq._event_list[i].ident);
 					if (_kq._event_list[i].data != ENOENT)
 					{
@@ -250,15 +209,25 @@ void Server::keventProcess()
 								}
 								buffer[n] = 0;
 								client_socket->getResource()->getResourceContent().append(buffer, n);
-								if (n < BUFFERSIZE - 1)
+								if (n == 0)
+								{
+									// client_socket->parsingCGIResponse();
+									// std::cerr << "parsingCGIResponse" << std::endl;
+									_kq.removeEvent(EVFILT_READ, _kq._event_list[i].ident, NULL);
+									// _kq.enableEvent(EVFILT_WRITE, _kq._event_list[i].ident, NULL);
+									close(client_socket->getResource()->getReadFd());
+									close(client_socket->getResource()->getWriteFd());
+									client_socket->setStage(MAKE_RESPONSE);
+								}
+								else if (n < BUFFERSIZE - 1)
 								{
 									client_socket->parsingCGIResponse();
 									std::cerr << "parsingCGIResponse" << std::endl;
-									_kq.removeEvent(EVFILT_READ, _kq._event_list[i].ident, NULL);
+									// _kq.removeEvent(EVFILT_READ, _kq._event_list[i].ident, NULL);
 									// _kq.enableEvent(EVFILT_WRITE, _kq._event_list[i].ident, NULL);
 									// close(client_socket->getResource()->getReadFd());
 									// close(client_socket->getResource()->getWriteFd());
-									client_socket->setStage(MAKE_RESPONSE);
+									// client_socket->setStage(MAKE_RESPONSE);
 								}
 							}
 						}
@@ -272,7 +241,17 @@ void Server::keventProcess()
 
 							char buf2[resource_size];
 							long fread_size = fread(buf2, sizeof(char), resource_size, resource_ptr);
-							if (fread_size != resource_size)
+							if (fread_size < 0)
+							{
+								client_socket->setStage(MAKE_RESPONSE);
+								continue;
+							}
+							else if (fread_size == 0)
+							{
+								client_socket->setStage(MAKE_RESPONSE);
+								continue;
+							}
+							else if (fread_size != resource_size)
 							{
 								std::cout << "read errorr !!!!!!!" << std::endl;
 								continue;
