@@ -37,7 +37,7 @@ void CgiHandler::cgiInitEnv()
 
 	_cgi_env["SERVER_PORT"] = _client_socket->getRequest()->getPort();
 	_cgi_env["SERVER_NAME"] = _client_socket->getRequest()->getServerName();
-	_cgi_env["PATH_INFO"] = _client_socket->getRequest()->getPath();
+	// _cgi_env["PATH_INFO"] = _client_socket->getRequest()->getPath();
 	_cgi_env["DOCUMENT_ROOT"] = _location_info->getCommonDirective()._cgi_path[extension];
 
 	// _cgi_env["PHP_SELF"] = _client_socket->getRequest()->getPath();
