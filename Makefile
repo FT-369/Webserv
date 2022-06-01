@@ -1,6 +1,6 @@
 # compile flag
 CXX = clang++
-CXXFLAGS = -std=c++98 $(IFLAGS) -fsanitize=address -g
+CXXFLAGS = -std=c++98 $(IFLAGS)
 IFLAGS = -I$(UTILS_INCLUDE) -I$(CONFIG_INCLUDE) -I$(CLIENT_INCLUDE) -I$(SERVER_INCLUDE) -I$(WEBSERV_INCLUDE)
 
 # exec name
