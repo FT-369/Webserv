@@ -90,29 +90,29 @@ int main(void)
 	
 	Server server = Server(config);
 
-	// std::cout << config.getConfigText() << std::endl;
-	// std::map<std::string, std::string> main = config.getGeneralDirective();
-	// ConfigHttp http = config.getHttpDirective();
+	std::cout << config.getConfigText() << std::endl;
+	std::map<std::string, std::string> main = config.getGeneralDirective();
+	ConfigHttp http = config.getHttpDirective();
 
-	// printMap("general", main);
-	// printMap("http_simple", http.getSimpleDirective());
+	printMap("general", main);
+	printMap("http_simple", http.getSimpleDirective());
 
-	// std::vector<ConfigServer> servers = http.getServers();
-	// for (int i = 0; i < servers.size(); i++) {
-	// 	ConfigServer server = servers[i];
-	// 	printCommonDirective("server_common_" + std::to_string(i + 1), server.getCommonDirective());
-	// 	printMap("server_simple_" + std::to_string(i + 1), server.getSimpleDirective());
-	// 	printServerDirective("server_directive_" + std::to_string(i + 1), server);
+	std::vector<ConfigServer> servers = http.getServers();
+	for (int i = 0; i < servers.size(); i++) {
+		ConfigServer server = servers[i];
+		printCommonDirective("server_common_" + std::to_string(i + 1), server.getCommonDirective());
+		printMap("server_simple_" + std::to_string(i + 1), server.getSimpleDirective());
+		printServerDirective("server_directive_" + std::to_string(i + 1), server);
 		
-	// 	std::vector<ConfigLocation> locations = server.getLocations();
-	// 	for (int j = 0; j < locations.size(); j++) {
-	// 		ConfigLocation location = locations[j];
-	// 		std::cout << C_YLLW << "location_url_" + std::to_string(i + 1) + "_" + std::to_string(j + 1) + ": " << C_NRML << location.getUrl() << std::endl;
-	// 		printCommonDirective("location_common_" + std::to_string(i + 1) + "_" + std::to_string(j + 1), location.getCommonDirective());
-	// 		printMap("location_simple_" + std::to_string(i + 1) + "_" + std::to_string(j + 1), location.getSimpleDirective());
-	// 		printLocationDirective("location_" + std::to_string(i + 1), location);
-	// 	}
-	// }
+		std::vector<ConfigLocation> locations = server.getLocations();
+		for (int j = 0; j < locations.size(); j++) {
+			ConfigLocation location = locations[j];
+			std::cout << C_YLLW << "location_url_" + std::to_string(i + 1) + "_" + std::to_string(j + 1) + ": " << C_NRML << location.getUrl() << std::endl;
+			printCommonDirective("location_common_" + std::to_string(i + 1) + "_" + std::to_string(j + 1), location.getCommonDirective());
+			printMap("location_simple_" + std::to_string(i + 1) + "_" + std::to_string(j + 1), location.getSimpleDirective());
+			printLocationDirective("location_" + std::to_string(i + 1), location);
+		}
+	}
 	try
 	{
 		server.keventProcess();

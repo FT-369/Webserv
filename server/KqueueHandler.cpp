@@ -36,10 +36,3 @@ void KqueueHandler::enableEvent(int16_t filter, uintptr_t ident, void *udata)
     EV_SET(&temp_event, ident, filter, EV_ENABLE, 0, 0, udata);
     _change_list.push_back(temp_event);
 }
-
-void KqueueHandler::removeEvent(int16_t filter, uintptr_t ident, void *udata)
-{
-    struct kevent temp_event;
-    EV_SET(&temp_event, ident, filter, EV_DELETE, 0, 0, udata);
-    _change_list.push_back(temp_event);
-}
