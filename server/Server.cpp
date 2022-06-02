@@ -79,16 +79,18 @@ void Server::keventProcess()
 				continue;
 			if (_kq._event_list[i].flags & EV_ERROR)
 			{
-				if (_socket.find(_kq._event_list[i].ident) != _socket.end() && _socket[_kq._event_list[i].ident] != NULL)
+				ClientSocket *client_socket = dynamic_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
+				if (client_socket != 0 && static_cast<uintptr_t>(client_socket->getSocketFd()) == _kq._event_list[i].ident)
 				{
-					close(_kq._event_list[i].ident);
-					if (_kq._event_list[i].data != ENOENT)
+					if (client_socket->getResource()->getPid() == -1)
 					{
-						delete _socket[_kq._event_list[i].ident];
+						if (client_socket->getRequest())
+							fclose(client_socket->getRequest()->getSocketReadFP());
+						if (client_socket->getResponse())
+							fclose(client_socket->getResponse()->getSocketWriteFD());
 					}
-					_socket[_kq._event_list[i].ident] = NULL;
-					_socket.erase(_kq._event_list[i].ident);
 				}
+				close(_kq._event_list[i].ident);
 				continue;
 			}
 			switch (_kq._event_list[i].filter)
