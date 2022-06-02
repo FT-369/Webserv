@@ -77,7 +77,7 @@ void Server::keventProcess()
 		if (event_num == -1)
 		{
 			std::cout << "errrororroroor" << std::endl;
-			exit(1);
+			continue ;
 		}
 		for (int i = 0; i < event_num; i++)
 		{
@@ -172,7 +172,7 @@ void Server::keventProcess()
 							}
 						}
 					}
-					else if (client_socket != 0 && client_socket->getResource() != 0 && client_socket->getResource()->getWriteFd() != _kq._event_list[i].ident
+					else if (client_socket != 0 && client_socket->getResource() != 0 && client_socket->getResource()->getReadFd() == _kq._event_list[i].ident
 						&& (client_socket->getStage() == SET_RESOURCE || client_socket->getStage() == CGI_READ))
 					{
 						int stat, ret;
@@ -209,26 +209,26 @@ void Server::keventProcess()
 								}
 								buffer[n] = 0;
 								client_socket->getResource()->getResourceContent().append(buffer, n);
-								if (n == 0)
+								if (n < BUFFERSIZE - 1)
 								{
-									// client_socket->parsingCGIResponse();
-									// std::cerr << "parsingCGIResponse" << std::endl;
+									client_socket->parsingCGIResponse();
+									std::cerr << "parsingCGIResponse" << std::endl;
 									_kq.removeEvent(EVFILT_READ, _kq._event_list[i].ident, NULL);
 									// _kq.enableEvent(EVFILT_WRITE, _kq._event_list[i].ident, NULL);
 									close(client_socket->getResource()->getReadFd());
 									close(client_socket->getResource()->getWriteFd());
 									client_socket->setStage(MAKE_RESPONSE);
 								}
-								else if (n < BUFFERSIZE - 1)
-								{
-									client_socket->parsingCGIResponse();
-									std::cerr << "parsingCGIResponse" << std::endl;
-									// _kq.removeEvent(EVFILT_READ, _kq._event_list[i].ident, NULL);
-									// _kq.enableEvent(EVFILT_WRITE, _kq._event_list[i].ident, NULL);
-									// close(client_socket->getResource()->getReadFd());
-									// close(client_socket->getResource()->getWriteFd());
-									// client_socket->setStage(MAKE_RESPONSE);
-								}
+								// else if (n < BUFFERSIZE - 1)
+								// {
+								// 	client_socket->parsingCGIResponse();
+								// 	std::cerr << "parsingCGIResponse" << std::endl;
+								// 	// _kq.removeEvent(EVFILT_READ, _kq._event_list[i].ident, NULL);
+								// 	// _kq.enableEvent(EVFILT_WRITE, _kq._event_list[i].ident, NULL);
+								// 	// close(client_socket->getResource()->getReadFd());
+								// 	// close(client_socket->getResource()->getWriteFd());
+								// 	// client_socket->setStage(MAKE_RESPONSE);
+								// }
 							}
 						}
 						else if (client_socket != 0 && client_socket->getResource() != 0 && client_socket->getResource()->getReadFd() == _kq._event_list[i].ident)
