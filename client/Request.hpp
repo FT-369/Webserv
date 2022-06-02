@@ -27,6 +27,7 @@ public:
 	std::string _protocol;
 	std::string _request_body;
 	std::string _request_main;
+	unsigned int _request_line_size;
 	unsigned int _request_header_size;
 	unsigned long _request_body_size;
 	std::map<std::string, std::string> _request_header;
@@ -39,9 +40,7 @@ public:
 	void parseRequest();
 	// void setRoute(std::vector<ConfigLocation> const &locations);
 
-	// int getSocketFD() const;
 	FILE *getSocketReadFP() const;
-	// FILE *getSocketWriteFP() const;
 	std::string getMethod() const;
 	std::string getPath() const;
 	std::string getQuery() const;
@@ -56,15 +55,10 @@ public:
 	unsigned int getRequestHeaderSize() const;
 	unsigned long getRequestBodySize() const;
 
-	// ConfigLocation *getRoute() const;
-	// ConfigLocation *getRoute();
-	// std::string getFile() const;
-
 private:
-	void parseRequestLine();
-	void parseRequestHeader();
-	void parseRequestBody();
-	std::string ft_fgets_line(FILE *fp);
+	void parseRequestBody(std::string const &line);
+	void parseRequestHeader(std::string const &line);
+	void parseRequestLine(std::string const &line);
 };
 
 #endif

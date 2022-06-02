@@ -74,13 +74,16 @@ void printLocationDirective(std::string name, ConfigLocation location) {
 	std::cout << C_GREN << "End of [" << name << "]\n\n" << C_NRML;
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
 	Config config;
 
 	try
 	{
-		config.setting();
+		if (argc > 1)
+			config.setting(std::string(argv[1]));
+		else
+			config.setting();
 	}
 	catch(const std::exception& e)
 	{

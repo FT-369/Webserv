@@ -1,18 +1,15 @@
 #include "Request.hpp"
 
 Request::Request(int socket_fd)
-	: _socket_read(fdopen(socket_fd, "r")), _stage(READ_REQUEST_LINE), _request_header_size(0), _request_body_size(0)
+	: _socket_read(fdopen(dup(socket_fd), "r")), _stage(READ_REQUEST_LINE), _request_header_size(0), _request_body_size(0)
 {
 }
 
 Request::~Request()
 {
 	fclose(_socket_read);
-	// fclose(socket_write);
-	// close(_socket_fd);
 }
 
-// int Request::getSocketFD() const { return _socket_fd; }
 FILE *Request::getSocketReadFP() const { return _socket_read; }
 
 std::string Request::getPort() const {
@@ -49,164 +46,6 @@ std::string Request::getRequestBody() const { return _request_body; }
 std::map<std::string, std::string> Request::getRequestHeader() const { return _request_header; }
 RequestStage Request::getRequestStage() const { return _stage; }
 
-std::string Request::ft_fgets_line(FILE *fp)
-{
-	char line[GET_LINE_BUF] = {
-		0,
-	};
-	std::string getline;
-	size_t len;
-
-	if (!fgets(line, GET_LINE_BUF, fp))
-		return getline;
-	getline = std::string(line);
-
-	while ((len = std::strlen(line)) && line[len - 1] != '\n')
-	{
-		if (!fgets(line, GET_LINE_BUF, fp))
-			return getline;
-		getline += std::string(line);
-	}
-	return getline;
-}
-
-void Request::parseRequestLine()
-{
-	std::string get_line;
-	std::vector<std::string> request_line;
-	std::vector<std::string> query_list;
-	size_t pos;
-
-	get_line = ft_fgets_line(getSocketReadFP());
-	_request_main += get_line;
-	if (get_line == "" || get_line == "\r\n")
-		throw request_error("Invalid Request");
-
-	request_line = ft_split_space(get_line);
-	if (request_line.size() != 3)
-		throw request_error("Invalid request line");
-
-	_method = request_line[0];
-	if ((pos = request_line[1].find("?")) == std::string::npos)
-	{
-		_path = request_line[1];
-	}
-	else
-	{
-		_path = request_line[1].substr(0, pos);
-		_query = request_line[1].substr(pos + 1);
-	}
-	_protocol = request_line[2];
-
-	if (_method != "GET" && _method != "POST" && _method != "DELETE")
-		throw request_error("Unknown method");
-	if (_path[0] != '/')
-		throw request_error("Invalid path");
-	if ((pos = _protocol.find("HTTP/1.1")) == std::string::npos)
-		throw request_error("not http protocol");
-
-	_stage = READ_REQUEST_HEADER;
-}
-
-void Request::parseRequestHeader()
-{
-	std::string get_line, key, value;
-	std::vector<std::string> key_value;
-
-	get_line = ft_fgets_line(getSocketReadFP());
-	_request_main += get_line;
-	_request_header_size += get_line.size();
-	if (get_line == "" || get_line == "\r\n")
-	{
-		_stage = READ_REQUEST_BODY;
-		return;
-	}
-	key_value = ft_split(get_line, ": ");
-	if (key_value.size() != 2)
-	{
-		_request_header.clear();
-		throw request_error("request format");
-	}
-	key = key_value[0];
-	value = key_value[1].replace(key_value[1].find("\r\n"), 2, "\0");
-	_request_header[key] = value;
-}
-
-void Request::parseRequestBody()
-{
-	long fread_ret;
-
-	if ((_request_header.find("Transfer-Encoding") != _request_header.end()
-		&& _request_header["Transfer-Encoding"] == "chunked") || 
-		(_request_header.find("transfer-encoding") != _request_header.end()
-		&& _request_header["transfer-encoding"] == "chunked"))
-	{
-		std::cerr << "_request_header[Transfer-Encoding] == chunked\n";
-		unsigned int chunk_size;
-		std::string chunk_size_hexa = ft_fgets_line(getSocketReadFP());
-		chunk_size_hexa.replace(chunk_size_hexa.find("\r\n"), 2, "\0");
-
-		// String to Hex
-		std::stringstream convert(chunk_size_hexa);
-		convert >> std::hex >> chunk_size;
-		std::cout << std::hex << chunk_size << std::endl;
-
-		char line[chunk_size + 3];
-		fread_ret = fread(line, sizeof(char), chunk_size + 2, getSocketReadFP());
-		line[chunk_size] = 0;
-		if (chunk_size == 0)
-		{
-			_stage = READ_END_OF_REQUEST;
-
-		}
-		else
-		{
-			_request_body_size += chunk_size;
-			_request_body.append(line, chunk_size);
-			_request_main.append(line, chunk_size);
-		}
-	}
-	else
-	{
-		char line[GET_LINE_BUF];
-		
-		memset(line, 0, GET_LINE_BUF);
-		fread_ret = fread(line, sizeof(char), GET_LINE_BUF - 1, getSocketReadFP());
-		line[fread_ret] = 0;
-		_request_body_size += fread_ret;
-		if (fread_ret <= 0)
-		{
-			_stage = READ_END_OF_REQUEST;
-		}
-		else
-		{
-			_request_body.append(line, fread_ret);
-			_request_main.append(line, fread_ret);
-		}
-	}
-}
-
-void Request::parseRequest()
-{
-	switch (_stage)
-	{
-	case READ_REQUEST_LINE:
-		parseRequestLine();
-		break;
-
-	case READ_REQUEST_HEADER:
-		parseRequestHeader();
-		break;
-
-	case READ_REQUEST_BODY:
-		parseRequestBody();
-		break;
-
-	default:
-		break;
-	}
-}
-
 std::string Request::getRequestMain() const 
 {
 	return _request_main;
@@ -220,4 +59,141 @@ unsigned int Request::getRequestHeaderSize() const
 unsigned long Request::getRequestBodySize() const
 {
 	return _request_body_size;
+}
+
+void Request::parseRequestLine(std::string const &line)
+{
+	std::vector<std::string> request_line;
+	size_t pos;
+
+	if (line == "")
+		throw request_error("Invalid Request Line");
+
+	request_line = ft_split_space(line);
+	if (request_line.size() != 3)
+		throw request_error("Invalid request Line");
+
+	_method = request_line[0];
+	if ((pos = request_line[1].find("?")) == std::string::npos)
+	{
+		_path = request_line[1];
+	}
+	else
+	{
+		_path = request_line[1].substr(0, pos);
+		_query = request_line[1].substr(pos + 1);
+	}
+	_protocol = request_line[2];
+
+	if (_path == "" && _path[0] != '/')
+		throw request_error("Invalid path");
+	if ((pos = _protocol.find("HTTP")) == std::string::npos)
+		throw request_error("not http protocol");
+}
+
+void Request::parseRequestHeader(std::string const &line)
+{
+	std::vector<std::string> headers;
+	std::vector<std::string> key_value;
+
+	headers = ft_split(line, "\r\n");
+
+	for (size_t i = 0; i < headers.size(); i++)
+	{
+		if (headers[i] == "")
+		{
+			throw request_error("Invalid Request header");
+		}
+		key_value = ft_split(headers[i], ": ");
+		if (key_value.size() != 2)
+		{
+			throw request_error("Invalid Request header format");
+		}
+		_request_header[key_value[0]] = key_value[1];
+	}
+}
+
+void Request::parseRequestBody(std::string const &line)
+{
+	std::vector<std::string> chunk;
+	std::string chunk_size_hexa;
+	std::string chunk_message;
+	unsigned int chunk_size;
+	std::stringstream convert;
+
+	if ((_request_header.find("Transfer-Encoding") != _request_header.end()
+		&& _request_header["Transfer-Encoding"] == "chunked") || 
+		(_request_header.find("transfer-encoding") != _request_header.end()
+		&& _request_header["transfer-encoding"] == "chunked"))
+	{
+		chunk = ft_split(_request_main, "\r\n");
+
+		for (size_t i = 0; i < chunk.size(); i += 2)
+		{
+			chunk_size_hexa = chunk[i];
+			std::stringstream convert(chunk_size_hexa);
+			convert >> std::hex >> chunk_size;
+			if (chunk_size == 0)
+				break;
+			chunk_message = chunk[i + 1];
+			_request_body.append(chunk_message, chunk_message.length());
+			_request_body_size += chunk_message.length();
+		}
+	}
+	else
+	{
+		_request_body = _request_main;
+		_request_body_size = _request_main.length();
+	}
+}
+
+void Request::parseRequest()
+{
+	char line[GET_LINE_BUF];
+	
+	memset(line, 0, GET_LINE_BUF);
+	long fread_ret = fread(line, sizeof(char), GET_LINE_BUF - 1, getSocketReadFP());
+	if (fread_ret < 0)
+	{
+		fclose(getSocketReadFP());
+		throw request_error("request fread error");
+	}
+	if (fread_ret == 0 && _stage == READ_END_OF_REQUEST)
+	{
+		return;
+	}
+
+	line[fread_ret] = 0;
+	_request_main.append(line, fread_ret);
+	if (_stage == READ_REQUEST_LINE)
+	{
+		size_t line_end = _request_main.find("\r\n");
+		if (line_end != std::string::npos)
+		{
+			parseRequestLine(_request_main.substr(0, line_end));
+			_request_line_size = line_end;
+			_stage = READ_REQUEST_HEADER;
+			_request_main = _request_main.substr(line_end + 2);
+		}
+	}
+	else if (_stage == READ_REQUEST_HEADER)
+	{
+		size_t header_end = _request_main.find("\r\n\r\n");
+		if (header_end != std::string::npos)
+		{
+			parseRequestHeader(_request_main.substr(0, header_end));
+			_request_header_size = header_end;
+			_stage = READ_REQUEST_BODY;
+			_request_main = _request_main.substr(header_end + 4);
+		}
+	}
+	else if (_stage == READ_REQUEST_BODY)
+	{
+		if (fread_ret == 0)
+		{
+			parseRequestBody(_request_main);
+			_stage = READ_END_OF_REQUEST;
+			fclose(getSocketReadFP());
+		}
+	}
 }
