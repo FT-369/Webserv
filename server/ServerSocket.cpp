@@ -31,7 +31,7 @@ void ServerSocket::binding()
 	{
 		throw socket_error("bind()");
 	}
-	if (listen(_socket_fd, 20) == -1)
+	if (listen(_socket_fd, 100000) == -1)
 	{
 		throw socket_error("listen()");
 	}

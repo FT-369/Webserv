@@ -2,7 +2,6 @@
 
 ConfigHttp::ConfigHttp()
 {
-	// init default
 }
 
 ConfigHttp::~ConfigHttp() {}
@@ -31,6 +30,10 @@ void ConfigHttp::identifyServerBlock(std::string const &block)
 	}
 }
 
+bool compareConfigServer(const ConfigServer &o1, const ConfigServer &o2) {
+	return o1.getListenPort() > o2.getListenPort();
+}
+
 void ConfigHttp::parsingHttp(std::string const &block)
 {
 	size_t pos;
@@ -51,5 +54,12 @@ void ConfigHttp::parsingHttp(std::string const &block)
 	for (size_t i = 0; i < blocks.size(); i++)
 	{
 		identifyServerBlock(blocks[i]);
+	}
+
+	sort(_servers.begin(), _servers.end(), compareConfigServer);
+	for (size_t i = 1; i < _servers.size(); i++)
+	{
+		if (_servers[i].getListenPort() == _servers[i - 1].getListenPort())
+			throw config_error("Duplicate Port");
 	}
 }
