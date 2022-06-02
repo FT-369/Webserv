@@ -23,16 +23,12 @@ void Server::serverConnect()
 {
 	std::vector<ConfigServer> servers = (_config.getHttpDirective()).getServers();
 	int server_size = servers.size();
-	std::cout << "origin_ server_size = " << (_config.getHttpDirective()).getServers().size() << std::endl;
-	std::cout << "server_size = " << server_size << std::endl;
 	for (int i = 0; i < server_size; i++)
 	{
 		ServerSocket *new_socket;
 		try
 		{
 			new_socket = new ServerSocket(servers[i]);
-			std::cout << "server host:" << new_socket->getSocketHost() << std::endl;
-			std::cout << "server port:" << new_socket->getSocketPort() << std::endl;
 			new_socket->binding();
 		}
 		catch (const std::exception &e)
@@ -45,7 +41,6 @@ void Server::serverConnect()
 		_socket[new_socket->getSocketFd()] = new_socket;
 		_kq.addEvent(EVFILT_READ, new_socket->getSocketFd(), NULL);
 	}
-	std::cout << "map_socket_size: " << _socket.size() << std::endl;
 }
 
 void Server::acceptGetClientFd(ServerSocket *server_socket)
@@ -65,14 +60,12 @@ void Server::keventProcess()
 	int flag = 0;
 	serverConnect(); // config server의 서버별 kqueue등록
 	if ((_kq._kq_fd = kqueue()) == -1)
-		std::cout << " errorororororo" << std::endl;
 	while (1)
 	{
 		int event_num = _kq.initKevent();
 		if (event_num == -1)
 		{
-			std::cout << "errrororroroor" << std::endl;
-			exit(1);
+			continue ;
 		}
 		for (int i = 0; i < event_num; i++)
 		{
@@ -102,7 +95,6 @@ void Server::keventProcess()
 				case SERVER_SOCKET:
 				{
 					ServerSocket *server_socket = dynamic_cast<ServerSocket *>(_socket[_kq._event_list[i].ident]);
-					std::cout << server_socket << std::endl;
 					try
 					{
 						acceptGetClientFd(server_socket);
@@ -117,11 +109,14 @@ void Server::keventProcess()
 				{
 					ClientSocket *client_socket = dynamic_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
 
-					if (client_socket != 0 && client_socket->getSocketFd() == _kq._event_list[i].ident && client_socket->getStage() == GET_REQUEST)
+					if (client_socket == 0)
+					{
+						continue;
+					}
+					if (client_socket->getSocketFd() == _kq._event_list[i].ident && client_socket->getStage() == GET_REQUEST)
 					{
 						if (client_socket->getRequest() == 0)
 						{
-							std::cerr << "Request() error" << std::endl;
 							continue;
 						}
 						while (client_socket->getStage() != END_OF_REQUEST)
@@ -157,7 +152,7 @@ void Server::keventProcess()
 							}
 						}
 					}
-					else if (client_socket != 0 && client_socket->getResource() != 0 && client_socket->getResource()->getWriteFd() != _kq._event_list[i].ident && (client_socket->getStage() == SET_RESOURCE || client_socket->getStage() == CGI_READ))
+					else if (client_socket->getResource() != 0 && client_socket->getResource()->getWriteFd() != _kq._event_list[i].ident && (client_socket->getStage() == SET_RESOURCE || client_socket->getStage() == CGI_READ))
 					{
 						int stat, ret;
 						size_t n;
@@ -166,7 +161,6 @@ void Server::keventProcess()
 						if (client_socket->getResource()->getPid() > 0)
 						{ // cgi
 							ret = waitpid(client_socket->getResource()->getPid(), &stat, WNOHANG);
-
 							if (ret == 0)
 							{
 								continue;
@@ -177,14 +171,14 @@ void Server::keventProcess()
 								// cgi error
 								_socket.erase(_kq._event_list[i].ident);
 								close(_kq._event_list[i].ident);
-								break;
-								;
+								continue ;
 							}
 							else if (WIFEXITED(stat) == true)
 							{
 								int n = read(_kq._event_list[i].ident, buffer, BUFFERSIZE - 1);
 								if (n < 0)
 								{
+									client_socket->setErrorResource("500");
 									continue;
 									// read error
 								}
@@ -197,7 +191,7 @@ void Server::keventProcess()
 								}
 							}
 						}
-						else if (client_socket != 0 && client_socket->getResource() != 0 && client_socket->getResource()->getReadFd() == _kq._event_list[i].ident)
+						else if (client_socket->getResource() != 0 && client_socket->getResource()->getReadFd() == _kq._event_list[i].ident)
 						{
 							// file Read
 							FILE *resource_ptr = fdopen(_kq._event_list[i].ident, "r");
@@ -206,8 +200,9 @@ void Server::keventProcess()
 							rewind(resource_ptr);
 							char buf2[resource_size];
 							long fread_size = fread(buf2, sizeof(char), resource_size, resource_ptr);
-							if (fread_size != resource_size)
+							if (fread_size != 0 && fread_size != resource_size)
 							{
+								client_socket->setErrorResource("500");
 								continue;
 							}
 							client_socket->getResource()->setResourceLength(resource_size);
@@ -230,7 +225,11 @@ void Server::keventProcess()
 				{
 					ClientSocket *client_socket = dynamic_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
 					// Send Response
-					if (client_socket != 0 && client_socket->getSocketFd() == _kq._event_list[i].ident && client_socket->getRequest() != 0 && client_socket->getStage() == MAKE_RESPONSE) // + 리소스도 다 읽었으면
+					if (client_socket == 0)
+					{
+						continue;
+					}
+					if (client_socket->getSocketFd() == _kq._event_list[i].ident && client_socket->getRequest() != 0 && client_socket->getStage() == MAKE_RESPONSE) // + 리소스도 다 읽었으면
 					{
 						client_socket->makeResponse();
 						client_socket->sendResponse();
@@ -240,7 +239,7 @@ void Server::keventProcess()
 						_socket.erase(_kq._event_list[i].ident);
 						close(_kq._event_list[i].ident);
 					}
-					else if (client_socket != 0 && client_socket->getStage() == CGI_WRITE && client_socket->getResource()->getWriteFd() == _kq._event_list[i].ident)
+					else if (client_socket->getStage() == CGI_WRITE && client_socket->getResource()->getWriteFd() == _kq._event_list[i].ident)
 					{
 						FILE *resource_ptr = fdopen(client_socket->getResource()->getWriteFd(), "wb");
 						fwrite(client_socket->getRequest()->getRequestBody().c_str(), 1, client_socket->getRequest()->getRequestBody().size(), resource_ptr);
@@ -248,12 +247,13 @@ void Server::keventProcess()
 						_socket.erase(client_socket->getResource()->getWriteFd());
 						client_socket->setStage(CGI_READ);
 					}
-					else if (client_socket != 0 && client_socket->getResource() != 0 && client_socket->getResource()->getWriteFd() == _kq._event_list[i].ident && client_socket->getStage() == SET_RESOURCE)
+					else if (client_socket->getResource() != 0 && client_socket->getResource()->getWriteFd() == _kq._event_list[i].ident && client_socket->getStage() == SET_RESOURCE)
 					{
 						// POST Write
 						FILE *resource_ptr = fdopen(client_socket->getResource()->getWriteFd(), "wb");
 						fwrite(client_socket->getRequest()->getRequestBody().c_str(), 1, client_socket->getRequest()->getRequestBody().size(), resource_ptr);
 						fclose(resource_ptr);
+						_socket.erase(client_socket->getResource()->getWriteFd());
 						client_socket->setStage(MAKE_RESPONSE);
 					}
 				}

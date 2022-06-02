@@ -88,20 +88,15 @@ int ClientSocket::isErrorRequest()
 	}
 	else if (find(allowed_method.begin(), allowed_method.end(), _request->getMethod()) == allowed_method.end())
 	{
-		std::cout << "ERROR Response " << std::endl;
 		setErrorResource("403");
 	}
 	else if (_request->getRequestHeaderSize() > _route->getCommonDirective()._request_limit_header_size || 
 	_request->getRequestBodySize() > _route->getCommonDirective()._client_limit_body_size) // request body & header size 체크
 	{
-		std::cerr << "ERROR Resquest Limit Size" << std::endl;
-		std::cerr << "_request->getRequestHeaderSize() : " << _request->getRequestHeaderSize() << std::endl;
-		std::cerr << "_request->getRequestBody().size() : " <<_request->getRequestBody().size() << std::endl;
 		setErrorResource("413");
 	}
 	else if (isDirectory(_route->getCommonDirective()._root) == 0)
 	{
-		std::cout << "ERROR Response " << std::endl;
 		setErrorResource("404");
 	}
 	else
@@ -127,17 +122,14 @@ void ClientSocket::setResourceFd()
 	}
 	else if (_request->getMethod() == "GET")
 	{
-		std::cout << "GET" << std::endl;
 		setGetFd();
 	}
 	else if (_request->getMethod() == "POST")
 	{
-		std::cout << "POST" << std::endl;
 		setPostFd();
 	}
 	else if (_request->getMethod() == "DELETE")
 	{
-		std::cout << "setDeleteFd" << std::endl;
 		setDeleteFd();
 	}
 }
@@ -147,7 +139,6 @@ bool ClientSocket::isCGI(const std::string &path)
 	std::string type;
 	type = getExtension(path);
 	std::map<std::string, std::string> cgi_path = _route->getCommonDirective()._cgi_path;
-	std::cout << "cgi_path = " << type << std::endl;
 	if (cgi_path.find(type) != cgi_path.end())
 	{
 		return 1;
@@ -242,7 +233,6 @@ void ClientSocket::setPostFd()
 			i++;
 		}
 		filename = temp;
-		std::cout << filename << " : filename = dirpath + _file; " << std::endl;
 	}
 	size_t rrpos = filename.rfind("/");
 	std::string temp_file;
@@ -302,6 +292,7 @@ void ClientSocket::setErrorResource(std::string error)
 {
 	int fd;
 
+	client_socket->setStage(MAKE_RESPONSE);
 	_response->setStatusCode(error);
 	fd = open(getErrorPage(error).c_str(), O_RDONLY);
 	_resource->setReadFd(fd);
@@ -336,7 +327,6 @@ void ClientSocket::setRoute()
 	std::string path = _request->getPath();
 	int path_len = path.size();
 	std::vector<ConfigLocation> locations = _server_info.getLocations();
-	std::cout << "setRoute path: " << _request->getPath() << std::endl;
 	_file = "";
 
 	for (int i = path_len - 1; i >= -1; i--)
