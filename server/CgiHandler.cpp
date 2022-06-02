@@ -95,7 +95,7 @@ int CgiHandler::executeCgi()
 		{
 			return -1;
 		}
-		int i = 0;
+		size_t i = 0;
 		for (std::map<std::string, std::string>::iterator it = _cgi_env.begin(); it != _cgi_env.end(); it++)
 		{
 			env[i] = strdup((it->first + "=" + it->second).c_str());

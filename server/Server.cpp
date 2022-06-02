@@ -60,7 +60,6 @@ void Server::acceptGetClientFd(ServerSocket *server_socket)
 
 void Server::keventProcess()
 {
-	int flag = 0;
 	serverConnect(); // config server의 서버별 kqueue등록
 	if ((_kq._kq_fd = kqueue()) == -1)
 	{
@@ -115,7 +114,7 @@ void Server::keventProcess()
 				{
 					ClientSocket *client_socket = dynamic_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
 
-					if (client_socket != 0 && client_socket->getSocketFd() == _kq._event_list[i].ident && client_socket->getStage() == GET_REQUEST)
+					if (client_socket != 0 && static_cast<uintptr_t>(client_socket->getSocketFd()) == _kq._event_list[i].ident && client_socket->getStage() == GET_REQUEST)
 					{
 						if (client_socket->getRequest() == 0)
 						{
@@ -155,11 +154,10 @@ void Server::keventProcess()
 							}
 						}
 					}
-					else if (client_socket != 0 && client_socket->getResource() != 0 && client_socket->getResource()->getReadFd() == _kq._event_list[i].ident
+					else if (client_socket != 0 && client_socket->getResource() != 0 && static_cast<uintptr_t>(client_socket->getResource()->getReadFd()) == _kq._event_list[i].ident
 						&& (client_socket->getStage() == SET_RESOURCE || client_socket->getStage() == CGI_READ))
 					{
 						int stat, ret;
-						size_t n;
 						char buffer[BUFFERSIZE];
 						memset(buffer, 0, BUFFERSIZE);
 						if (client_socket->getResource()->getPid() > 0)
@@ -198,7 +196,7 @@ void Server::keventProcess()
 								}
 							}
 						}
-						else if (client_socket != 0 && client_socket->getResource() != 0 && client_socket->getResource()->getReadFd() == _kq._event_list[i].ident)
+						else if (client_socket != 0 && client_socket->getResource() != 0 && static_cast<uintptr_t>(client_socket->getResource()->getReadFd()) == _kq._event_list[i].ident)
 						{ // file 읽기
 							FILE *resource_ptr = fdopen(_kq._event_list[i].ident, "r");
 							fseek(resource_ptr, 0, SEEK_END);
@@ -237,7 +235,7 @@ void Server::keventProcess()
 				{
 					ClientSocket *client_socket = dynamic_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
 					// response 보내주는거
-					if (client_socket != 0 && client_socket->getSocketFd() == _kq._event_list[i].ident && client_socket->getRequest() != 0 && client_socket->getStage() == MAKE_RESPONSE) // + 리소스도 다 읽었으면
+					if (client_socket != 0 && static_cast<uintptr_t>(client_socket->getSocketFd()) == _kq._event_list[i].ident && client_socket->getRequest() != 0 && client_socket->getStage() == MAKE_RESPONSE) // + 리소스도 다 읽었으면
 					{
 						client_socket->makeResponse();
 						client_socket->sendResponse();
@@ -247,7 +245,7 @@ void Server::keventProcess()
 						_socket.erase(_kq._event_list[i].ident);
 						close(_kq._event_list[i].ident);
 					}
-					else if (client_socket != 0 && client_socket->getStage() == CGI_WRITE && client_socket->getResource()->getWriteFd() == _kq._event_list[i].ident)
+					else if (client_socket != 0 && client_socket->getStage() == CGI_WRITE && static_cast<uintptr_t>(client_socket->getResource()->getWriteFd()) == _kq._event_list[i].ident)
 					{
 						FILE *resource_ptr = fdopen(client_socket->getResource()->getWriteFd(), "wb");
 						fwrite(client_socket->getRequest()->getRequestBody().c_str(), 1, client_socket->getRequest()->getRequestBody().size(), resource_ptr);
@@ -255,7 +253,7 @@ void Server::keventProcess()
 						_socket.erase(client_socket->getResource()->getWriteFd());
 						client_socket->setStage(CGI_READ);
 					}
-					else if (client_socket != 0 && client_socket->getResource() != 0 && client_socket->getResource()->getWriteFd() == _kq._event_list[i].ident && client_socket->getStage() == SET_RESOURCE)
+					else if (client_socket != 0 && client_socket->getResource() != 0 && static_cast<uintptr_t>(client_socket->getResource()->getWriteFd()) == _kq._event_list[i].ident && client_socket->getStage() == SET_RESOURCE)
 					{
 						// POST
 						FILE *resource_ptr = fdopen(client_socket->getResource()->getWriteFd(), "wb");

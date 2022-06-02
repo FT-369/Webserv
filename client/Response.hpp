@@ -17,7 +17,7 @@ private:
 	std::string _status_code;
 
 public:
-	Response(int socket_fd, Resource *resource);
+	Response(int socket_fd);
 	~Response();
 	FILE* getSocketWriteFD() const;
 	std::string getStatusCode() const;

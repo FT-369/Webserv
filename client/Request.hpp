@@ -53,7 +53,7 @@ public:
 	unsigned long getRequestBodySize() const;
 
 private:
-	void parseRequestBody(std::string const &line);
+	void parseRequestBody();
 	void parseRequestHeader(std::string const &line);
 	void parseRequestLine(std::string const &line);
 };

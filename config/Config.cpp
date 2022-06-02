@@ -32,7 +32,7 @@ void Config::checkBrace(std::stack<bool> &check_brace, std::string &buffer)
 {
 	std::string modify_buffer;
 
-	for (int i = 0; i < buffer.length(); i++)
+	for (size_t i = 0; i < buffer.length(); i++)
 	{
 		modify_buffer += buffer[i];
 		if (buffer[i] == '{')
@@ -76,7 +76,7 @@ void Config::parseGeneralDirective(std::map<std::string, std::string> &directive
 	std::string value;
 
 	main_line = ft_split(buffer, ";");
-	for (int i = 0; i < main_line.size(); i++)
+	for (size_t i = 0; i < main_line.size(); i++)
 	{
 		split_line = ft_split_space(main_line[i]);
 		if (split_line.size() < 2)

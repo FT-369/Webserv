@@ -1,6 +1,6 @@
 #include "Response.hpp"
 
-Response::Response(int socket_fd, Resource *resource)
+Response::Response(int socket_fd)
 	: _socket_write(fdopen(dup(socket_fd), "w"))
 {
 
@@ -8,6 +8,7 @@ Response::Response(int socket_fd, Resource *resource)
 
 Response::~Response()
 {
+	fclose(_socket_write);
 }
 
 FILE* Response::getSocketWriteFD() const { return _socket_write; }

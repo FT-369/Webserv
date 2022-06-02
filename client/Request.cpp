@@ -114,7 +114,7 @@ void Request::parseRequestHeader(std::string const &line)
 	}
 }
 
-void Request::parseRequestBody(std::string const &line)
+void Request::parseRequestBody()
 {
 	std::vector<std::string> chunk;
 	std::string chunk_size_hexa;
@@ -191,7 +191,7 @@ void Request::parseRequest()
 	{
 		if (fread_ret == 0)
 		{
-			parseRequestBody(_request_main);
+			parseRequestBody();
 			_stage = READ_END_OF_REQUEST;
 		}
 	}
