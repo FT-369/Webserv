@@ -2,9 +2,9 @@
 #include "Response.hpp"
 
 ClientSocket::ClientSocket(int fd, ConfigServer server_info)
-	: Socket(CLIENT_SOCKET, fd),  _request(new Request(fd)), _response(NULL), _resource(new Resource()), _stage(GET_REQUEST), _server_info(server_info), _request_parse_error(false)
+	: Socket(CLIENT_SOCKET, fd),  _request(new Request(fd)), _response(new Response(fd)), _resource(new Resource()), 
+		_stage(GET_REQUEST), _server_info(server_info), _request_parse_error(false)
 {
-	_response = new Response(fd);
 };
 
 ClientSocket::~ClientSocket()
@@ -50,12 +50,11 @@ void ClientSocket::makeResponse()
 
 void ClientSocket::sendResponse()
 {
-	_response->combineResponse();
-
 	FILE *socket_write = _response->getSocketWriteFD();
-	fputs(_response->combineResponse().c_str(), socket_write);
-	fflush(socket_write);
+	std::string combine_res = _response->combineResponse();
 
+	fputs(combine_res.c_str(), socket_write);
+	fflush(socket_write);
 	fwrite(_response->getEntity().c_str(), sizeof(char), _response->getEntity().length(), socket_write);
 	fclose(socket_write);
 }
