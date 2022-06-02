@@ -6,7 +6,6 @@ Socket::Socket(int socket_type) : _socket_type(socket_type) {}
 Socket::Socket(int socket_type, int fd) : _socket_type(socket_type), _socket_fd(fd) {}
 Socket::~Socket()
 {
-	// close(socket_fd);
 }
 
 void Socket::setSocketType(int socket_type) {_socket_type = socket_type;}

@@ -2,7 +2,6 @@
 
 ConfigHttp::ConfigHttp()
 {
-	// init default
 }
 
 ConfigHttp::~ConfigHttp() {}

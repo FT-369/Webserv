@@ -15,8 +15,6 @@ private:
 	std::string _entity;
 	unsigned long _entity_length;
 	std::string _status_code;
-	// Request *_request;
-	// Resource *_resource;
 
 public:
 	Response(int socket_fd, Resource *resource);

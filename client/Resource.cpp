@@ -18,12 +18,9 @@ std::string &Resource::getResourceContent() { return _content; }
 std::string const &Resource::getResourceContent() const { return _content; }
 std::string Resource::getResourceType() const { return _content_type; }
 unsigned long Resource::getResourceLength() const { return _content_length; }
-// std::string Resource::getSrcExtension() const { return _extension; }
-
 void Resource::setWriteFd(int fd) { _write_fd = fd; }
 void Resource::setReadFd(int fd) { _read_fd = fd; }
 void Resource::setPid(pid_t pid) { _pid = pid; }
-// void Resource::setExtension(std::string const &extension) { _extension = extension; _content_type = GlobalConfig::getMimeTypes()[_extension]; }
 void Resource::setResourceType(std::string const &content_type) { _content_type = content_type; }
 void Resource::setResourceContent(std::string const &content){ _content = content; }
 void Resource::setResourceLength(unsigned int content_length) { _content_length = content_length; }

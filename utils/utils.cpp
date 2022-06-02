@@ -1,11 +1,5 @@
 #include "utils.hpp"
 
-int	error_handling(std::string error, int ret)
-{
-	std::cerr << error << std::endl;
-	return(ret);
-}
-
 std::string ft_ltrim(std::string const &str)
 {
 	size_t idx = 0;

@@ -39,4 +39,10 @@ struct	request_error : public ExceptionHandler
 	request_error(std::string const &description) : ExceptionHandler("Request Error", description) { }
 };
 
+struct	kqueue_error : public ExceptionHandler
+{
+	kqueue_error() : ExceptionHandler("Kqueue Error") { }
+	kqueue_error(std::string const &description) : ExceptionHandler("Kqueue Error", description) { }
+};
+
 #endif

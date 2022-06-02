@@ -31,14 +31,11 @@ public:
 	unsigned int _request_header_size;
 	unsigned long _request_body_size;
 	std::map<std::string, std::string> _request_header;
-	// ConfigLocation *_route;
-	// std::string _file; // 라우팅 경로를 제외한 파일  // _route->getUrl() + _file = _path;
 
 public:
 	Request(int socket_fd);
 	~Request();
 	void parseRequest();
-	// void setRoute(std::vector<ConfigLocation> const &locations);
 
 	FILE *getSocketReadFP() const;
 	std::string getMethod() const;

@@ -23,7 +23,7 @@ public:
 	void setting();
 	void setting(std::string const &filename);
 
-private: // func
+private:
 	void identifyHttpBlock(std::string const &block);
 	void parseGeneralDirective(std::map<std::string, std::string> &directive, std::string const &buffer);
 	void checkBrace(std::stack<bool> &check_brace, std::string &buffer);

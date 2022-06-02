@@ -69,6 +69,7 @@ void Request::parseRequestLine(std::string const &line)
 	if (line == "")
 		throw request_error("Invalid Request Line");
 
+	std::cerr << line << std::endl;
 	request_line = ft_split_space(line);
 	if (request_line.size() != 3)
 		throw request_error("Invalid request Line");
@@ -155,7 +156,6 @@ void Request::parseRequest()
 	long fread_ret = fread(line, sizeof(char), GET_LINE_BUF - 1, getSocketReadFP());
 	if (fread_ret < 0)
 	{
-		// fclose(getSocketReadFP());
 		throw request_error("request fread error");
 	}
 	if (fread_ret == 0 && _stage == READ_END_OF_REQUEST)
@@ -193,7 +193,6 @@ void Request::parseRequest()
 		{
 			parseRequestBody(_request_main);
 			_stage = READ_END_OF_REQUEST;
-			// fclose(getSocketReadFP());
 		}
 	}
 }
