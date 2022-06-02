@@ -32,6 +32,8 @@ void Response::makePostHeader(Resource *resource)
 	if (_header["Content-Length"] == "")
 		_header["Content-Length"] = std::to_string(_entity.length());
 	_header["Server"] = "Mac Web Server";
+	// _header["Connection"] = "keep-alive";
+	// _header["Keep-Alive"] = "timeout=5, max=1000";
 }
 
 void Response::makeGetHeader(Resource *resource)
@@ -41,6 +43,8 @@ void Response::makeGetHeader(Resource *resource)
 	if (_header["Content-Length"] == "")
 		_header["Content-Length"] = std::to_string(_entity.length());
 	_header["Server"] = "Mac Web Server";
+	// _header["Connection"] = "keep-alive";
+	// _header["Keep-Alive"] = "timeout=5, max=1000";
 }
 
 void Response::makeRedirectHeader(ConfigLocation *route)

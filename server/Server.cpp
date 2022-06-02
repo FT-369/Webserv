@@ -158,9 +158,22 @@ void Server::keventProcess()
 						{
 							if (read_fd != -1)
 							{
+								FILE *resource_ptr;
+								long resource_size = 0;
+								
+								if (client_socket->getStage() == SET_RESOURCE)
+								{
+									FILE *resource_ptr = fdopen(dup(client_socket->getResource()->getReadFd()), "r");
+									fseek(resource_ptr, 0, SEEK_END);
+									long resource_size = ftell(resource_ptr);
+									fseek(resource_ptr, 0, SEEK_SET);
+									fclose(resource_ptr);
+									if (resource_size == 0)
+										client_socket->setStage(MAKE_RESPONSE);
+								}
+								std::cerr << "read_fd : " << resource_size << std::endl;
 								fcntl(read_fd, F_SETFL, O_NONBLOCK);
 								_kq.addEvent(EVFILT_READ, read_fd, NULL);
-								std::cerr << "read_fd : " << read_fd << std::endl;
 								_socket[read_fd] = client_socket;
 							}
 							if (write_fd != -1)
@@ -211,7 +224,7 @@ void Server::keventProcess()
 								if (n == 0)
 								{
 									// client_socket->parsingCGIResponse();
-									// std::cerr << "parsingCGIResponse" << std::endl;
+									std::cerr << "parsingCGIResponse EOF!!" << std::endl;
 									_kq.removeEvent(EVFILT_READ, _kq._event_list[i].ident, NULL);
 									// _kq.enableEvent(EVFILT_WRITE, _kq._event_list[i].ident, NULL);
 									close(client_socket->getResource()->getReadFd());
@@ -221,6 +234,7 @@ void Server::keventProcess()
 								else if (n < BUFFERSIZE - 1)
 								{
 									client_socket->parsingCGIResponse();
+									client_socket->setStage(MAKE_RESPONSE);
 									std::cerr << "parsingCGIResponse" << std::endl;
 									// _kq.removeEvent(EVFILT_READ, _kq._event_list[i].ident, NULL);
 									// _kq.enableEvent(EVFILT_WRITE, _kq._event_list[i].ident, NULL);
@@ -233,7 +247,7 @@ void Server::keventProcess()
 						else if (client_socket != 0 && client_socket->getResource() != 0 && client_socket->getResource()->getReadFd() == _kq._event_list[i].ident)
 						{ // file 읽기
 							std::cerr << "2 client socket : " << _kq._event_list[i].ident <<  " " << client_socket->getResource()->getReadFd() << std::endl;
-							FILE *resource_ptr = fdopen(_kq._event_list[i].ident, "r");
+							FILE *resource_ptr = fdopen(dup(_kq._event_list[i].ident), "r");
 							fseek(resource_ptr, 0, SEEK_END);
 							long resource_size = ftell(resource_ptr);
 							fseek(resource_ptr, 0, SEEK_SET);
@@ -249,7 +263,7 @@ void Server::keventProcess()
 							if (fread_size == 0)
 							{
 								client_socket->setStage(MAKE_RESPONSE);
-								// fclose(resource_ptr);
+								fclose(resource_ptr);
 								continue;
 							}
 							else if (fread_size != resource_size)
