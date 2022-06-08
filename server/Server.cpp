@@ -193,7 +193,7 @@ void Server::keventProcess()
 									client_socket->parsingCGIResponse();
 									close(client_socket->getResource()->getReadFd());
 									close(client_socket->getResource()->getWriteFd());
-									client_socket->setStage(MAKE_RESPONSE);
+									client_socket->setStage(SEND_RESPONSE);
 								}
 							}
 						}
@@ -230,7 +230,7 @@ void Server::keventProcess()
 							continue;
 						}
 						client_socket->getResource()->setResourceLength(resource_size);
-						client_socket->setStage(MAKE_RESPONSE);
+						client_socket->setStage(SEND_RESPONSE);
 					}
 					break;
 				}
@@ -245,7 +245,7 @@ void Server::keventProcess()
 				{
 					ClientSocket *client_socket = dynamic_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
 					// response 보내주는거
-					if (client_socket != 0 && static_cast<uintptr_t>(client_socket->getSocketFd()) == _kq._event_list[i].ident && client_socket->getRequest() != 0 && client_socket->getStage() == MAKE_RESPONSE) // + 리소스도 다 읽었으면
+					if (client_socket != 0 && static_cast<uintptr_t>(client_socket->getSocketFd()) == _kq._event_list[i].ident && client_socket->getRequest() != 0 && client_socket->getStage() == SEND_RESPONSE) // + 리소스도 다 읽었으면
 					{
 						client_socket->makeResponse();
 						client_socket->sendResponse();
@@ -270,7 +270,7 @@ void Server::keventProcess()
 						fwrite(client_socket->getRequest()->getRequestBody().c_str(), 1, client_socket->getRequest()->getRequestBody().size(), resource_ptr);
 						fclose(resource_ptr);
 						close(client_socket->getResource()->getWriteFd());
-						client_socket->setStage(MAKE_RESPONSE);
+						client_socket->setStage(SEND_RESPONSE);
 					}
 				}
 				}

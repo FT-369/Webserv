@@ -45,7 +45,7 @@ void ClientSocket::setStage(Stage stage) { _stage = stage; }
 void ClientSocket::makeResponse()
 {
 	_response->setEntity(_resource->getResourceContent());
-	return _response->makeResponse(_request, _resource, _route);
+	return _response->makeResponse(_resource, _route);
 }
 
 void ClientSocket::sendResponse()
@@ -61,7 +61,7 @@ void ClientSocket::sendResponse()
 
 std::string ClientSocket::getErrorPage(std::string error_num)
 {
-	std::string root = "/goinfre/jwoo/Webserv/setting/defaultErrorPage.html";
+	std::string root = "./setting/defaultErrorPage.html";
 	std::map<std::string, std::string> temp = _route->getCommonDirective()._error_page;
 	std::string _status_code;
 
@@ -71,7 +71,7 @@ std::string ClientSocket::getErrorPage(std::string error_num)
 		root = _route->getCommonDirective()._root + "/" + _route->getCommonDirective()._error_page[_status_code];
 		if (getFileType(root) == 0)
 		{
-			return "/goinfre/jwoo/Webserv/setting/defaultErrorPage.html";
+			return "./setting/defaultErrorPage.html";
 		}
 	}
 	return root;
@@ -87,7 +87,7 @@ int ClientSocket::isErrorRequest()
 	}
 	else if (find(allowed_method.begin(), allowed_method.end(), _request->getMethod()) == allowed_method.end())
 	{
-		setErrorResource("403");
+		setErrorResource("405");
 	}
 	else if (_request->getRequestHeaderSize() > static_cast<unsigned int>(_route->getCommonDirective()._request_limit_header_size) || 
 	_request->getRequestBodySize() > static_cast<unsigned long>(_route->getCommonDirective()._client_limit_body_size)) // request body & header size 체크
@@ -159,7 +159,7 @@ void ClientSocket::setGetFd()
 	{
 		// resource content에 autoindex 만들기 
 		_resource->makeAutoIndex(root, _file, _request->getRequestHeader()["Host"]);
-		setStage(MAKE_RESPONSE); // auto index 바로 response 보내기
+		setStage(SEND_RESPONSE); // auto index 바로 response 보내기
 		_response->setStatusCode("200");
 		return ;
 	}
@@ -268,7 +268,7 @@ void ClientSocket::setDeleteFd()
 			if (isFile(indexfile) == 1)
 			{
 				_response->setStatusCode("200");
-				setStage(MAKE_RESPONSE);
+				setStage(SEND_RESPONSE);
 				return;
 			}
 		}
@@ -277,7 +277,7 @@ void ClientSocket::setDeleteFd()
 	{
 		if (getFileType(entity_file) > 0)
 		{
-			setStage(MAKE_RESPONSE);
+			setStage(SEND_RESPONSE);
 			_response->setStatusCode("200");
 			return ;
 		}

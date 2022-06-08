@@ -30,7 +30,7 @@ public:
 	void makeRedirectHeader(ConfigLocation *route);
 	void makeHeader(Resource *resource);
 	void setEntity(std::string const &entity);
-	void makeResponse(Request *request, Resource *resource, ConfigLocation *route);
+	void makeResponse(Resource *resource, ConfigLocation *route);
 	std::string combineResponse();
 	void setStatusCode(std::string const &status_code);
 	void addHeader(std::string key, std::string value);

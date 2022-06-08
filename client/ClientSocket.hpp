@@ -10,7 +10,7 @@ enum Stage
 	GET_REQUEST, // 리퀘스트 파싱 시작
 	END_OF_REQUEST, //리퀘스터 파싱 완료
 	SET_RESOURCE, // 리소스 세팅 시작
-	MAKE_RESPONSE, // 세팅된 리소스로 응답 보내줌
+	SEND_RESPONSE, // 세팅된 리소스로 응답 보내줌
 	MAKE_AUTOINDEX,
 	CGI_WRITE,
 	CGI_READ,

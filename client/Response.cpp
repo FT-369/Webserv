@@ -44,16 +44,9 @@ void Response::makeRedirectHeader(ConfigLocation *route)
 }
 
 
-void Response::makeResponse(Request *request, Resource *resource, ConfigLocation *route)
+void Response::makeResponse(Resource *resource, ConfigLocation *route)
 {
 	// resource의 content 가져오기
-	std::vector<std::string> temp;
-	temp = route->getCommonDirective()._limit_except;
-
-	if (find(temp.begin(), temp.end(), request->getMethod()) == temp.end())
-	{
-		setStatusCode("405");
-	}
 	makeHeader(resource);
 	makeRedirectHeader(route);
 	makeStartLine();
