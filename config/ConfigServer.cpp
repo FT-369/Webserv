@@ -22,7 +22,7 @@ void ConfigServer::identifyLocationBlock(std::string const &block)
 	if (block_name_arg.size() >= 2 && block_name_arg[0] == "location")
 	{
 		std::string url = block_name_arg[1];
-		for (int i = 2; i < block_name_arg.size(); i++)
+		for (size_t i = 2; i < block_name_arg.size(); i++)
 			url += " " + block_name_arg[i];
 
 		ConfigLocation location(url, _common_directive, "", "");
@@ -62,7 +62,7 @@ void ConfigServer::parseServerDirecive(std::map<std::string, std::string> &simpl
 		else
 		{
 			bool isNumber = true;
-			for (int i = 0; i < listen[0].size(); i++)
+			for (size_t i = 0; i < listen[0].size(); i++)
 			{
 				if (std::isdigit(listen[0][i]) == 0)
 					isNumber = false;

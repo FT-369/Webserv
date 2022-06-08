@@ -1,11 +1,5 @@
 #include "utils.hpp"
 
-int	error_handling(std::string error, int ret)
-{
-	std::cerr << error << std::endl;
-	return(ret);
-}
-
 std::string ft_ltrim(std::string const &str)
 {
 	size_t idx = 0;
@@ -56,7 +50,7 @@ std::vector<std::string> ft_split_space(std::string const &line)
 {
 	std::vector<std::string> words;
 	std::string new_line = line;
-	int i = 0;
+	size_t i = 0;
 
 	while (i < new_line.length()) {
 		if (isspace(new_line[i])) {

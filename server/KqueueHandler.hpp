@@ -19,7 +19,6 @@ public:
 	void addEvent(int16_t filter, uintptr_t ident, void *udata);
 	void enableEvent(int16_t filter, uintptr_t ident, void *udata);
 	void disableEvent(int16_t filter, uintptr_t ident, void *udata);
-	void removeEvent(int16_t filter, uintptr_t ident, void *udata);
 	int isServerFd();
 };
 

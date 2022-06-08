@@ -36,8 +36,9 @@ struct CommonDirective
 	}
 
 	CommonDirective(CommonDirective const &cd)
-		: _root(cd._root), _autoindex(cd._autoindex), _index(cd._index), _error_page(cd._error_page), _cgi_path(cd._cgi_path),
-		_limit_except(cd._limit_except), _client_limit_body_size(cd._client_limit_body_size), _request_limit_header_size(cd._request_limit_header_size) {}
+		: _root(cd._root), _autoindex(cd._autoindex), _index(cd._index), _error_page(cd._error_page),
+		_limit_except(cd._limit_except), _client_limit_body_size(cd._client_limit_body_size), 
+		_request_limit_header_size(cd._request_limit_header_size), _cgi_path(cd._cgi_path){}
 
 	CommonDirective& operator=(CommonDirective const &cd) {
 		if (this == &cd) {

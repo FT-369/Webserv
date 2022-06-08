@@ -1,6 +1,6 @@
 #include "Response.hpp"
 
-Response::Response(int socket_fd, Resource *resource)
+Response::Response(int socket_fd)
 	: _socket_write(fdopen(dup(socket_fd), "w"))
 {
 
@@ -8,6 +8,7 @@ Response::Response(int socket_fd, Resource *resource)
 
 Response::~Response()
 {
+	fclose(_socket_write);
 }
 
 FILE* Response::getSocketWriteFD() const { return _socket_write; }
@@ -59,29 +60,24 @@ void Response::makeRedirectHeader(ConfigLocation *route)
 void Response::makeResponse(Request *request, Resource *resource, ConfigLocation *route)
 {
 	// resource의 content 가져오기
-	// _entity = _resource->getResourceContent();
 	std::vector<std::string> temp;
 	temp = route->getCommonDirective()._limit_except;
 
 	if (find(temp.begin(), temp.end(), request->getMethod()) == temp.end())
 	{
-		std::cout << "ERROR Response " << std::endl;
 		setStatusCode("405");
 		makeGetHeader(resource);
 	}
 	else if (request->getMethod() == "GET")
 	{
-		std::cout << "getMethod GET" << std::endl;
 		makeGetHeader(resource);
 	}
 	else if (request->getMethod() == "POST")
 	{
-		std::cout << "POST" << std::endl;
 		makePostHeader(resource);
 	}
 	else if (request->getMethod() == "DELETE")
 	{
-		std::cout << "makeGetHeader" << std::endl;
 		makeGetHeader(resource);
 	}
 	makeRedirectHeader(route);
@@ -94,19 +90,13 @@ std::string Response::combineResponse()
 	std::map<std::string, std::string>::iterator it;
 
 	send_data += _start_line;
+	std::cerr << send_data << std::endl;
 	for (it = _header.begin(); it != _header.end(); it++)
 	{
 		send_data += it->first + ": " + it->second + "\r\n";
 	}
 	send_data += "\r\n";
-	// send_data += "\r\n" + _entity + "\r\n";
-	std::cerr << "send_data : " << send_data << std::endl;
 	return send_data;
-	// fputs(send_data.c_str(), _socket_write);
-	// fflush(_socket_write);
-
-	// fwrite(_resource->getResourceContent().c_str(), sizeof(char), (_resource->getResourceLength() > 0 ? _resource->getResourceLength() : _resource->getResourceContent().length()), _socket_write);
-	// fclose(_socket_write);
 }
 
 void Response::addHeader(std::string key, std::string value)

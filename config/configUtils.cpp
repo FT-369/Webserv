@@ -44,7 +44,7 @@ void getCommonErrorPage(CommonDirective &directive, std::vector<std::string> con
 		throw config_parsing_error("Invalid 'error_page' directive value"); // 지시어 형식이 맞지 않음
 
 	std::string error_page = line[line.size() - 1];
-	for (int i = 1; i < line.size() - 1; i++)
+	for (size_t i = 1; i < line.size() - 1; i++)
 	{
 		char *endptr = 0;
 		double d = std::strtod(line[i].c_str(), &endptr);
@@ -95,7 +95,7 @@ void getAllowedMethod(CommonDirective &directive, std::vector<std::string> const
 	if (line.size() < 2)
 		throw config_parsing_error("Invalid 'limit_except' directive value");
 	std::vector<std::string> new_directive;
-	for (int i = 1; i < line.size(); i++)
+	for (size_t i = 1; i < line.size(); i++)
 	{
 		if (line[i] != "GET" && line[i] != "POST" && line[i] != "DELETE")
 			throw config_parsing_error("Invalid directive value"); // 지시어 형식이 맞지 않음
@@ -162,7 +162,7 @@ void parseSimpleDirective(std::map<std::string, std::string> &simple, CommonDire
 		main_line.pop_back();
 	}
 
-	for (int i = 0; i < main_line.size(); i++)
+	for (size_t i = 0; i < main_line.size(); i++)
 	{
 		split_line = ft_split_space(main_line[i]);
 		if (split_line.size() < 2)
@@ -189,7 +189,7 @@ std::string sperateBrace(std::string const &buffer)
 	bool first_brace = false;
 	int last_idx = -1;
 
-	for (int i = 0; i < buffer.length(); i++)
+	for (size_t i = 0; i < buffer.length(); i++)
 	{
 		modify_buffer += buffer[i];
 		if (first_brace == false && buffer[i] == ';')

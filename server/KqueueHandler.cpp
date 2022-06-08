@@ -1,6 +1,6 @@
 #include "KqueueHandler.hpp"
 
-KqueueHandler::KqueueHandler() : _kq_fd(0), _n_event(1024)
+KqueueHandler::KqueueHandler() :  _n_event(1024), _kq_fd(0)
 {
 }
 

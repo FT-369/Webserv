@@ -2,9 +2,9 @@
 #include "Response.hpp"
 
 ClientSocket::ClientSocket(int fd, ConfigServer server_info)
-	: Socket(CLIENT_SOCKET, fd), _server_info(server_info), _request(new Request(fd)), _response(NULL), _resource(new Resource()), _stage(GET_REQUEST), _request_parse_error(false)
+	: Socket(CLIENT_SOCKET, fd),  _request(new Request(fd)), _response(new Response(fd)), _resource(new Resource()), 
+		_stage(GET_REQUEST), _server_info(server_info), _request_parse_error(false)
 {
-	_response = new Response(fd, _resource);
 };
 
 ClientSocket::~ClientSocket()
@@ -50,19 +50,18 @@ void ClientSocket::makeResponse()
 
 void ClientSocket::sendResponse()
 {
-	_response->combineResponse();
-
 	FILE *socket_write = _response->getSocketWriteFD();
-	fputs(_response->combineResponse().c_str(), socket_write);
-	fflush(socket_write);
+	std::string combine_res = _response->combineResponse();
 
+	fputs(combine_res.c_str(), socket_write);
+	fflush(socket_write);
 	fwrite(_response->getEntity().c_str(), sizeof(char), _response->getEntity().length(), socket_write);
 	fclose(socket_write);
 }
 
 std::string ClientSocket::getErrorPage(std::string error_num)
 {
-	std::string root = "./setting/defaultErrorPage.html";
+	std::string root = "/goinfre/jwoo/Webserv/setting/defaultErrorPage.html";
 	std::map<std::string, std::string> temp = _route->getCommonDirective()._error_page;
 	std::string _status_code;
 
@@ -72,7 +71,7 @@ std::string ClientSocket::getErrorPage(std::string error_num)
 		root = _route->getCommonDirective()._root + "/" + _route->getCommonDirective()._error_page[_status_code];
 		if (getFileType(root) == 0)
 		{
-			return "./setting/defaultErrorPage.html";
+			return "/goinfre/jwoo/Webserv/setting/defaultErrorPage.html";
 		}
 	}
 	return root;
@@ -90,8 +89,8 @@ int ClientSocket::isErrorRequest()
 	{
 		setErrorResource("403");
 	}
-	else if (_request->getRequestHeaderSize() > _route->getCommonDirective()._request_limit_header_size || 
-	_request->getRequestBodySize() > _route->getCommonDirective()._client_limit_body_size) // request body & header size 체크
+	else if (_request->getRequestHeaderSize() > static_cast<unsigned int>(_route->getCommonDirective()._request_limit_header_size) || 
+	_request->getRequestBodySize() > static_cast<unsigned long>(_route->getCommonDirective()._client_limit_body_size)) // request body & header size 체크
 	{
 		setErrorResource("413");
 	}
@@ -117,7 +116,11 @@ void ClientSocket::setResourceFd()
 	if (isCGI(_file))
 	{
 		CgiHandler cgi(_route, this);
-		cgi.executeCgi(); // <- 여기서 resource read_fd, write_fd 설정
+		if (cgi.executeCgi() != 200) // <- 여기서 resource read_fd, write_fd 설정
+		{
+			setErrorResource("500");
+			return ;
+		}
 		setStage(CGI_WRITE);
 	}
 	else if (_request->getMethod() == "GET")
@@ -173,7 +176,7 @@ void ClientSocket::setGetFd()
 			}
 		}
 	}
-	else // 
+	else
 	{
 		if (getFileType(entity_file) > 0)
 		{
@@ -291,14 +294,15 @@ void ClientSocket::setDeleteFd()
 void ClientSocket::setErrorResource(std::string error)
 {
 	int fd;
-
-	client_socket->setStage(MAKE_RESPONSE);
 	_response->setStatusCode(error);
 	fd = open(getErrorPage(error).c_str(), O_RDONLY);
+	if (_resource->getReadFd() != -1)
+	{
+		close(_resource->getReadFd());
+	}
 	_resource->setReadFd(fd);
 	if (fd < 0)
 	{
-		// _resource->getResourceContent().append(buf, resource_size);
 		_resource->setResourceContent("Error");
 		_resource->setResourceType("text/plain");
 	}
@@ -333,7 +337,7 @@ void ClientSocket::setRoute()
 	{
 		if (i == path_len - 1 || path[i + 1] == '/')
 		{
-			for (int j = 0; j < locations.size(); j++)
+			for (size_t j = 0; j < locations.size(); j++)
 			{
 				if (path.substr(0, i + 1) == locations[j].getUrl() || path.substr(0, i + 1) == locations[j].getUrl() + "/")
 				{

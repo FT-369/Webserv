@@ -33,7 +33,6 @@ void CgiHandler::cgiInitEnv()
 	_cgi_env["SERVER_PORT"] = _client_socket->getRequest()->getPort();
 	_cgi_env["SERVER_NAME"] = _client_socket->getRequest()->getServerName();
 	_cgi_env["DOCUMENT_ROOT"] = _location_info->getCommonDirective()._cgi_path[extension];
-	std::cerr << "_client_socket->getRequest()->getPath(): " << _client_socket->getRequest()->getPath() << std::endl;
 	_cgi_env["DOCUMENT_URI"] = _client_socket->getRequest()->getPath() + (_client_socket->getRequest()->getQuery().size() > 0 ? ("?" + _client_socket->getRequest()->getQuery()) : ""); // 리퀘스트에 명시된 전체 주소가 들어가야 함
 	_cgi_env["REQUEST_URI"] = _client_socket->getRequest()->getPath() + (_client_socket->getRequest()->getQuery().size() > 0 ? ("?" + _client_socket->getRequest()->getQuery()) : ""); // 리퀘스트에 명시된 전체 주소가 들어가야 함
 	_cgi_env["SCRIPT_NAME"] = _client_socket->getFile(); // 실행파일 전체 주소가 들어가야함
@@ -78,7 +77,7 @@ int CgiHandler::executeCgi()
 		return 500;
 	}
 	pid_t pid = fork();
-	int status;
+	int status = 200;
 
 	if (pid < 0) 
 	{
@@ -96,7 +95,7 @@ int CgiHandler::executeCgi()
 		{
 			return -1;
 		}
-		int i = 0;
+		size_t i = 0;
 		for (std::map<std::string, std::string>::iterator it = _cgi_env.begin(); it != _cgi_env.end(); it++)
 		{
 			env[i] = strdup((it->first + "=" + it->second).c_str());
