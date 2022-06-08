@@ -201,14 +201,15 @@ void ClientSocket::setPostFd()
 	std::string entire_file = root + _file;
 	std::string dirpath, filepath, filename;
 	int i = 1;
-
 	dirpath = root;
 	filepath = _file;
+
 	if (isDirectory(entire_file))
 	{
 		dirpath = entire_file;
 		filepath = "";
 	}
+	std::cout << entire_file << std::endl;
 	if (filepath == "")
 	{
 		filename = dirpath + "/NewFile";
@@ -220,22 +221,17 @@ void ClientSocket::setPostFd()
 			i++;
 		}
 		filename = temp;
+		_response->setStatusCode("201");
 	}
-	else
+	else if (getFileType(entire_file) == 0)
 	{
-		std::string extenstion = getExtension(_file);
-		size_t rpos = _file.rfind(".");
-		std::string file_name = _file.substr(0, rpos);
-		if (rpos < _file.size()) // 확장자가 있음
-			extenstion = "." + extenstion;
-		dirpath = dirpath + file_name;
-		std::string temp = dirpath + extenstion;
-		while (getFileType(temp))
-		{
-			temp = dirpath + '(' + std::to_string(i) + ')' + extenstion;
-			i++;
-		}
-		filename = temp;
+		_response->setStatusCode("201");
+		filename = entire_file;
+	}
+	else if (getFileType(entire_file) == 1)
+	{
+		_response->setStatusCode("200");
+		filename = entire_file;
 	}
 	size_t rrpos = filename.rfind("/");
 	std::string temp_file;
@@ -248,14 +244,12 @@ void ClientSocket::setPostFd()
 		setErrorResource("400");
 		return;
 	}
-	int fd = open(filename.c_str(), O_WRONLY | O_CREAT, 0777);
+	int fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_APPEND, 0777);
 	if (fd < 0)
 	{
 		setErrorResource("500");
 		return;
 	}
-	else
-		_response->setStatusCode("201");
 	_resource->setWriteFd(fd);
 }
 
