@@ -27,7 +27,7 @@ Response *ClientSocket::getResponse() const { return _response; }
 ConfigLocation *ClientSocket::getRoute() const { return _route; }
 std::string ClientSocket::getFile() const { return _file; }
 
-void ClientSocket::recieveRequest()
+void ClientSocket::readRequest()
 {
 	_request->parseRequest();
 	if (_request->getRequestStage() == READ_END_OF_REQUEST)

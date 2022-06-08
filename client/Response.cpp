@@ -26,26 +26,13 @@ void Response::makeStartLine()
 	_start_line = "HTTP/1.1 " + _status_code + " " + GlobalConfig::getStatusCode()[_status_code] + "\r\n";
 }
 
-void Response::makePostHeader(Resource *resource)
+void Response::makeHeader(Resource *resource)
 {
 	if (_header["Content-Type"] == "")
 		_header["Content-Type"] = resource->getResourceType();
 	if (_header["Content-Length"] == "")
 		_header["Content-Length"] = std::to_string(_entity.length());
 	_header["Server"] = "Mac Web Server";
-	// _header["Connection"] = "keep-alive";
-	// _header["Keep-Alive"] = "timeout=5, max=1000";
-}
-
-void Response::makeGetHeader(Resource *resource)
-{
-	if (_header["Content-Type"] == "")
-		_header["Content-Type"] = resource->getResourceType();
-	if (_header["Content-Length"] == "")
-		_header["Content-Length"] = std::to_string(_entity.length());
-	_header["Server"] = "Mac Web Server";
-	// _header["Connection"] = "keep-alive";
-	// _header["Keep-Alive"] = "timeout=5, max=1000";
 }
 
 void Response::makeRedirectHeader(ConfigLocation *route)
@@ -66,20 +53,8 @@ void Response::makeResponse(Request *request, Resource *resource, ConfigLocation
 	if (find(temp.begin(), temp.end(), request->getMethod()) == temp.end())
 	{
 		setStatusCode("405");
-		makeGetHeader(resource);
 	}
-	else if (request->getMethod() == "GET")
-	{
-		makeGetHeader(resource);
-	}
-	else if (request->getMethod() == "POST")
-	{
-		makePostHeader(resource);
-	}
-	else if (request->getMethod() == "DELETE")
-	{
-		makeGetHeader(resource);
-	}
+	makeHeader(resource);
 	makeRedirectHeader(route);
 	makeStartLine();
 }

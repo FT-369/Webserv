@@ -45,7 +45,7 @@ public:
 	std::string getFile() const;
 
 	
-	void recieveRequest();
+	void readRequest();
 	void makeResponse();
 	void sendResponse();
 	Stage getStage();

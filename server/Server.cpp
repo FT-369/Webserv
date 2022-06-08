@@ -67,7 +67,7 @@ void Server::keventProcess()
 		int event_num = _kq.initKevent();
 		if (event_num == -1)
 		{
-			continue ;
+			continue;
 		}
 		for (int i = 0; i < event_num; i++)
 		{
@@ -113,7 +113,11 @@ void Server::keventProcess()
 				{
 					ClientSocket *client_socket = dynamic_cast<ClientSocket *>(_socket[_kq._event_list[i].ident]);
 
-					if (client_socket != 0 && static_cast<uintptr_t>(client_socket->getSocketFd()) == _kq._event_list[i].ident && client_socket->getStage() == GET_REQUEST)
+					if (client_socket == 0)
+					{
+						continue;
+					}
+					if (static_cast<uintptr_t>(client_socket->getSocketFd()) == _kq._event_list[i].ident && client_socket->getStage() == GET_REQUEST)
 					{
 						if (client_socket->getRequest() == 0)
 						{
@@ -124,7 +128,7 @@ void Server::keventProcess()
 						{
 							try
 							{
-								client_socket->recieveRequest();
+								client_socket->readRequest();
 							}
 							catch (const std::exception &e)
 							{
@@ -153,8 +157,7 @@ void Server::keventProcess()
 							}
 						}
 					}
-					else if (client_socket != 0 && client_socket->getResource() != 0 && static_cast<uintptr_t>(client_socket->getResource()->getReadFd()) == _kq._event_list[i].ident
-						&& (client_socket->getStage() == SET_RESOURCE || client_socket->getStage() == CGI_READ))
+					else if (client_socket->getResource() != 0 && static_cast<uintptr_t>(client_socket->getResource()->getReadFd()) == _kq._event_list[i].ident && client_socket->getStage() == CGI_READ)
 					{
 						int stat, ret;
 						char buffer[BUFFERSIZE];
@@ -172,7 +175,7 @@ void Server::keventProcess()
 								// cgi error
 								_socket.erase(_kq._event_list[i].ident);
 								close(_kq._event_list[i].ident);
-								continue ;
+								continue;
 							}
 							else if (WIFEXITED(stat) == true)
 							{
@@ -194,30 +197,41 @@ void Server::keventProcess()
 								}
 							}
 						}
-						else if (client_socket != 0 && client_socket->getResource() != 0 && static_cast<uintptr_t>(client_socket->getResource()->getReadFd()) == _kq._event_list[i].ident)
-						{ // file 읽기
-							FILE *resource_ptr = fdopen(_kq._event_list[i].ident, "r");
-							fseek(resource_ptr, 0, SEEK_END);
-							long resource_size = ftell(resource_ptr);
-							rewind(resource_ptr);
-							char buf2[resource_size];
-							long fread_size = fread(buf2, sizeof(char), resource_size, resource_ptr);
+					}
+					else if (client_socket->getResource() != 0 && static_cast<uintptr_t>(client_socket->getResource()->getReadFd()) == _kq._event_list[i].ident && client_socket->getStage() == SET_RESOURCE)
+					{ // file 읽기
+						FILE *resource_ptr = fdopen(_kq._event_list[i].ident, "r");
+						fseek(resource_ptr, 0, SEEK_END);
+						long resource_size = ftell(resource_ptr);
+						rewind(resource_ptr);
+						long total_size = 0;
+						long fread_size = 0;
+						
+						while (total_size < resource_size)
+						{
+							char buf2[BUFFERSIZE];
+							fread_size = fread(buf2, sizeof(char), BUFFERSIZE - 1, resource_ptr);
 							if (fread_size < 0)
 							{
-								client_socket->setErrorResource("500");
-								continue;
+								break;
 							}
-							else if (fread_size != 0 && fread_size != resource_size)
-							{
-								client_socket->setErrorResource("500");
-								continue;
-							}
-							client_socket->getResource()->setResourceLength(resource_size);
-							client_socket->getResource()->getResourceContent().append(buf2, resource_size);
-							client_socket->setStage(MAKE_RESPONSE);
-							fclose(resource_ptr);
-							close(client_socket->getResource()->getReadFd());
+							total_size += fread_size;
+							client_socket->getResource()->getResourceContent().append(buf2, fread_size);
 						}
+						fclose(resource_ptr);
+						close(client_socket->getResource()->getReadFd());
+						if (fread_size < 0)
+						{
+							client_socket->setErrorResource("500");
+							continue;
+						}
+						else if (total_size != resource_size)
+						{
+							client_socket->setErrorResource("500");
+							continue;
+						}
+						client_socket->getResource()->setResourceLength(resource_size);
+						client_socket->setStage(MAKE_RESPONSE);
 					}
 					break;
 				}

@@ -28,8 +28,7 @@ public:
 
 	void makeStartLine();
 	void makeRedirectHeader(ConfigLocation *route);
-	void makeGetHeader(Resource *resource);
-	void makePostHeader(Resource *resource);
+	void makeHeader(Resource *resource);
 	void setEntity(std::string const &entity);
 	void makeResponse(Request *request, Resource *resource, ConfigLocation *route);
 	std::string combineResponse();
