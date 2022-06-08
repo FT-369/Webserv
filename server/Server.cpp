@@ -206,7 +206,6 @@ void Server::keventProcess()
 						rewind(resource_ptr);
 						long total_size = 0;
 						long fread_size = 0;
-						
 						while (total_size < resource_size)
 						{
 							char buf2[BUFFERSIZE];

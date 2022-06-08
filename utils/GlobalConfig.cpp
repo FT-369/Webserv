@@ -86,11 +86,11 @@ void GlobalConfig::initStatusCode()
 	GlobalConfig::_status_code["413"] = "Request Entity Too Large";
 	GlobalConfig::_status_code["414"] = "Request URI Too Long";
 	GlobalConfig::_status_code["415"] = "Unsupported Media Type";
-	GlobalConfig::_status_code["416"] = "Requested Range Not Satisfiable";
-	GlobalConfig::_status_code["500"] = "Expectation Failed";
-	GlobalConfig::_status_code["501"] = "Internal Server Error";
-	GlobalConfig::_status_code["502"] = "Not Implemented";
-	GlobalConfig::_status_code["503"] = "Bad Gateway";
+	GlobalConfig::_status_code["416"] = "Range Not Satisfiable";
+	GlobalConfig::_status_code["500"] = "Internal Server Error";
+	GlobalConfig::_status_code["501"] = "Not Implemented";
+	GlobalConfig::_status_code["502"] = "Bad Gateway";
+	GlobalConfig::_status_code["503"] = "Service Unavailable";
 	GlobalConfig::_status_code["504"] = "Gateway Timeout";
 	GlobalConfig::_status_code["505"] = "HTTP Version Not Supported";
 }
